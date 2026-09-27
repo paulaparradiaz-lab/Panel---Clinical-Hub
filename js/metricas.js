@@ -121,9 +121,12 @@ ${rankingTemas.armazon()}
     <p class="mini"><b>Toca una fila</b> para ver los comentarios de ese tipo: desde ahí puedes reclasificar
     cualquiera o devolverlo al Inbox, igual que en el ranking de temas.</p>
     <p class="mini"><b>La mejora</b> se enlaza al tipo completo, igual que en temas: <b>Crear mejora</b> hace
-    una nueva o la enlaza a una que ya existe, <b>Ver mejora</b> la edita y <b>Desvincular</b> se la quita
-    sin borrarla. <b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
-    ese tipo a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox.</p>
+    una nueva (con este tipo ya marcado como su indicador, su estado y, si ya se hizo, la fecha en que se
+    completó) o la enlaza a una que ya existe; <b>Ver mejora</b> la edita y <b>Desvincular</b> se la quita
+    sin borrarla. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
+    <p class="mini"><b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
+    ese tipo a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox. <b>Nueva
+    etiqueta</b> crea un tipo nuevo: aparece aquí cuando tenga su primer comentario.</p>
   </div>
   <div class="filtros-fila">
     <span class="rotulo">Mejora</span>

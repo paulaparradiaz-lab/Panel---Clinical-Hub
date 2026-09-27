@@ -72,8 +72,10 @@ export function armazon(){
         ¿Cómo funciona?</button>
     </div>
     <div class="ayuda-plegable" id="ayuda-ranking" hidden>
-      <p class="mini">Tus temas, ordenados por cuánta gente los pide. Solo aparecen los que ya tienen
-      comentarios clasificados; se ven los 10 más pedidos y el botón de abajo muestra todos.</p>
+      <p class="mini">Tus temas, ordenados por cuántos comentarios los piden (<b>Piden</b>) y desde cuántos
+      países (<b>Países</b>). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
+      y el botón de abajo muestra todos. El filtro de arriba deja ver <b>Todos</b>, solo los que están
+      <b>Sin mejora</b> o solo los que ya tienen <b>Con mejora</b>.</p>
       <p class="mini"><b>El texto subrayado</b> abre los comentarios reales de ese tema; desde ahí puedes
       reclasificar cualquiera o sacarlo del tema. <b>El lápiz</b> cambia el nombre del tema (la IA sigue
       usando el mismo). <b>La caneca</b> le quita el tema a sus comentarios sin borrar nada: lo que queda

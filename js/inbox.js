@@ -63,11 +63,14 @@ function armazon(){
       ¿Cómo funciona?</button>
   </div>
   <div class="ayuda-plegable" id="ayuda-inbox" hidden>
-    <p class="mini">Cada tarjeta trae lo que escribió el médico, tal cual. Dile qué es (tema pedido, mejora
-    global o las dos) y en qué subcategoría cae. Al guardar desaparece del inbox y empieza a sumar en
-    Métricas. Si no dice nada aprovechable, márcalo como ruido. Lo que llega solo con estrellas no pasa
-    por aquí: se clasifica solo y suma directo en Métricas. El buscador solo sirve para encontrar y agrupar;
-    con ☑ eliges todas las que se ven para clasificarlas juntas.</p>
+    <p class="mini">Aquí llega lo que la IA no tuvo claro. Cada tarjeta trae lo que escribió el médico, tal cual.
+    Dile qué es (tema pedido, mejora global o las dos) y en qué subcategoría cae. Al guardar desaparece del
+    Inbox y empieza a sumar en Métricas y en Impacto. Si no dice nada aprovechable, márcalo como ruido: no se
+    borra, queda en la fila de Ruido del ranking por si fue un error.</p>
+    <p class="mini">Lo que llega <b>solo con estrellas</b>, sin texto, no pasa por aquí porque no hay nada que
+    clasificar; sus estrellas sí cuentan en el Ranking de estrellas.</p>
+    <p class="mini"><b>El buscador</b> solo sirve para encontrar y agrupar; con <b>☑</b> eliges todas las que se ven
+    para clasificarlas o descartarlas juntas.</p>
   </div>
   <!-- Buscador y ☑ en una sola fila -->
   <div class="fila-buscar" id="fila-buscar">
