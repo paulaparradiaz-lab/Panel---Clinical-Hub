@@ -520,6 +520,8 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .impacto-grafica .area{fill:var(--c);opacity:.16}
 .impacto-grafica .trazo{fill:none;stroke:var(--c);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .impacto-grafica .punto{fill:var(--c);stroke:var(--surface2);stroke-width:2}
+/* La semana que va corriendo: punto hueco, su porcentaje todavía puede cambiar */
+.impacto-grafica .punto.en-curso{fill:var(--surface2);stroke:var(--c);stroke-width:2.2}
 /* Semanas con menos de 10 opiniones: punto gris abajo, sin porcentaje */
 .impacto-grafica .pocos{fill:var(--surface2);stroke:var(--border2);stroke-width:1.5}
 .impacto-grafica .tendencia{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-dasharray:5 4;opacity:.55;stroke-linecap:round}
@@ -531,6 +533,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .ley-linea{width:18px;height:3px;border-radius:2px;background:var(--c)}
 .ley-tendencia{width:18px;height:0;border-top:2px dashed var(--ink);opacity:.55}
 .ley-pocos{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border2);background:var(--surface2)}
+.ley-curso{width:10px;height:10px;border-radius:50%;border:2px solid var(--c);background:var(--surface2)}
 .ley-hito{display:grid!important;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--ink);color:var(--surface);font-style:normal;font-size:9px;font-weight:700}
 .impacto-grafica .hito line{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3}
 .impacto-grafica .hito circle{fill:var(--ink)}

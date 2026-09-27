@@ -80,6 +80,9 @@ export async function render(){
     <p class="mini"><b>Quiénes cuentan:</b> solo la <b>encuesta del sitio</b> y <b>WhatsApp</b>, que es donde el médico
     opina. El buscador no cuenta: ahí solo se buscan temas, nunca llegan críticas, y si se usa mucho una semana
     haría parecer que las críticas bajaron.</p>
+    <p class="mini"><b>Cada punto es una semana de lunes a domingo</b>, fija: no se corre de un día para otro. Cada
+    lunes aparece un punto nuevo. El último es la <b>semana en curso</b> (punto hueco): todavía le faltan días, así
+    que su porcentaje puede cambiar hasta el domingo.</p>
     <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas en que opinaron menos de 10 médicos. Con tan pocos, una
     sola crítica da un porcentaje que asusta y no significa nada, así que no se calcula.</p>
     <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas (o 3
@@ -163,7 +166,8 @@ async function cargar(){
   const fin = Date.now();
   const inicio = Math.min(fin - 7 * DIA, Math.max(DESDE, Math.min(...todos.concat([fin]))));
   const modo = (fin - inicio) / DIA > DIAS_PARA_IR_POR_MES ? "mes" : "semana";
-  $("#impacto-desde").textContent = "Desde el " + fechaCorta(new Date(inicio)) + ", por " + modo +
+  $("#impacto-desde").textContent = "Desde el " + fechaCorta(new Date(inicio)) + ", por " +
+    (modo === "semana" ? "semana (lunes a domingo)" : "mes") +
     " · % de los médicos que opinaron (encuesta y WhatsApp)";
   indicadores = catalogo.mejoras.filter(c => c.slug !== RUIDO).map(c => {
     const lista = clasificadas.filter(x => (x.mejoras || []).indexOf(c.slug) > -1);
@@ -183,33 +187,38 @@ async function cargar(){
   pintar();
 }
 
-/* Los puntos de la gráfica, de la fecha de inicio a hoy.
-   Por semana: semanas que terminan hoy (la última son los últimos 7 días).
-   Por mes: meses del calendario (el último va hasta hoy).
+/* Los puntos de la gráfica: periodos FIJOS del calendario, que no se
+   corren de un día para otro.
+   Por semana: de lunes a domingo, desde la semana que contiene la fecha
+   de inicio; cada lunes aparece un punto nuevo.
+   Por mes: meses del calendario.
+   El último periodo es el que va corriendo («en curso»): todavía le
+   faltan días y su porcentaje puede cambiar.
    Cada punto: n críticas del indicador, total de opiniones y el %
    (null si opinaron menos de 10). */
 function periodos(dias, todos, inicio, fin, modo){
   const lista = [];
   if (modo === "semana"){
-    /* Semanas completas desde el inicio: la primera empieza ese día o justo después */
-    const n = Math.max(2, Math.floor((fin - inicio) / (7 * DIA)));
-    for (let i = 0; i < n; i++){
-      const hasta = fin - (n - 1 - i) * 7 * DIA;
-      lista.push({ desde: hasta - 7 * DIA, hasta: hasta });
+    const d = new Date(inicio);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));        // el lunes de esa semana
+    while (d.getTime() <= fin){
+      const desde = d.getTime();
+      d.setDate(d.getDate() + 7);
+      lista.push({ desde: desde, hasta: d.getTime() });
     }
   } else {
     const d = new Date(inicio);
     let a = d.getFullYear(), m = d.getMonth();
-    while (true){
-      const desde = new Date(a, m, 1).getTime();
-      if (desde > fin) break;
-      lista.push({ desde: desde, hasta: Math.min(fin, new Date(a, m + 1, 1).getTime()) });
+    while (new Date(a, m, 1).getTime() <= fin){
+      lista.push({ desde: new Date(a, m, 1).getTime(), hasta: new Date(a, m + 1, 1).getTime() });
       m++; if (m > 11){ m = 0; a++; }
     }
   }
   lista.forEach(p => {
-    p.n = dias.filter(t => t > p.desde && t <= p.hasta).length;
-    p.total = todos.filter(t => t > p.desde && t <= p.hasta).length;
+    p.enCurso = p.hasta > fin;
+    p.n = dias.filter(t => t >= p.desde && t < p.hasta).length;
+    p.total = todos.filter(t => t >= p.desde && t < p.hasta).length;
     p.pct = p.total >= MINIMO ? p.n / p.total * 100 : null;
   });
   return lista;
@@ -268,6 +277,7 @@ function leyenda(o){
     '<span><i class="ley-linea"></i>% de los que opinaron cada ' + por + ' que se quejó de esto</span>' +
     '<span><i class="ley-tendencia"></i>Tendencia: las últimas ' + k + ' juntas</span>' +
     (o.periodos.some(p => p.pct === null) ? '<span><i class="ley-pocos"></i>Pocos datos (opinaron menos de ' + MINIMO + ')</span>' : '') +
+    '<span><i class="ley-curso"></i>' + (o.modo === "mes" ? "Mes" : "Semana") + ' en curso (puede cambiar)</span>' +
     (o.mejoras.length ? '<span><i class="ley-hito">#</i>Mejora completada</span>' : '') +
   '</div>';
 }
@@ -293,12 +303,16 @@ function grafica(o){
   const tope = Math.max(10, Math.ceil(Math.max(0, ...conDato) / 10) * 10);
   const x = i => izq + i * (w - izq - der) / Math.max(1, N - 1);
   const y = v => h - abj - v / tope * (h - arr - abj);
-  const t0 = P[0].hasta, t1 = P[N - 1].hasta;
-  const xFecha = t => izq + Math.max(0, (t - t0)) / (t1 - t0) * (w - izq - der);
-  const dentro = t => t >= P[0].desde && t <= t1;
+  /* Cada punto va en la mitad de su semana (o mes): una mejora se ubica
+     entre los puntos según su fecha */
+  const medio = p => (p.desde + p.hasta) / 2;
+  const t0 = medio(P[0]), t1 = medio(P[N - 1]);
+  const xFecha = t => izq + Math.min(1, Math.max(0, (t - t0) / (t1 - t0))) * (w - izq - der);
+  const dentro = t => t >= P[0].desde && t < P[N - 1].hasta;
+  const domingo = p => new Date(p.hasta - DIA);
   const etiqueta = p => o.modo === "mes"
     ? new Date(p.desde).toLocaleDateString("es-CO", { month:"short", year:"2-digit" })
-    : fechaCorta(new Date(p.hasta));
+    : fechaCorta(new Date(p.desde));
 
   const salto = Math.max(1, Math.ceil(N / 6));
   const ejes = [0, tope / 2, tope].map(v => '<line class="' + (v ? "guia" : "base") + '" x1="' + izq + '" x2="' + (w - der) +
@@ -336,7 +350,9 @@ function grafica(o){
   const trazos = tramos.map(t => '<path class="trazo" d="' + camino(t) + '"/>').join("");
 
   const ancho = Math.min(24, (w - izq - der) / Math.max(1, N - 1));
-  const quien = p => o.modo === "mes" ? "Mes de " + etiqueta(p) : "Semana al " + etiqueta(p);
+  const quien = p => (o.modo === "mes" ? "Mes de " + etiqueta(p)
+    : "Semana del " + fechaCorta(new Date(p.desde)) + " al " + fechaCorta(domingo(p))) +
+    (p.enCurso ? " (en curso: todavía faltan días)" : "");
   const puntos = P.map((p, i) =>
     '<g><rect x="' + (x(i) - ancho / 2) + '" y="' + arr + '" width="' + ancho + '" height="' + (h - arr - abj) + '" fill="transparent">' +
       '<title>' + quien(p) + ': ' + (p.pct === null
@@ -344,7 +360,8 @@ function grafica(o){
         : pct(p.pct) + ' · ' + p.n + ' de ' + p.total + ' que opinaron') + '</title></rect>' +
     (p.pct === null
       ? '<circle class="pocos" cx="' + x(i) + '" cy="' + y(0) + '" r="3" pointer-events="none"/>'
-      : '<circle class="punto" cx="' + x(i) + '" cy="' + y(p.pct) + '" r="' + (N > 30 ? 2.5 : 3.5) + '" pointer-events="none"/>') +
+      : '<circle class="punto' + (p.enCurso ? ' en-curso' : '') + '" cx="' + x(i) + '" cy="' + y(p.pct) + '" r="' +
+          (p.enCurso ? 4.5 : N > 30 ? 2.5 : 3.5) + '" pointer-events="none"/>') +
     '</g>').join("");
 
   /* Tendencia: críticas y opiniones de los últimos k periodos juntos */
