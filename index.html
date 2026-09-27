@@ -1759,6 +1759,29 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
      el mismo aire que el buscador de temas */
   #ranking-criticas{margin-top:18px}
 }
+/* Ventanas de acciones (crear, ver, vincular, desvincular, comentarios…):
+   medidas parejas, opción «compacta». Campos de 44 px (la caja de Detalle
+   conserva su alto), Cancelar y el botón principal de 48 px, y los
+   botones de las listas de 32 px con letra 13 semi-negrita. */
+#velo-forma .campo:not(textarea){height:44px;min-height:0;padding-top:0;padding-bottom:0;box-sizing:border-box}
+#velo-forma .ventana-botones .boton{height:48px;min-height:0;padding-top:0;padding-bottom:0;box-sizing:border-box;border:1px solid transparent}
+#velo-forma .ventana-botones .boton.secundario{border-color:var(--border2)}
+#velo-forma .forma .boton-chico{
+  height:32px;padding-top:0;padding-bottom:0;box-sizing:border-box;
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;line-height:1;
+}
+/* «¿Cómo funciona?» de las ventanas: arriba a la derecha del título; al
+   tocarlo se abre un recuadro con todas las explicaciones juntas. */
+.cabeza-ventana{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cabeza-ventana .enlace-ayuda{flex:none;margin-top:4px}
+.ayuda-ventana{margin:10px 0 14px;padding:12px 14px;border-radius:14px;background:var(--surface2)}
+.ayuda-ventana[hidden]{display:none}
+.ayuda-ventana p.mini{margin:0 0 6px}
+.ayuda-ventana p.mini:last-child{margin:0}
+@media (max-width:760px){
+  /* En celular Ver y Desvincular son solo icono (ojo y cadena rota) */
+  #velo-forma .forma .mejora-fila .boton-chico{font-size:0}
+}
 /* ============================================================
    Métricas en celular: ajustes finos de alineación
    ============================================================ */
@@ -1775,6 +1798,22 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   /* «Nueva etiqueta» de críticas quedaba pegado a la bandeja de tarjetas:
      la misma separación que en temas pedidos. */
   #ranking-criticas{margin-top:23px}
+  /* Ventana «Mejoras de …»: cabía más ancha que la pantalla. El título
+     largo se parte en líneas, y Ver y Desvincular pasan a botones
+     redondos con icono (ojo y cadena rota), del mismo tamaño que los
+     de los rankings (32 px, icono de 15 px); el texto sigue ahí para
+     lectores de pantalla. */
+  .mejora-fila{align-items:center}
+  .mejora-fila-txt b{white-space:normal;overflow:visible;text-overflow:clip}
+  .mejora-fila .boton-chico{
+    flex:none;position:relative;width:32px;height:32px;padding:0;border-radius:50%;font-size:0;
+  }
+  .mejora-fila .boton-chico::before{
+    content:"";position:absolute;inset:0;margin:auto;width:15px;height:15px;background:currentColor;
+    -webkit-mask:var(--icono) center/contain no-repeat;mask:var(--icono) center/contain no-repeat;
+  }
+  .mejora-fila .boton-chico[data-ver]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
+  .mejora-fila .boton-chico[data-desv]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
   /* Mejoras: Estado, Responsable y «Nueva mejora» del mismo alto (40 px) */
   .desplegables .desplegable-boton,
   #btn-nueva-mejora{height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}

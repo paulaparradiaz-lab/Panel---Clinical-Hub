@@ -87,7 +87,7 @@ export function ventanaClasificar(lista, alTerminar, opciones){
     '</div>' +
     '<span class="etiqueta">¿Qué es?</span>' +
     '<div class="subpestanas que-es" id="c-tipos" role="group" aria-label="Qué es"></div>' +
-    '<p class="mini" id="c-ayuda">Puedes marcar las dos si pide un tema y además comenta la plataforma.</p>' +
+    '<p class="mini explica" id="c-ayuda">Puedes marcar las dos si pide un tema y además comenta la plataforma.</p>' +
     '<div id="c-bloque-temas">' +
       '<span class="etiqueta">¿Qué tema pide?</span>' +
       '<input class="campo" id="c-busca-tema" placeholder="Buscar en los ' + catalogo.temas.length +
@@ -296,7 +296,7 @@ export function ventanaComentarios({ titulo, guia, intro, lista, vacio, alCambia
     titulo: titulo,
     guia: guia,
     cuerpo:
-      (intro ? '<p class="mini">' + intro + '</p>' : '') +
+      (intro ? '<p class="mini explica">' + intro + '</p>' : '') +
       '<div class="lista-chat" style="max-height:58vh;overflow:auto">' +
       (orden.length ? orden.map(tarjetaGrupo).join("") : '<p class="vacio">' + escapar(vacio || "No hay comentarios.") + '</p>') +
       '</div>',

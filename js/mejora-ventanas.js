@@ -30,7 +30,7 @@ export async function ventanaCrearMejora({ slug, tema = false, n, mejoras, alCam
     titulo: tema ? "Mejora del tema" : "Crear mejora",
     guia: sugerido + " · " + plural(n, "comentario", "comentarios"),
     cuerpo:
-      (tema ? '<p class="mini">La mejora queda enlazada a este tema completo: hoy lo piden ' +
+      (tema ? '<p class="mini explica">La mejora queda enlazada a este tema completo: hoy lo piden ' +
         plural(n, "comentario", "comentarios") + ', y los que lleguen después quedan cubiertos igual.</p>' : '') +
       campoIndicador("m-indicador", tema ? "cantidad_temas" : slug) +
       '<span class="etiqueta">A qué mejora pertenece</span>' +
@@ -39,7 +39,7 @@ export async function ventanaCrearMejora({ slug, tema = false, n, mejoras, alCam
       mejoras.map(m => '<option value="' + m.id + '">#' + m.id + ' · ' + escapar(m.titulo) +
         ' · ' + escapar(nombreEstado(m.estado)) + '</option>').join("") +
       '</select>' +
-      '<p class="mini">Si esto ya lo estás trabajando en otra mejora, elígela y queda enlazada a este indicador.</p>' +
+      '<p class="mini explica">Si esto ya lo estás trabajando en otra mejora, elígela y queda enlazada a este indicador.</p>' +
       '<div id="m-nueva">' +
       '<span class="etiqueta">Título</span>' +
       '<input class="campo" id="m-titulo" placeholder="Título de la mejora" value="' + escapar(sugerido) + '">' +
@@ -80,7 +80,7 @@ export async function ventanaCrearMejora({ slug, tema = false, n, mejoras, alCam
    el conjunto de las marcadas, que se va llenando al tocar. */
 const CAMPO_PERSONAS =
   '<span class="etiqueta">Quién la hace</span>' +
-  '<p class="mini">Marca una o varias personas. Puedes cambiarlas después en la pestaña Mejoras.</p>' +
+  '<p class="mini explica">Marca una o varias personas. Puedes cambiarlas después en la pestaña Mejoras.</p>' +
   '<div class="bandeja-opciones" id="m-personas" style="max-height:32vh"><p class="vacio">Cargando…</p></div>';
 
 function elegirPersonas(bandeja){
@@ -124,7 +124,7 @@ function campoCompletada(id, valor){
   return '<div id="' + id + '-caja" hidden>' +
     '<span class="etiqueta">Completada el</span>' +
     '<input class="campo" type="date" id="' + id + '" max="' + hoyTexto() + '" value="' + (valor || hoyTexto()) + '">' +
-    '<p class="mini">Si se hizo antes, por fuera del sistema, pon el día real: Impacto mide el antes y el ' +
+    '<p class="mini explica">Si se hizo antes, por fuera del sistema, pon el día real: Impacto mide el antes y el ' +
     'después desde esa fecha.</p></div>';
 }
 function mostrarCompletada(selEstado, id){
@@ -142,7 +142,7 @@ function campoIndicador(id, seleccionado){
       catalogo.mejoras.filter(c => c.slug !== RUIDO).map(c => '<option value="' + escapar(c.slug) + '"' +
         (c.slug === seleccionado ? " selected" : "") + '>' + escapar(c.nombre) + '</option>').join("") +
     '</select>' +
-    '<p class="mini">En Impacto se verá si bajaron las críticas de ese indicador. Por ejemplo, publicar una ' +
+    '<p class="mini explica">En Impacto se verá si bajaron las críticas de ese indicador. Por ejemplo, publicar una ' +
     'guía nueva impacta en «Cantidad de temas». Si no está, créalo con «Nueva etiqueta» en el ranking de ' +
     'mejoras globales.</p>';
 }
@@ -217,9 +217,9 @@ export function ventanaNuevaEtiqueta({ tipo, alCambiar }){
       '<input class="campo" id="e-nombre" placeholder="' + (esTema ? "Por ejemplo: Cetoacidosis diabética" : "Por ejemplo: Velocidad de carga") + '">' +
       '<span class="etiqueta">Otras formas de decirlo</span>' +
       '<input class="campo" id="e-sinonimos" placeholder="' + (esTema ? "CAD | cetoacidosis | crisis hiperglucémica" : "lento | se demora | tarda en cargar") + '">' +
-      '<p class="mini">Sepáralas con una barra |. Sirven para que la IA la reconozca aunque el médico lo diga ' +
+      '<p class="mini explica">Sepáralas con una barra |. Sirven para que la IA la reconozca aunque el médico lo diga ' +
       'de otra manera.</p>' +
-      '<p class="mini">La etiqueta aparece en el ranking cuando tenga su primer comentario. Ya puedes usarla ' +
+      '<p class="mini explica">La etiqueta aparece en el ranking cuando tenga su primer comentario. Ya puedes usarla ' +
       'al clasificar en el Inbox y para enlazar mejoras.</p>',
     aceptar: "Crear etiqueta",
     alAceptar: async () => {
@@ -253,7 +253,7 @@ export function ventanaVerMejora({ mejora: m, slug, alCambiar }){
         '<option value="' + e[0] + '"' + (e[0] === m.estado ? " selected" : "") + '>' + e[1] + '</option>').join("") +
       '</select>' +
       campoCompletada("v-fecha", fechaTexto(m.completada_en)) +
-      '<p class="mini">Una mejora no se borra: si ya no va, ponla en Descartada y la historia se conserva.</p>',
+      '<p class="mini explica">Una mejora no se borra: si ya no va, ponla en Descartada y la historia se conserva.</p>',
     aceptar: "Guardar cambios",
     ancha: true,
     alAceptar: async () => {
@@ -284,7 +284,7 @@ export function ventanaMejorasDe({ slug, lista, datos, que = "tema", alCambiar }
     titulo: "Mejoras de " + nombreDe(slug),
     guia: plural(lista.length, "mejora enlazada", "mejoras enlazadas"),
     cuerpo:
-      '<p class="mini">' + (que === "tema"
+      '<p class="mini explica">' + (que === "tema"
         ? 'Las mejoras que atienden este tema. Desvincular le quita el tema a esa mejora, sin borrarla.'
         : 'Las mejoras que impactan en este indicador. Desvincular le quita el indicador a esa mejora, sin borrarla.') +
       '</p><div class="lista-mejoras-fila">' + lista.map(m =>
@@ -318,7 +318,7 @@ export function ventanaDesvincular({ mejora: m, slug, que = "tema", datos, alCam
       titulo: "No se puede desvincular",
       guia: "#" + m.id + " · " + m.titulo,
       cuerpo: '<p>«' + escapar(nombreDe(slug)) + '» es el único indicador de esta mejora.</p>' +
-        '<p class="mini">Si se lo quitas, la mejora quedaría sin nada que medir en Impacto. Para cambiarle el ' +
+        '<p class="mini explica">Si se lo quitas, la mejora quedaría sin nada que medir en Impacto. Para cambiarle el ' +
         'indicador, ve a la pestaña Mejoras y toca «Impacta en» en su tarjeta.</p>',
       aceptar: "Entendido",
       alAceptar: async () => {}
@@ -332,7 +332,7 @@ export function ventanaDesvincular({ mejora: m, slug, que = "tema", datos, alCam
     guia: nombreDe(slug),
     cuerpo:
       '<p>¿Quitarle la mejora “' + escapar(m.titulo) + '” a “' + escapar(nombreDe(slug)) + '”?</p>' +
-      '<p class="mini">La mejora no se borra y sigue enlazada a lo demás que tenga.</p>',
+      '<p class="mini explica">La mejora no se borra y sigue enlazada a lo demás que tenga.</p>',
     aceptar: "Desvincular",
     alAceptar: async () => {
       await desvincularMejora(m.id, slug);

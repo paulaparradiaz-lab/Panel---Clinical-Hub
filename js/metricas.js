@@ -557,7 +557,7 @@ function ventanaRenombrarTipo(m, alCambiar){
     guia: actual,
     cuerpo:
       '<input class="campo" id="r-nombre" value="' + escapar(actual) + '">' +
-      '<p class="mini">Cambia solo el nombre que ves en el panel. La IA sigue clasificando con el mismo ' +
+      '<p class="mini explica">Cambia solo el nombre que ves en el panel. La IA sigue clasificando con el mismo ' +
       'código (' + escapar(m.slug) + '), así que lo que ya llegó y lo que llegue después se queda junto aquí. ' +
       'El nombre viejo se guarda como sinónimo para que la IA lo siga reconociendo.</p>',
     aceptar: "Guardar nombre",
@@ -581,11 +581,11 @@ function ventanaQuitarTipo(m, lista, alCambiar){
     guia: nombreDe(m.slug) + " · " + plural(lista.length, "comentario", "comentarios"),
     cuerpo:
       '<p>¿Quitar “' + escapar(nombreDe(m.slug)) + '” de sus ' + plural(lista.length, "comentario", "comentarios") + '?</p>' +
-      '<p class="mini">No se borra ningún comentario ni el tipo del catálogo: la IA lo puede seguir usando. ' +
+      '<p class="mini explica">No se borra ningún comentario ni el tipo del catálogo: la IA lo puede seguir usando. ' +
       'Los que tenían otras clasificaciones las conservan.' +
-      (vuelven ? ' <b>' + plural(vuelven, "comentario se queda", "comentarios se quedan") +
-        ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.' : '') +
-      '</p>',
+      '</p>' +
+      (vuelven ? '<p class="mini"><b>' + plural(vuelven, "comentario se queda", "comentarios se quedan") +
+        ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.</p>' : ''),
     aceptar: "Quitar",
     alAceptar: async () => {
       await quitarMejoraTecnica(lista, m.slug);

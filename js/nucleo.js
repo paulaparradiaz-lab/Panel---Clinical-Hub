@@ -102,6 +102,7 @@ export function abrirVentana({ titulo, guia = "", cuerpo = "", aceptar = "Guarda
       '</div>' +
       '<p class="aviso" id="aviso-forma" role="status"></p>' +
     '</div>';
+  armarAyudaVentana(v.querySelector(".ventana"));
   v.hidden = false;
   v.querySelector("[data-cerrar]").onclick = cerrarVentana;
   v.onclick = e => { if (e.target === v) cerrarVentana(); };
@@ -115,6 +116,34 @@ export function abrirVentana({ titulo, guia = "", cuerpo = "", aceptar = "Guarda
   });
   const primero = v.querySelector("input, textarea, select");
   if (primero) setTimeout(() => primero.focus(), 60);
+}
+
+/* Los textos que explican (.explica) no se ven de entrada: se juntan en
+   un «¿Cómo funciona?» arriba a la derecha del título, como en las
+   secciones del panel. Lo demás (datos, avisos) sigue a la vista. */
+function armarAyudaVentana(ventana){
+  const textos = ventana.querySelectorAll(".forma .explica");
+  if (!textos.length) return;
+  const mast = ventana.querySelector(".mast");
+  const cabeza = document.createElement("div");
+  cabeza.className = "cabeza-ventana";
+  mast.before(cabeza);
+  cabeza.appendChild(mast);
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "enlace-ayuda";
+  boton.setAttribute("aria-expanded", "false");
+  boton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>¿Cómo funciona?';
+  cabeza.appendChild(boton);
+  const caja = document.createElement("div");
+  caja.className = "ayuda-ventana";
+  caja.hidden = true;
+  textos.forEach(t => caja.appendChild(t));
+  (ventana.querySelector("p.guia") || cabeza).after(caja);
+  boton.onclick = () => {
+    caja.hidden = !caja.hidden;
+    boton.setAttribute("aria-expanded", String(!caja.hidden));
+  };
 }
 
 /* Lee un campo del formulario abierto; devuelve null si está vacío */

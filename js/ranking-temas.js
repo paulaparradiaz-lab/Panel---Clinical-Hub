@@ -287,7 +287,7 @@ function ventanaRenombrar(slug){
     guia: actual,
     cuerpo:
       '<input class="campo" id="r-nombre" value="' + escapar(actual) + '">' +
-      '<p class="mini">Cambia solo el nombre que ves en el panel. La IA sigue clasificando con el mismo ' +
+      '<p class="mini explica">Cambia solo el nombre que ves en el panel. La IA sigue clasificando con el mismo ' +
       'código del tema (' + escapar(slug) + '), así que lo que ya llegó y lo que llegue después se queda ' +
       'junto aquí. El nombre viejo se guarda como sinónimo para que la IA lo siga reconociendo.</p>',
     aceptar: "Guardar nombre",
@@ -312,11 +312,11 @@ function ventanaDesetiquetar(slug){
     guia: nombreDe(slug) + " · " + plural(lista.length, "comentario", "comentarios"),
     cuerpo:
       '<p>¿Quitar “' + escapar(nombreDe(slug)) + '” de sus ' + plural(lista.length, "comentario", "comentarios") + '?</p>' +
-      '<p class="mini">No se borra ningún comentario ni el tema del catálogo: la IA lo puede seguir usando. ' +
+      '<p class="mini explica">No se borra ningún comentario ni el tema del catálogo: la IA lo puede seguir usando. ' +
       'Los que tenían otros temas los conservan.' +
-      (vuelven ? ' <b>' + plural(vuelven, "comentario se queda", "comentarios se quedan") +
-        ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.' : '') +
-      '</p>',
+      '</p>' +
+      (vuelven ? '<p class="mini"><b>' + plural(vuelven, "comentario se queda", "comentarios se quedan") +
+        ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.</p>' : ''),
     aceptar: "Quitar tema",
     alAceptar: async () => {
       await quitarTema(lista, slug);
@@ -345,7 +345,7 @@ function ventanaVerTema(slug){
     titulo: nombreDe(slug),
     guia: plural(lista.length, "comentario", "comentarios") + " · " + plural(formas, "forma de decirlo", "formas de decirlo"),
     cuerpo:
-      '<p class="mini">Lo que escribió cada médico, tal cual llegó. Puedes mandar cualquiera a otros ' +
+      '<p class="mini explica">Lo que escribió cada médico, tal cual llegó. Puedes mandar cualquiera a otros ' +
       'temas o sacarlo de este.</p>' +
       /* .lista-chat: la misma lista en estilo chat del Inbox */
       '<div class="lista-chat" style="max-height:58vh;overflow:auto">' +

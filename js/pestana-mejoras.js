@@ -388,7 +388,7 @@ function ventanaAsignar(m){
     titulo: "Personas de la mejora",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
-      '<p class="mini">Marca una o varias. La lista son los usuarios del panel: cada usuario nuevo aparece aquí solo.</p>' +
+      '<p class="mini explica">Marca una o varias. La lista son los usuarios del panel: cada usuario nuevo aparece aquí solo.</p>' +
       '<div class="bandeja-opciones" id="a-usuarios" style="max-height:50vh">' +
       (usuarios.length ? usuarios.map(u =>
         '<button type="button" class="fila-opcion" data-usuario="' + escapar(u.id) + '" aria-pressed="' + elegidas.has(u.id) + '">' +
@@ -429,7 +429,7 @@ function ventanaIndicador(m){
     titulo: "Indicador de la mejora",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
-      '<p class="mini">¿En qué mejora global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
+      '<p class="mini explica">¿En qué mejora global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
       'de ese indicador después de completarla. Puedes marcar más de uno.</p>' +
       '<div class="bandeja-opciones" id="i-globales" style="max-height:50vh">' +
       globales.map(c =>
@@ -438,7 +438,7 @@ function ventanaIndicador(m){
         '<span><b>' + escapar(c.nombre) + '</b><span class="mini">' + plural(cuenta.get(c.slug) || 0, "comentario", "comentarios") +
         '</span></span></span><span class="marca-opcion" aria-hidden="true"></span></button>').join("") +
       '</div>' +
-      '<p class="mini">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de mejoras globales.</p>',
+      '<p class="mini explica">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de mejoras globales.</p>',
     aceptar: "Guardar",
     alAceptar: async () => {
       if (!elegidos.size){ avisar("Elige al menos un indicador.", "mal", "#aviso-forma"); return false; }
