@@ -89,6 +89,9 @@ export async function render(){
     indicador disminuyeron. <b>Debajo</b> está la lista de esas mejoras, para saber qué es cada número. La fecha
     es la de «Completada el», que puedes escribir a mano si se hizo antes, por fuera del sistema.</p>
     <p class="mini"><b>«Ver comentarios»</b> abre lo que escribieron los médicos sobre ese indicador.</p>
+    <p class="mini"><b>Fechas:</b> el número de críticas de cada indicador y «Ver comentarios» incluyen <b>todo el
+    historial</b>; la gráfica muestra <b>desde el 15 de agosto</b>. Por eso los números no siempre cuadran exactamente
+    con lo que se ve en la línea.</p>
   </div>
   <div id="impacto-indicadores" class="impacto-indicadores"><p class="vacio">Cargando…</p></div>
 </section>`;
