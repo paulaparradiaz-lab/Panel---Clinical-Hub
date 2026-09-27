@@ -119,8 +119,9 @@ function armazon(){
   </div>
   <div class="ayuda-plegable" id="ayuda-mejoras" hidden>
     <p class="mini">Cada fila es una <b>crítica</b>: un tipo de lo que los médicos dicen de la plataforma (no de un
-    tema clínico), ya clasificado por la IA o por ti. Es la misma tabla del ranking de temas: <b>Veces</b> es cuántos
-    comentarios cayeron ahí, <b>Países</b> desde cuántos países, y <b>Estrellas</b> el promedio que pusieron esos
+    tema clínico), ya clasificado por la IA o por ti. Es la misma tabla del ranking de temas: <b>el texto subrayado</b>
+    dice cuántas formas distintas hay de decirlo (o cuántos comentarios, si todos dicen lo mismo), <b>Países</b> desde
+    cuántos países, y <b>Estrellas</b> el promedio que pusieron esos
     médicos al comentar (solo cuentan los que calificaron). El color de las estrellas usa la misma escala de la
     gráfica de estrellas:</p>
     <ul class="lista-niveles">
