@@ -1752,6 +1752,13 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #panel-ranking .buscador-lupa,
   :is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
   #f-foco-mejoras .chip{display:flex;align-items:center}
+  /* Mejoras: Estado, Responsable y «Nueva mejora» del mismo alto (40 px) */
+  .desplegables .desplegable-boton,
+  #btn-nueva-mejora{height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+  /* Estado y Responsable se estiran hasta el borde derecho, alineados
+     con «Nueva mejora» y las tarjetas */
+  .desplegables .desplegable{flex:1 1 auto}
+  .desplegables .desplegable-boton{width:100%;justify-content:center}
   /* Botón redondo (ojo o bombillo): el icono en el centro exacto del
      círculo, y el círculo centrado bajo la caneca. */
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{position:relative;margin-right:-2px}
