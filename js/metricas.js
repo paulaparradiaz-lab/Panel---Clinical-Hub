@@ -5,12 +5,12 @@
    ESTRELLAS   Promedio de estrellas por mes, en chupetes con la nota,
                la ★ y cuántas reseñas, sobre un área sombreada del
                color de cada nivel.
-   TEMAS       El ranking de temas pedidos de la Temas vieja, con sus
-               mejoras y acciones (vive en ranking-temas.js).
-   MEJORAS     Los tipos de mejora global, con su promedio de estrellas,
-               la escala de 4 colores y un globito con el detalle. Como
-               en temas, cada tipo puede tener su mejora: crear, ver y
+   CRÍTICAS    Ranking de críticas: los tipos de mejora global en la
+               misma tabla que temas (veces, países, estrellas con su
+               color y globito), cada uno con sus mejoras: crear, ver y
                desvincular, con el filtro con / sin mejora.
+   TEMAS       El ranking de temas pedidos, al final, con sus mejoras y
+               acciones (vive en ranking-temas.js).
 
    Los rankings cuentan solo lo ya clasificado (auto o revisado): lo
    que la IA dejó por revisar vive en el Inbox y suma aquí en cuanto
@@ -109,7 +109,6 @@ function armazon(){
   <div id="tendencia"><p class="vacio">Cargando…</p></div>
 </section>
 
-${rankingTemas.armazon()}
 
 <section class="caja" style="margin-top:16px">
   <div class="fila-entre cabeza-seccion">
@@ -155,6 +154,8 @@ ${rankingTemas.armazon()}
   </div>
   <div id="ranking-criticas"><p class="vacio">Cargando…</p></div>
 </section>
+
+${rankingTemas.armazon()}
 `;
 }
 
