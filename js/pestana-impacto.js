@@ -159,7 +159,8 @@ async function cargar(){
      Inbox (son médicos que escribieron). De ahí salen el total y las
      críticas, para que el porcentaje nunca pase de 100. */
   const opinaron = (fb.data || []).filter(x => CANALES_OPINION.indexOf(x.origen) > -1);
-  const todos = opinaron.map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
+  /* Sin fecha (la base no la entendió): no se puede ubicar en una semana */
+  const todos = opinaron.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
   const clasificadas = opinaron.filter(x => x.estado !== "por_revisar");
 
   /* Fechas de cada mejora: la última vez que entró a cada estado. La
@@ -187,7 +188,7 @@ async function cargar(){
     " · % de los médicos que opinaron (encuesta y WhatsApp)";
   indicadores = catalogo.mejoras.filter(c => c.slug !== RUIDO).map(c => {
     const lista = clasificadas.filter(x => (x.mejoras || []).indexOf(c.slug) > -1);
-    const dias = lista.map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
+    const dias = lista.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
     const ids = new Set(datos.enlaces.filter(e => e.tema_slug === c.slug).map(e => e.mejora_id));
     /* Solo las completadas, de la más antigua a la más reciente */
     const mejoras = datos.mejoras

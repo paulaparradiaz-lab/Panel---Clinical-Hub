@@ -28,7 +28,8 @@ export function escapar(t){
 }
 
 export function fecha(iso){
-  if (!iso) return "";
+  /* Un feedback con fecha que la base no entendió llega sin fecha */
+  if (!iso) return "sin fecha";
   return new Date(iso).toLocaleDateString("es-CO",
     { timeZone:"America/Bogota", day:"numeric", month:"short", year:"numeric" });
 }
