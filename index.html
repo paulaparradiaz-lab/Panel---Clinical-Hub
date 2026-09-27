@@ -1744,6 +1744,14 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   /* Filtro de mejora de críticas: las tres opciones llenan el ancho */
   #f-foco-mejoras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
   #f-foco-mejoras .chip{justify-content:center;white-space:nowrap;padding-left:6px;padding-right:6px}
+  /* «Nueva etiqueta» de críticas quedaba pegado a la bandeja de tarjetas:
+     la misma separación que en temas pedidos. */
+  #ranking-criticas{margin-top:23px}
+  /* Filtros, «Nueva etiqueta» y buscador de temas: todos de 40 px de alto */
+  #f-foco-mejoras .chip,
+  #panel-ranking .buscador-lupa,
+  :is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+  #f-foco-mejoras .chip{display:flex;align-items:center}
   /* Botón redondo (ojo o bombillo): el icono en el centro exacto del
      círculo, y el círculo centrado bajo la caneca. */
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{position:relative;margin-right:-2px}
