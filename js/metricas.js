@@ -47,6 +47,24 @@ export async function render(caja){
   pintarChipsMejoras();
   $("#btn-nueva-global").addEventListener("click", () => ventanaNuevaEtiqueta({ tipo: "mejora",
     alCambiar: async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); } }));
+  $("#ranking-criticas").addEventListener("click", e => {
+    const ver = e.target.closest("[data-ver-critica]");
+    if (ver){ ocultarGloboCritica(); abrirCritica(ordenCriticas[Number(ver.dataset.verCritica)]); return; }
+    const nota = e.target.closest("[data-globo-critica]");
+    if (nota){ mostrarGloboCritica(nota); return; }
+    const bt = e.target.closest("button[data-tema-accion]");
+    const tr = bt && bt.closest("tr");
+    if (!bt || !tr) return;
+    const i = Array.from(tr.parentNode.children).indexOf(tr);
+    accionMejora(bt.dataset.temaAccion, ordenCriticas[i], clasificadasCriticas);
+  });
+  $("#ranking-criticas").addEventListener("mouseover", e => {
+    const nota = e.target.closest("[data-globo-critica]");
+    if (nota) mostrarGloboCritica(nota);
+  });
+  $("#ranking-criticas").addEventListener("mouseout", e => {
+    if (e.target.closest("[data-globo-critica]")) ocultarGloboCritica();
+  });
   $("#f-foco-mejoras").addEventListener("click", e => {
     const b = e.target.closest("button[data-v]");
     if (!b) return;
@@ -95,42 +113,39 @@ ${rankingTemas.armazon()}
 
 <section class="caja" style="margin-top:16px">
   <div class="fila-entre cabeza-seccion">
-    <div><h2 class="titulo-seccion">Ranking de mejoras globales</h2><p class="subtitulo-seccion">Lo que dicen de la plataforma</p></div>
+    <div><h2 class="titulo-seccion">Ranking de críticas</h2><p class="subtitulo-seccion">Lo que dicen de la plataforma</p></div>
     <button class="enlace-ayuda" id="btn-ayuda-mejoras" aria-expanded="false" aria-controls="ayuda-mejoras">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
       ¿Cómo funciona?</button>
   </div>
   <div class="ayuda-plegable" id="ayuda-mejoras" hidden>
-    <p class="mini">Cada fila es un <b>tipo de mejora global</b>: lo que los médicos dicen de la plataforma
-    (no de un tema clínico), ya clasificado por la IA o por ti.</p>
-    <p class="mini"><b>El primer número</b> es cuántos comentarios cayeron en ese tipo, y <b>el largo de la
-    barra</b> es ese mismo número dibujado. <b>La estrella</b> es el promedio de estrellas que pusieron esos
-    médicos al comentar (solo cuentan los que calificaron).</p>
-    <p class="mini"><b>El color</b> indica qué tan contentos están quienes señalan esa mejora, con la misma
-    escala de la gráfica de estrellas:</p>
+    <p class="mini">Cada fila es una <b>crítica</b>: un tipo de lo que los médicos dicen de la plataforma (no de un
+    tema clínico), ya clasificado por la IA o por ti. Es la misma tabla del ranking de temas: <b>Veces</b> es cuántos
+    comentarios cayeron ahí, <b>Países</b> desde cuántos países, y <b>Estrellas</b> el promedio que pusieron esos
+    médicos al comentar (solo cuentan los que calificaron). El color de las estrellas usa la misma escala de la
+    gráfica de estrellas:</p>
     <ul class="lista-niveles">
       <li><i style="background:#1fa15a"></i><b>Excelente:</b> de 4,5 a 5 estrellas</li>
       <li><i style="background:#2f6fed"></i><b>Muy bien:</b> de 4 a 4,5</li>
       <li><i style="background:#e5a117"></i><b>Regular:</b> de 3,5 a 4</li>
       <li><i style="background:#dc4a3d"></i><b>Malo:</b> menos de 3,5</li>
     </ul>
-    <p class="mini">Una barra roja quiere decir que quienes piden eso están insatisfechos.</p>
-    <p class="mini"><b>Ruido</b> va al final, en gris: se cuenta, pero no es una mejora por hacer. Solo cuenta lo que
-    trae texto: lo que llega solo con estrellas es una calificación, no ruido.</p>
-    <p class="mini"><b>Pasa el mouse</b> por una fila para ver cuántas notas hubo de cada estrella. Con
-    pocas notas el promedio puede engañar: fíjate en cuántas lo forman.</p>
-    <p class="mini"><b>Toca una fila</b> para ver los comentarios de ese tipo: desde ahí puedes reclasificar
-    cualquiera o devolverlo al Inbox, igual que en el ranking de temas.</p>
-    <p class="mini"><b>La mejora</b> se enlaza al tipo completo, igual que en temas: <b>Crear mejora</b> hace
-    una nueva (con este tipo ya marcado como su indicador, su estado y, si ya se hizo, la fecha en que se
-    completó) o la enlaza a una que ya existe; <b>Ver mejora</b> la edita y <b>Desvincular</b> se la quita
-    sin borrarla. Si un tipo tiene varias mejoras (por ejemplo, «Cantidad de temas», donde cada guía publicada es
-    una), dice cuántas y <b>Ver mejoras</b> abre la lista para elegir cuál ver o desvincular. No se puede
-    desvincular el único indicador de una mejora: quedaría sin nada que medir en Impacto; se cambia en la
-    pestaña Mejoras. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
+    <p class="mini"><b>Pasa el mouse</b> (o toca) las estrellas para ver cuántas notas hubo de cada una: con pocas
+    notas el promedio puede engañar. <b>El texto subrayado</b> abre los comentarios reales; desde ahí puedes
+    reclasificar cualquiera o devolverlo al Inbox.</p>
+    <p class="mini"><b>La mejora</b> se enlaza a la crítica completa, que es su indicador en Impacto: <b>Crear
+    mejora</b> hace una nueva (con esta crítica ya marcada como su indicador, su estado y, si ya se hizo, la fecha
+    en que se completó) o la enlaza a una que ya existe; <b>el ojo</b> la ve y edita y <b>la cadena rota</b> se la
+    quita sin borrarla. Si una crítica tiene varias mejoras (por ejemplo, «Cantidad de temas», donde cada guía
+    publicada es una), dice cuántas y el ojo abre la lista para elegir cuál ver o desvincular. No se puede
+    desvincular el único indicador de una mejora: quedaría sin nada que medir en Impacto; se cambia en la pestaña
+    Mejoras. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
     <p class="mini"><b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
-    ese tipo a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox. <b>Nueva
-    etiqueta</b> crea un tipo nuevo: aparece aquí cuando tenga su primer comentario.</p>
+    esa crítica a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox. <b>Nueva
+    etiqueta</b> crea una crítica nueva: aparece aquí cuando tenga su primer comentario.</p>
+    <p class="mini"><b>Ruido</b> es la última fila, en gris: lo que se descartó porque no decía nada aprovechable. Solo
+    cuenta lo que trae texto: lo que llega solo con estrellas es una calificación, no ruido. Tócala para revisarlo;
+    solo sale con el filtro Todos.</p>
   </div>
   <div class="filtros-fila">
     <span class="rotulo">Mejora</span>
@@ -138,7 +153,7 @@ ${rankingTemas.armazon()}
     <button class="boton-chico boton-nueva" id="btn-nueva-global">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva etiqueta</button>
   </div>
-  <div id="mejoras-top"><p class="vacio">Cargando…</p></div>
+  <div id="ranking-criticas"><p class="vacio">Cargando…</p></div>
 </section>
 `;
 }
@@ -160,7 +175,7 @@ async function cargar(){
   } catch (err){
     if (!$("#tendencia")) return;
     const aviso = '<p class="vacio">No se pudieron leer las métricas. ' + escapar(traducirError(err && err.message)) + '</p>';
-    ["#tendencia", "#ranking", "#mejoras-top"].forEach(s => { $(s).innerHTML = aviso; });
+    ["#tendencia", "#ranking", "#ranking-criticas"].forEach(s => { $(s).innerHTML = aviso; });
     return;
   }
   /* Si mientras cargaba te fuiste al Inbox, no hay dónde pintar */
@@ -331,6 +346,9 @@ function conectarGlobo(puntos){
    ============================================================ */
 let focoMejoras = "todas";
 let mejorasIA = [];              // mejoras_ia
+let ordenCriticas = [];         // filas pintadas del ranking de críticas
+let clasificadasCriticas = [];   // comentarios que cuenta (para abrir cada crítica)
+let notasCriticas = new Map();   // crítica -> notas por estrella (globito)
 let mejorasDe = new Map();       // indicador -> todas sus mejoras (sin descartadas)
 let datosMej = null;             // mejoras y enlaces, para no dejar una mejora sin indicador
 let ultimo = null;               // lo último pintado, para volver a filtrar
@@ -351,137 +369,136 @@ function pintarMejoras(todasVista, filas){
     veces: ruidoTexto.length, con_estrellas: conNota.length,
     promedio_estrellas: conNota.length ? conNota.reduce((a, x) => a + x.estrellas, 0) / conNota.length : null
   })).filter(m => m.slug !== RUIDO || m.veces > 0);
-  /* El filtro deja fuera Ruido: no es una mejora por hacer */
-  const lista = focoMejoras === "todas" ? todas : todas.filter(m => m.slug !== RUIDO &&
-    (focoMejoras === "con_accion") === mejorasDe.has(m.slug));
   if (!todas.length){
-    $("#mejoras-top").innerHTML = '<p class="vacio">Todavía no hay mejoras clasificadas.</p>';
+    $("#ranking-criticas").innerHTML = '<p class="vacio">Todavía no hay críticas clasificadas.</p>';
     return;
   }
-  /* Cuántas notas de cada estrella tiene cada tipo (para el globito).
-     Mismas filas que cuenta la vista: todo menos lo que sigue por revisar. */
-  const notasDe = new Map();
-  const clasificadas = filas.filter(x => x.estado !== "por_revisar" &&
+  /* Las mismas filas que cuenta la vista (todo menos lo que sigue por
+     revisar), sin lo que llega solo con estrellas marcado como ruido */
+  clasificadasCriticas = filas.filter(x => x.estado !== "por_revisar" &&
     (tieneTexto(x) || (x.mejoras || []).indexOf(RUIDO) === -1));
-  /* Y cuántas formas distintas de decirlo tiene cada tipo, como en temas */
-  const formasDe = new Map();
-  clasificadas.forEach(x => (x.mejoras || []).forEach(m => {
-    const o = notasDe.get(m) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
+  /* De cada crítica: notas por estrella (para el globito), formas de
+     decirlo y países, como en el ranking de temas */
+  notasCriticas = new Map();
+  const formasDe = new Map(), paisesDe = new Map();
+  clasificadasCriticas.forEach(x => (x.mejoras || []).forEach(m => {
+    const o = notasCriticas.get(m) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
     if (x.estrellas != null) o[x.estrellas]++;
-    notasDe.set(m, o);
+    notasCriticas.set(m, o);
     const texto = String(x.mejora_texto || x.tema_puntual || "").trim().toLowerCase();
-    const formas = formasDe.get(m) || new Set();
-    if (texto) formas.add(texto);
-    formasDe.set(m, formas);
+    if (!formasDe.has(m)) formasDe.set(m, new Set());
+    if (texto) formasDe.get(m).add(texto);
+    if (!paisesDe.has(m)) paisesDe.set(m, new Set());
+    if (x.pais) paisesDe.get(m).add(x.pais);
   }));
-  const orden = lista.filter(m => m.slug !== RUIDO).concat(lista.filter(m => m.slug === RUIDO));
-  const tope = Math.max(1, ...todas.map(m => m.veces));
-  if (!orden.length){
-    $("#mejoras-top").innerHTML = '<p class="vacio">Ningún tipo cumple ese filtro. Prueba con Todos.</p>';
+
+  /* El filtro deja fuera Ruido: no es una mejora por hacer */
+  const criticas = todas.filter(m => m.slug !== RUIDO && (focoMejoras === "todas" ||
+    (focoMejoras === "con_accion") === mejorasDe.has(m.slug)));
+  const ruido = focoMejoras === "todas" ? todas.find(m => m.slug === RUIDO) : null;
+  ordenCriticas = criticas.concat(ruido ? [ruido] : []);
+  if (!ordenCriticas.length){
+    $("#ranking-criticas").innerHTML = '<p class="vacio">Ninguna crítica cumple ese filtro. Prueba con Todos.</p>';
     return;
   }
-  $("#mejoras-top").innerHTML = orden.map((m, i) => {
+
+  const estrellas = (m, i) => {
     const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas) : null;
-    const color = m.slug === RUIDO ? "var(--border2)" : (prom != null ? colorNota(prom) : "var(--brand)");
+    return prom == null ? '<span class="mini">—</span>'
+      : '<button type="button" class="nota-critica" data-globo-critica="' + i + '" style="--n:' +
+          (m.slug === RUIDO ? "var(--border2)" : colorNota(prom)) + '">' + prom.toFixed(1).replace(".", ",") + ' ★</button>';
+  };
+  const cuerpo = ordenCriticas.map((m, i) => {
     const formas = (formasDe.get(m.slug) || new Set()).size;
-    const enlace = formas > 1 ? formas + " formas de decirlo" : (m.veces === 1 ? "1 comentario" : m.veces + " comentarios");
-    return '<div class="fila pinchable" data-i="' + i + '" tabindex="0" role="button" title="Ver sus comentarios">' +
-      '<span class="fila-etq"><span class="fila-nombre-linea"><span class="fila-nombre">' + escapar(m.nombre) +
-        '</span>' + (m.slug === RUIDO ? '' : ICONOS) + '</span>' +
-        '<span class="enlace-formas">' + enlace + '</span></span>' +
-      '<span class="barra"><span style="width:' + (m.veces / tope * 100) + '%;background:' + color + '"></span></span>' +
-      '<span class="fila-num tabular"><b>' + num(m.veces) + '</b> · ' +
-        (prom != null ? prom.toFixed(1).replace(".", ",") + "★" : "—") + '</span>' +
-      accionesMejora(m) +
-    '</div>';
-  }).join("") +
-  '<div class="globo-mes" id="globo-mejora" role="tooltip" hidden></div>' +
-  '<div class="leyenda-notas">' + NIVELES.map(n =>
-    '<span><i style="background:' + colorNota(n[2]) + '"></i>' + n[0] + ' <b>' + n[1] + '</b></span>').join("") +
-    '<span><i style="background:var(--border2)"></i>Ruido</span></div>';
+    const texto = formas > 1 ? formas + " formas de decirlo" : (m.veces === 1 ? "1 comentario" : m.veces + " comentarios");
+    const enlace = '<button class="enlace-formas" data-ver-critica="' + i + '" title="Ver los comentarios reales">' + texto + '</button>';
+    const paises = (paisesDe.get(m.slug) || new Set()).size;
+    if (m.slug === RUIDO) return '<tr class="fila-ruido">' +
+      '<td><span class="tema-nombre">Ruido</span><br>' + enlace + '</td>' +
+      '<td class="tabular"><b>' + num(m.veces) + '</b></td>' +
+      '<td class="tabular">' + paises + '</td>' +
+      '<td><span class="mini">Descartados: no decían nada aprovechable</span></td>' +
+      '<td><span class="etq">descartado</span></td>' +
+      '<td><button class="boton-chico" data-ver-critica="' + i + '">Revisar</button></td></tr>';
+    const n = (mejorasDe.get(m.slug) || []).length;
+    return '<tr>' +
+      '<td><span class="tema-nombre">' + escapar(m.nombre) + ICONOS + '</span><br>' + enlace + '</td>' +
+      '<td class="tabular"><b>' + num(m.veces) + '</b></td>' +
+      '<td class="tabular">' + paises + '</td>' +
+      '<td>' + estrellas(m, i) + '</td>' +
+      '<td>' + (n > 1 ? '<span class="etq lima">' + n + ' mejoras</span>'
+        : n ? '<span class="etq lima">con mejora</span>' : '<span class="etq alerta">sin mejora</span>') + '</td>' +
+      '<td>' + accionesMejora(m, i) + '</td></tr>';
+  }).join("");
 
-  /* Globito: al pasar el mouse (o tocar) una fila, el detalle de ese tipo */
-  const caja = $("#mejoras-top");
+  $("#ranking-criticas").innerHTML =
+    '<table class="tabla"><thead><tr><th>Crítica</th><th>Veces</th><th>Países</th><th>Estrellas</th>' +
+    '<th>Mejora</th><th>Acciones</th></tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    '<div class="globo-mes" id="globo-mejora" role="tooltip" hidden></div>';
+}
+
+/* Globito de las estrellas: cuántas notas hubo de cada una */
+function mostrarGloboCritica(bt){
+  const m = ordenCriticas[Number(bt.dataset.globoCritica)];
+  const globo = $("#globo-mejora"), caja = $("#ranking-criticas");
+  if (!m || !globo) return;
+  const notas = notasCriticas.get(m.slug) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
+  const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas) : null;
+  const topeN = Math.max(1, ...[1, 2, 3, 4, 5].map(n => notas[n]));
+  globo.innerHTML =
+    '<div class="globo-mes-cab"><b>' + escapar(m.nombre) + '</b>' +
+      (prom != null ? '<span style="color:' + (m.slug === RUIDO ? "var(--muted)" : colorNota(prom)) + '">' +
+        prom.toFixed(1).replace(".", ",") + ' ★</span>' : '') + '</div>' +
+    [5, 4, 3, 2, 1].map(n =>
+      '<div class="globo-mes-fila"><span>' + n + ' ★</span>' +
+      '<span class="globo-mes-barra"><i style="width:' + (notas[n] / topeN * 100) + '%;background:' + COLORES[n] + '"></i></span>' +
+      '<b>' + num(notas[n]) + '</b><small>' + pct(notas[n], m.con_estrellas) + '%</small></div>').join("") +
+    '<div class="globo-mes-total"><b>' + num(m.veces) + '</b> ' + (m.veces === 1 ? "comentario" : "comentarios") +
+      ' · <b>' + num(m.con_estrellas) + '</b> con nota</div>';
+  globo.hidden = false;
+  const base = caja.getBoundingClientRect(), f = bt.getBoundingClientRect();
+  const ancho = globo.offsetWidth;
+  globo.style.left = Math.max(0, Math.min(f.left - base.left + f.width / 2 - ancho / 2, base.width - ancho)) + "px";
+  globo.style.top = (f.bottom - base.top + 6) + "px";
+}
+
+function ocultarGloboCritica(){
   const globo = $("#globo-mejora");
-  function mostrar(fila){
-    const m = orden[Number(fila.dataset.i)];
-    const notas = notasDe.get(m.slug) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
-    const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas) : null;
-    const topeN = Math.max(1, ...[1, 2, 3, 4, 5].map(n => notas[n]));
-    globo.innerHTML =
-      '<div class="globo-mes-cab"><b>' + escapar(m.nombre) + '</b>' +
-        (prom != null ? '<span style="color:' + (m.slug === RUIDO ? "var(--muted)" : colorNota(prom)) + '">' +
-          prom.toFixed(1).replace(".", ",") + ' ★</span>' : '') + '</div>' +
-      [5, 4, 3, 2, 1].map(n =>
-        '<div class="globo-mes-fila"><span>' + n + ' ★</span>' +
-        '<span class="globo-mes-barra"><i style="width:' + (notas[n] / topeN * 100) + '%;background:' + COLORES[n] + '"></i></span>' +
-        '<b>' + num(notas[n]) + '</b><small>' + pct(notas[n], m.con_estrellas) + '%</small></div>').join("") +
-      '<div class="globo-mes-total"><b>' + num(m.veces) + '</b> ' + (m.veces === 1 ? "comentario" : "comentarios") +
-        ' · <b>' + num(m.con_estrellas) + '</b> con nota' +
-        (m.slug === RUIDO ? '<br>No es una mejora por hacer.' : '') + '</div>';
-    globo.hidden = false;
-    const base = caja.getBoundingClientRect();
-    const f = fila.getBoundingClientRect();
-    const ancho = globo.offsetWidth;
-    globo.style.left = Math.max(0, Math.min(f.right - base.left - ancho, base.width - ancho)) + "px";
-    const abajo = f.bottom - base.top + 6;
-    globo.style.top = (abajo + globo.offsetHeight <= base.height + 40 ? abajo : f.top - base.top - globo.offsetHeight - 6) + "px";
-  }
-  function ocultar(){ globo.hidden = true; }
-  caja.querySelectorAll(".fila[data-i]").forEach(fila => {
-    fila.addEventListener("mouseenter", () => mostrar(fila));
-    fila.addEventListener("mouseleave", ocultar);
-    fila.addEventListener("focus", () => mostrar(fila));
-    fila.addEventListener("blur", ocultar);
-    fila.addEventListener("click", e => {
-      ocultar();
-      const bt = e.target.closest("button[data-mej-accion], button[data-tema-accion]");
-      if (bt){ accionMejora(bt.dataset.mejAccion || bt.dataset.temaAccion, orden[Number(fila.dataset.i)], clasificadas); return; }
-      abrirMejora(orden[Number(fila.dataset.i)]);
-    });
-    fila.addEventListener("keydown", e => {
-      if (e.key === "Enter" && e.target === fila){ ocultar(); abrirMejora(orden[Number(fila.dataset.i)]); }
-    });
-  });
+  if (globo) globo.hidden = true;
+}
 
-  /* Tocar una fila: sus comentarios, con Reclasificar y Devolver al Inbox */
-  function abrirMejora(m){
-    const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas).toFixed(1).replace(".", ",") + "★" : null;
-    ventanaComentarios({
-      titulo: m.nombre,
-      guia: plural(m.veces, "comentario", "comentarios") +
-        (prom ? " · " + prom + " de " + plural(m.con_estrellas, "nota", "notas") : ""),
-      intro: m.slug === RUIDO
-        ? "Lo que se marcó como ruido, tal cual llegó. Si algo se descartó por error, reclasifícalo aquí mismo o devuélvelo al Inbox."
-        : "Lo que escribió cada médico, tal cual llegó. Si alguno no es de este tipo, reclasifícalo aquí mismo o devuélvelo al Inbox.",
-      lista: clasificadas.filter(x => (x.mejoras || []).indexOf(m.slug) > -1),
-      alCambiar: async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); }
-    });
-  }
+/* Los comentarios de una crítica (o de Ruido), con Reclasificar y Devolver */
+function abrirCritica(m){
+  const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas).toFixed(1).replace(".", ",") + "★" : null;
+  ventanaComentarios({
+    titulo: m.nombre,
+    guia: plural(m.veces, "comentario", "comentarios") +
+      (prom ? " · " + prom + " de " + plural(m.con_estrellas, "nota", "notas") : ""),
+    intro: m.slug === RUIDO
+      ? "Lo que se marcó como ruido, tal cual llegó. Si algo se descartó por error, reclasifícalo aquí mismo o devuélvelo al Inbox."
+      : "Lo que escribió cada médico, tal cual llegó. Si alguno no es de esta crítica, reclasifícalo aquí mismo o devuélvelo al Inbox.",
+    lista: clasificadasCriticas.filter(x => (x.mejoras || []).indexOf(m.slug) > -1),
+    alCambiar: async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); }
+  });
 }
 
 /* Marca y botones de la mejora de cada tipo, como en el ranking de
    temas. Ruido no lleva: no es una mejora por hacer. */
 function accionesMejora(m){
-  if (m.slug === RUIDO) return '<span class="fila-mejora"></span>';
   const n = (mejorasDe.get(m.slug) || []).length;
-  return '<span class="fila-mejora">' +
-    (n > 1 ? '<span class="etq lima">' + n + ' mejoras</span>'
-      : n ? '<span class="etq lima">con mejora</span>' : '<span class="etq alerta">sin mejora</span>') +
-    /* data-tema-accion: los mismos botones del ranking de temas (icono
-       de cadena, ojo y cadena rota, con su globito), que salen del CSS.
-       Con varias mejoras, el ojo abre la lista para elegir cuál. */
-    (n > 1 ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
-      : n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejora</button>' +
-            '<button class="boton-chico" data-tema-accion="desvincular">Desvincular</button>'
-      : '<button class="boton-chico" data-tema-accion="mejora">Crear mejora</button>') +
-    '</span>';
+  /* data-tema-accion: los mismos botones del ranking de temas (icono de
+     cadena, ojo y cadena rota, con su globito), que salen del CSS. Con
+     varias mejoras, el ojo abre la lista para elegir cuál. */
+  return n > 1 ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
+    : n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejora</button>' +
+          '<button class="boton-chico" data-tema-accion="desvincular">Desvincular</button>'
+    : '<button class="boton-chico" data-tema-accion="mejora">Crear mejora</button>';
 }
 
 function accionMejora(accion, m, clasificadas){
   const alCambiar = async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); };
   if (accion === "renombrar"){ ventanaRenombrarTipo(m, alCambiar); return; }
-  if (accion === "quitar"){
+  if (accion === "borrar"){
     ventanaQuitarTipo(m, clasificadas.filter(x => (x.mejoras || []).indexOf(m.slug) > -1), alCambiar);
     return;
   }
@@ -497,9 +514,9 @@ function accionMejora(accion, m, clasificadas){
 
 /* ✏️ y 🗑️ de cada tipo, como en el ranking de temas */
 const ICONOS =
-  '<button class="icono-btn" data-mej-accion="renombrar" title="Renombrar" aria-label="Renombrar">' +
+  '<button class="icono-btn" data-tema-accion="renombrar" title="Renombrar" aria-label="Renombrar">' +
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>' +
-  '<button class="icono-btn peligro" data-mej-accion="quitar" title="Quitar este tipo de sus comentarios" ' +
+  '<button class="icono-btn peligro" data-tema-accion="borrar" title="Quitar esta crítica de sus comentarios" ' +
     'aria-label="Quitar este tipo de sus comentarios">' +
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 4h4"/><path d="M6 7l1 13h10l1-13"/>' +
     '<path d="M10 11v6M14 11v6"/></svg></button>';

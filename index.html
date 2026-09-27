@@ -490,13 +490,6 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .fila.pinchable:hover .fila-etq{color:var(--ink)}
 /* Métricas · ranking de mejoras: todas las barras arrancan en la misma
    línea, aunque los nombres tengan largos distintos. */
-#mejoras-top{display:flex;flex-direction:column;gap:10px;margin-top:14px;position:relative}
-#mejoras-top .leyenda-notas{margin-top:6px}
-#mejoras-top .fila{grid-template-columns:min(190px,38%) 1fr auto}
-#mejoras-top .fila-etq{max-width:none;display:flex;flex-direction:column;gap:1px;white-space:normal}
-#mejoras-top .fila-nombre{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#mejoras-top .enlace-formas{margin:0;font-size:12px}
-#mejoras-top{gap:14px}
 /* PESTAÑA MEJORAS: una tarjeta por mejora con su estado, lo que
    tiene enlazado (temas y mejoras globales) y sus personas. */
 /* PESTAÑA IMPACTO: una tarjeta por indicador con su gráfica de
@@ -740,23 +733,15 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
   .boton-responsable{margin-left:0}
 }
 
-/* Mejora de cada tipo (marca + botones), como en el ranking de temas.
-   Ancho fijo para que las marcas queden en columna fila tras fila. */
-#mejoras-top .fila{grid-template-columns:min(240px,34%) 1fr auto 224px}
-#mejoras-top .fila-mejora .etq{white-space:nowrap}
-#mejoras-top .fila-mejora{display:flex;align-items:center;justify-content:flex-end;gap:6px;cursor:default}
-#mejoras-top .fila-nombre-linea{display:flex;align-items:center;gap:2px;min-width:0}
-#mejoras-top .fila-nombre-linea .fila-nombre{min-width:0;margin-right:4px}
-#mejoras-top .fila-nombre-linea .icono-btn{width:24px;height:24px}
-#mejoras-top .fila-nombre-linea .icono-btn svg{width:13px;height:13px}
-@media (max-width:760px){
-  /* En celular cada fila va en tres líneas: el nombre completo con el
-     lápiz y la caneca, la barra con su número y, abajo, la mejora */
-  #mejoras-top .fila{grid-template-columns:1fr auto;row-gap:8px}
-  #mejoras-top .fila-etq{grid-column:1 / -1}
-  #mejoras-top .fila-mejora{grid-column:1 / -1;justify-content:flex-start;flex-wrap:wrap}
-  #mejoras-top .fila-mejora:empty{display:none}
+/* Ranking de críticas: la misma tabla que temas pedidos; las estrellas
+   van en una pastilla con el color de su nivel y su globito */
+#ranking-criticas{position:relative}
+.nota-critica{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border:0;border-radius:999px;
+  background:color-mix(in srgb,var(--n) 14%,transparent);color:var(--ink);font-size:12.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;cursor:pointer;white-space:nowrap;
 }
+.nota-critica::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--n)}
 
 .datos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dato{
@@ -1384,126 +1369,126 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 /* La tabla en columnas de verdad: el lapiz y la caneca se van al borde
    derecho de su celda en vez de quedar pegados a cada nombre, que es lo
    que hacia que cayeran en diagonal. */
-#ranking .tabla{table-layout:fixed}
-#ranking .tabla th:nth-child(2),#ranking .tabla td:nth-child(2),
-#ranking .tabla th:nth-child(3),#ranking .tabla td:nth-child(3){width:72px;text-align:right}
-#ranking .tabla th:nth-child(4),#ranking .tabla td:nth-child(4){width:26%}
-#ranking .tabla th:nth-child(5),#ranking .tabla td:nth-child(5){width:112px}
-#ranking .tabla th:nth-child(6),#ranking .tabla td:nth-child(6){width:146px}
-#ranking .tabla td{vertical-align:middle}
-#ranking .tabla td .mini{margin:0}
-#ranking .tema-nombre{display:flex;align-items:center;gap:6px;font-weight:600;line-height:1.25}
-#ranking .tema-nombre .icono-btn{flex:none}
-#ranking .tema-nombre .icono-btn:first-of-type{margin-left:auto}
-#ranking .enlace-formas{margin-top:2px;text-align:left}
-#ranking .etq{display:inline-flex;justify-content:center;min-width:92px}
+:is(#ranking,#ranking-criticas) .tabla{table-layout:fixed}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(2),:is(#ranking,#ranking-criticas) .tabla td:nth-child(2),
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3){width:72px;text-align:right}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(4),:is(#ranking,#ranking-criticas) .tabla td:nth-child(4){width:26%}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(5),:is(#ranking,#ranking-criticas) .tabla td:nth-child(5){width:112px}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(6),:is(#ranking,#ranking-criticas) .tabla td:nth-child(6){width:146px}
+:is(#ranking,#ranking-criticas) .tabla td{vertical-align:middle}
+:is(#ranking,#ranking-criticas) .tabla td .mini{margin:0}
+:is(#ranking,#ranking-criticas) .tema-nombre{display:flex;align-items:center;gap:6px;font-weight:600;line-height:1.25}
+:is(#ranking,#ranking-criticas) .tema-nombre .icono-btn{flex:none}
+:is(#ranking,#ranking-criticas) .tema-nombre .icono-btn:first-of-type{margin-left:auto}
+:is(#ranking,#ranking-criticas) .enlace-formas{margin-top:2px;text-align:left}
+:is(#ranking,#ranking-criticas) .etq{display:inline-flex;justify-content:center;min-width:92px}
 /* Estado de la mejora como en la vista previa C: tinte suave, sin borde. */
-#ranking .etq.lima,#ranking .etq.alerta{border-color:transparent;font-size:12px;font-weight:500;padding:4px 11px}
-#ranking .etq.lima{background:var(--brand-bg);color:var(--brand-ink)}
-#ranking .tabla .boton-chico{width:100%;justify-content:center}
+:is(#ranking,#ranking-criticas) .etq.lima,:is(#ranking,#ranking-criticas) .etq.alerta{border-color:transparent;font-size:12px;font-weight:500;padding:4px 11px}
+:is(#ranking,#ranking-criticas) .etq.lima{background:var(--brand-bg);color:var(--brand-ink)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico{width:100%;justify-content:center}
 /* Filas como tarjetas: la tabla va sobre una bandeja gris y cada tema es
-   una tarjeta blanca separada. #ranking le gana a .tabla tr:last-child,
+   una tarjeta blanca separada. :is(#ranking,#ranking-criticas) le gana a .tabla tr:last-child,
    así la última tarjeta conserva su borde. */
-#ranking{background:var(--bg);border-radius:20px;padding:6px 14px 14px}
-#ranking .tabla{border-spacing:0 8px}
-#ranking .tabla th{border-bottom:0;padding:10px 10px 0}
-#ranking .tabla tbody td{
+:is(#ranking,#ranking-criticas){background:var(--bg);border-radius:20px;padding:6px 14px 14px}
+:is(#ranking,#ranking-criticas) .tabla{border-spacing:0 8px}
+:is(#ranking,#ranking-criticas) .tabla th{border-bottom:0;padding:10px 10px 0}
+:is(#ranking,#ranking-criticas) .tabla tbody td{
   background:var(--surface);padding:14px 10px;
   border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   transition:background .2s,border-color .2s;
 }
-#ranking .tabla tbody td:first-child{border-left:1px solid var(--border);border-radius:16px 0 0 16px;padding-left:18px}
-#ranking .tabla tbody td:last-child{border-right:1px solid var(--border);border-radius:0 16px 16px 0;padding-right:16px}
-#ranking .tabla tbody tr:hover td{border-color:var(--border2)}
+:is(#ranking,#ranking-criticas) .tabla tbody td:first-child{border-left:1px solid var(--border);border-radius:16px 0 0 16px;padding-left:18px}
+:is(#ranking,#ranking-criticas) .tabla tbody td:last-child{border-right:1px solid var(--border);border-radius:0 16px 16px 0;padding-right:16px}
+:is(#ranking,#ranking-criticas) .tabla tbody tr:hover td{border-color:var(--border2)}
 /* El <br> que va tras .tema-nombre (que es flex, o sea bloque) dejaba una
    línea vacía entre el nombre y las formas de decirlo: se oculta para que
    el bloque quede junto y centrado como el resto de la fila. */
-#ranking .tema-nombre + br{display:none}
+:is(#ranking,#ranking-criticas) .tema-nombre + br{display:none}
 /* "Ver todos los temas" con aire: antes quedaba pegado a la última tarjeta */
-#ranking #btn-ver-todos{margin-top:14px}
-#ranking > .mini{margin-top:12px}
+:is(#ranking,#ranking-criticas) #btn-ver-todos{margin-top:14px}
+:is(#ranking,#ranking-criticas) > .mini{margin-top:12px}
 /* Fila de Ruido: al final del ranking, en gris, para distinguirla de los temas */
-#ranking .fila-ruido td{background:var(--surface2)}
-#ranking .fila-ruido .tema-nombre{color:var(--muted)}
-#ranking .fila-ruido .boton-chico{
+:is(#ranking,#ranking-criticas) .fila-ruido td{background:var(--surface2)}
+:is(#ranking,#ranking-criticas) .fila-ruido .tema-nombre{color:var(--muted)}
+:is(#ranking,#ranking-criticas) .fila-ruido .boton-chico{
   width:auto; padding:6px 14px; font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap;
   background:var(--surface); border:1px solid var(--border2); color:var(--brand-ink); box-shadow:none;
 }
-#ranking .fila-ruido .boton-chico:hover{background:var(--brand);border-color:transparent}
-#ranking .enlace-formas{margin-top:4px}
+:is(#ranking,#ranking-criticas) .fila-ruido .boton-chico:hover{background:var(--brand);border-color:transparent}
+:is(#ranking,#ranking-criticas) .enlace-formas{margin-top:4px}
 /* El encabezado Tema arranca donde arranca el texto de la tarjeta. */
-#ranking .tabla th:first-child{padding-left:19px}
+:is(#ranking,#ranking-criticas) .tabla th:first-child{padding-left:19px}
 /* Piden y Países: el número centrado justo bajo la mitad de su título. */
-#ranking .tabla th:nth-child(2),#ranking .tabla td:nth-child(2),
-#ranking .tabla th:nth-child(3),#ranking .tabla td:nth-child(3){text-align:center}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(2),:is(#ranking,#ranking-criticas) .tabla td:nth-child(2),
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3){text-align:center}
 /* Acciones del ranking: solo Crear mejora parece botón, con el lima de
    la subpestaña activa (Ranking) y un icono de cadena puesto desde
    el CSS. Ver mejora (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
    data-tema-accion, sin tocar el JS. El ranking de mejoras globales
-   (#mejoras-top) usa los mismos botones. */
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]{
+   (#ranking-criticas) usa la misma tabla y los mismos botones. */
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{
   width:auto;padding:6px 12px 6px 10px;white-space:nowrap;background:var(--brand);color:var(--brand-ink);
   font-size:12px;font-weight:600;line-height:1.4;box-shadow:none;
   transition:background .35s var(--ease),transform .3s var(--ease);
 }
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]::before,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]::before,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]::before{
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]::before,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::before,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::before{
   content:"";display:inline-block;width:15px;height:15px;background:currentColor;
   -webkit-mask:var(--icono) center/contain no-repeat;mask:var(--icono) center/contain no-repeat;
 }
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3C/svg%3E")}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]::before{width:13px;height:13px;margin-right:5px;vertical-align:-2px}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]:hover{
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3C/svg%3E")}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]::before{width:13px;height:13px;margin-right:5px;vertical-align:-2px}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]:hover{
   background:#b2d974;color:var(--brand-ink);transform:translateY(-1px);
 }
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="mejora"]:active{transform:translateY(1px) scale(.96)}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]:active{transform:translateY(1px) scale(.96)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
 /* Ver mejora (ojo) y Desvincular (cadena rota): solo icono, redondos como
    el lápiz y la caneca. El texto sigue en el botón (font-size:0) para
    lectores de pantalla. */
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"],
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]{
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"],
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]{
   display:inline-grid;place-items:center;width:28px;height:28px;padding:0;vertical-align:middle;
   border-radius:50%;background:none;font-size:0;color:var(--faint);
   transition:background .2s,color .2s,transform .3s var(--ease);
 }
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]{margin-left:4px}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]{margin-left:4px}
 /* El texto oculto ocupa una fila invisible y subía el icono: el icono se
    centra en la bolita con posición absoluta. */
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]::before,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]::before{position:absolute;inset:0;margin:auto}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]:hover{background:var(--brand-bg);color:var(--brand-ink);transform:scale(1.1)}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]:hover{background:var(--warn-bg);color:var(--warn);transform:scale(1.1)}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]:active,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]:active{transform:scale(.9)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::before,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::before{position:absolute;inset:0;margin:auto}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:hover{background:var(--brand-bg);color:var(--brand-ink);transform:scale(1.1)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:hover{background:var(--warn-bg);color:var(--warn);transform:scale(1.1)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:active,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:active{transform:scale(.9)}
 /* Globito que dice qué hace cada icono, al pasar el mouse o llegar con el
    teclado. Sale del CSS porque el JS no les pone title. */
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"],
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]{position:relative}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]::after,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]::after{
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"],
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]{position:relative}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::after,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::after{
   position:absolute;bottom:calc(100% + 8px);left:50%;z-index:5;
   padding:5px 10px;border-radius:999px;background:var(--ink);color:#ffffff;
   font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;pointer-events:none;
   box-shadow:var(--sombra-suave);opacity:0;transform:translate(-50%,4px);
   transition:opacity .15s,transform .2s var(--ease);
 }
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]::after{content:"Ver mejora"}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]::after{content:"Desvincular mejora"}
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]:hover::after,:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="vermejora"]:focus-visible::after,
-:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]:hover::after,:is(#ranking .tabla,#mejoras-top) .boton-chico[data-tema-accion="desvincular"]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::after{content:"Ver mejora"}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::after{content:"Desvincular mejora"}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:hover::after,:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:focus-visible::after,
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:hover::after,:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:760px){
   #panel-ranking{padding:16px 14px 18px}
   #panel-ranking > .resumen-sub{float:none;margin:0 0 12px}
-  #ranking .tabla{table-layout:auto}
+  :is(#ranking,#ranking-criticas) .tabla{table-layout:auto}
   /* La tabla es más ancha que un celular: se desliza de lado dentro de su
      bandeja en vez de ensanchar toda la página (y sacar de la vista el
      menú de abajo). */
-  #ranking{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  #ranking .tabla{min-width:640px}
+  :is(#ranking,#ranking-criticas){overflow-x:auto;-webkit-overflow-scrolling:touch}
+  :is(#ranking,#ranking-criticas) .tabla{min-width:640px}
   /* Reseñas: los cuatro filtros (Fuente, Periodo, Reseñas, País) no
      caben en una fila de celular; se apilan uno bajo el otro. */
   #panel-ranking:has(#f-canal){grid-template-columns:minmax(0,1fr)}
@@ -1654,28 +1639,29 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #panel-ranking:has(#f-canal) > .tarjetas,
   #panel-ranking:has(#f-canal) > .rejilla ~ .rejilla,
   #panel-ranking:has(#f-canal) > .comentarios{display:none}
-  #panel-ranking:has(#ranking) > .resumen-sub,
-  #panel-ranking:has(#ranking) > .filtros-fila,
-  #panel-ranking:has(#ranking) > .rejilla{display:none}
-  #ranking .tabla th:nth-child(3),#ranking .tabla td:nth-child(3),
-  #ranking .tabla th:nth-child(4),#ranking .tabla td:nth-child(4){display:none}
+  #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .resumen-sub,
+  #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .filtros-fila,
+  #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .rejilla{display:none}
+  :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3),
+  :is(#ranking,#ranking-criticas) .tabla th:nth-child(4),:is(#ranking,#ranking-criticas) .tabla td:nth-child(4){display:none}
   /* Cada tema, una tarjeta compacta: el nombre arriba y debajo
      "9 piden", el estado y las acciones. Sin desplazarse de lado. */
-  #ranking{overflow-x:visible}
-  #ranking .tabla{display:block;min-width:0}
-  #ranking .tabla thead{display:none}
-  #ranking .tabla tbody{display:grid;gap:8px;padding-top:8px}
-  #ranking .tabla tbody tr{
+  :is(#ranking,#ranking-criticas){overflow-x:visible}
+  :is(#ranking,#ranking-criticas) .tabla{display:block;min-width:0}
+  :is(#ranking,#ranking-criticas) .tabla thead{display:none}
+  :is(#ranking,#ranking-criticas) .tabla tbody{display:grid;gap:8px;padding-top:8px}
+  :is(#ranking,#ranking-criticas) .tabla tbody tr{
     display:grid; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:10px;
     background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px 16px;
   }
-  #ranking .tabla tbody td:nth-child(n){display:block;width:auto;padding:0;border:0;border-radius:0;background:none;text-align:left}
-  #ranking .tabla tbody td:nth-child(1){grid-column:1/-1}
-  #ranking .tabla tbody td:nth-child(3),#ranking .tabla tbody td:nth-child(4){display:none}
-  #ranking .tabla tbody td:nth-child(2)::after{content:" piden";font-size:12px;font-weight:500;color:var(--faint)}
-  #ranking .tabla tbody td:nth-child(6){justify-self:end}
-  #ranking{padding:4px 10px 10px}
-  #ranking .etq{min-width:0}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(n){display:block;width:auto;padding:0;border:0;border-radius:0;background:none;text-align:left}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(1){grid-column:1/-1}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(3),:is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(4){display:none}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(2)::after{content:" piden";font-size:12px;font-weight:500;color:var(--faint)}
+  #ranking-criticas .tabla tbody td:nth-child(2)::after{content:" veces"}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6){justify-self:end}
+  :is(#ranking,#ranking-criticas){padding:4px 10px 10px}
+  :is(#ranking,#ranking-criticas) .etq{min-width:0}
 
   .pestana-curva{
     /* Detrás del menú (29 < 30): así la bolita activa, que vive en el
