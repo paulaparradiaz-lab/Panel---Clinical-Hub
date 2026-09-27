@@ -1740,6 +1740,25 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 #panel-ranking .buscador-lupa,
 :is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
 :is(#f-foco-mejoras,#f-foco) .chip{display:inline-flex;align-items:center}
+/* Métricas en computador: una sola escala de letra en los rankings.
+   18 título · 14 nombre y países · 13 botones y filtros · 12 pastillas. */
+@media (min-width:761px){
+  :is(#ranking,#ranking-criticas) .nota-critica,
+  :is(#ranking,#ranking-criticas) .tabla td:nth-child(5) .etq,
+  :is(#ranking,#ranking-criticas) .fila-ruido .etq{font-size:12px;font-weight:600}
+  #ranking-criticas .paises-critica{font-size:14px;font-weight:600}
+  :is(#f-foco-mejoras,#f-foco) .chip,
+  :is(#btn-nueva-global,#btn-nuevo-tema),
+  :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"],
+  :is(#ranking,#ranking-criticas) .fila-ruido .boton-chico{font-size:13px;font-weight:600}
+  /* Temas pedidos sin la columna Países (la tabla comparte estructura con
+     críticas, por eso se esconde en vez de quitarse) */
+  #ranking .tabla thead th:nth-child(3),
+  #ranking .tabla tbody td:nth-child(3){display:none}
+  /* Filtros y «Nueva etiqueta» de críticas separados de la bandeja, con
+     el mismo aire que el buscador de temas */
+  #ranking-criticas{margin-top:18px}
+}
 /* ============================================================
    Métricas en celular: ajustes finos de alineación
    ============================================================ */

@@ -69,8 +69,7 @@ export function armazon(){
         ¿Cómo funciona?</button>
     </div>
     <div class="ayuda-plegable" id="ayuda-ranking" hidden>
-      <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos comentarios los piden), con
-      desde cuántos países (<b>Países</b>). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
+      <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos comentarios los piden). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
       y el botón de abajo muestra todos. El filtro de arriba deja ver <b>Todos</b>, solo los que están
       <b>Sin mejora</b> o solo los que ya tienen <b>Con mejora</b>.</p>
       <p class="mini"><b>El texto subrayado</b> abre los comentarios reales de ese tema; desde ahí puedes
