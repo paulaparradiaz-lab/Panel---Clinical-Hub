@@ -422,7 +422,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .fila-entre.cabeza-seccion{align-items:flex-start;flex-wrap:nowrap;margin-bottom:0}
 .titulo-seccion{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25;color:var(--ink)}
 .subtitulo-seccion{margin:3px 0 0;font-size:12.5px;color:var(--faint);line-height:1.4}
-.cabeza-seccion .enlace-ayuda{flex:none;margin-top:2px}
+.cabeza-seccion .enlace-ayuda{flex:none;margin-top:-3px}
 /* Inbox · ayuda plegable y buscador con lupa */
 .enlace-ayuda{display:inline-flex;align-items:center;gap:5px;padding:4px 2px;background:none;border:0;font-size:12.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .enlace-ayuda:hover{color:var(--ink)}
@@ -1361,8 +1361,11 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
   box-shadow:var(--sombra-suave); padding:20px 20px 22px; margin-top:16px;
 }
-#panel-ranking > .resumen-sub{float:right;margin:3px 0 0;font-size:12.5px}
-#panel-ranking > .filtros-fila{margin-top:0;padding-bottom:16px;border-bottom:1px solid var(--border2)}
+/* Temas pedidos armado como críticas: bajo el título, el filtro de mejora
+   (con el resumen a la derecha) y luego el buscador. */
+#panel-ranking .caja > .filtros-fila{margin-top:18px}
+#panel-ranking .caja > .filtros-fila .resumen-sub{margin:0 0 0 auto;font-size:12.5px}
+#panel-ranking .caja > .fila-buscar{margin-top:14px}
 #panel-ranking > .caja{background:none;border:0;box-shadow:none;padding:0;clear:both}
 #panel-ranking > .caja > .fila-entre{margin-bottom:14px}
 
@@ -1485,7 +1488,6 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 
 @media (max-width:760px){
   #panel-ranking{padding:16px 14px 18px}
-  #panel-ranking > .resumen-sub{float:none;margin:0 0 12px}
   :is(#ranking,#ranking-criticas) .tabla{table-layout:auto}
   /* La tabla es más ancha que un celular: se desliza de lado dentro de su
      bandeja en vez de ensanchar toda la página (y sacar de la vista el
@@ -1644,6 +1646,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #panel-ranking:has(#f-canal) > .comentarios{display:none}
   #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .resumen-sub,
   #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .filtros-fila,
+  #panel-ranking:has(#ranking) .caja > .filtros-fila,
   #panel-ranking:has(:is(#ranking,#ranking-criticas)) > .rejilla{display:none}
   :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3),
   :is(#ranking,#ranking-criticas) .tabla th:nth-child(4),:is(#ranking,#ranking-criticas) .tabla td:nth-child(4){display:none}
@@ -1682,7 +1685,6 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
    vez de quitarse. */
 :is(#ranking,#ranking-criticas) .tabla thead th:nth-child(2),
 :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(2){display:none}
-}
 /* El número de países es un botón con su globito */
 .paises-critica{
   border:0;background:none;padding:2px 6px;border-radius:8px;font:inherit;font-size:14px;font-weight:600;
@@ -1732,6 +1734,12 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #ranking .tabla tbody td:nth-child(5){grid-area:m;justify-self:start}
   #ranking .tabla tbody td:nth-child(6){grid-area:a;justify-self:end}
 }
+/* Métricas: filtros de mejora, «Nueva etiqueta» y buscador de temas,
+   todos de 40 px de alto (computador y celular) */
+:is(#f-foco-mejoras,#f-foco) .chip,
+#panel-ranking .buscador-lupa,
+:is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+:is(#f-foco-mejoras,#f-foco) .chip{display:inline-flex;align-items:center}
 /* ============================================================
    Métricas en celular: ajustes finos de alineación
    ============================================================ */
@@ -1739,19 +1747,15 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   /* Temas pedidos con el mismo margen interno que las otras dos cajas
      (estrellas y críticas): título, buscador y tarjetas en la misma línea. */
   #panel-ranking{padding:16px}
-  /* «¿Cómo funciona?» centrado con la primera línea del título */
-  .cabeza-seccion .enlace-ayuda{margin-top:-3px}
+  /* El filtro de temas se movió dentro de la caja (y en celular va oculto):
+     se conserva el aire de 14 px que la caja tenía arriba. */
+  #panel-ranking > .caja{margin-top:14px}
   /* Filtro de mejora de críticas: las tres opciones llenan el ancho */
   #f-foco-mejoras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
   #f-foco-mejoras .chip{justify-content:center;white-space:nowrap;padding-left:6px;padding-right:6px}
   /* «Nueva etiqueta» de críticas quedaba pegado a la bandeja de tarjetas:
      la misma separación que en temas pedidos. */
   #ranking-criticas{margin-top:23px}
-  /* Filtros, «Nueva etiqueta» y buscador de temas: todos de 40 px de alto */
-  #f-foco-mejoras .chip,
-  #panel-ranking .buscador-lupa,
-  :is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
-  #f-foco-mejoras .chip{display:flex;align-items:center}
   /* Mejoras: Estado, Responsable y «Nueva mejora» del mismo alto (40 px) */
   .desplegables .desplegable-boton,
   #btn-nueva-mejora{height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}

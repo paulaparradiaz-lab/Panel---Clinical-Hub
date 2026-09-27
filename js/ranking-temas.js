@@ -55,17 +55,13 @@ const ETIQUETA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4a1
 /* ============================================================
    1. Armazón y eventos
    Mismas clases e ids que el ranking viejo (#panel-ranking,
-   #f-foco, #ranking, data-tema-accion…) para heredar su CSS.
+   #f-foco, #ranking, data-tema-accion…) para heredar su CSS. Armado
+   como el Ranking de críticas: título, filtro de mejora y la tabla.
    ============================================================ */
 export function armazon(){
   return `
 <section id="panel-ranking">
-  <p class="resumen-sub" id="resumen-ranking"></p>
-  <div class="filtros-fila">
-    <span class="rotulo">Mejora</span>
-    <div class="filtros" id="f-foco" role="group" aria-label="Estado de mejora"></div>
-  </div>
-  <section class="caja" style="margin-top:14px">
+  <section class="caja">
     <div class="fila-entre cabeza-seccion">
       <div><h2 class="titulo-seccion">Ranking de temas pedidos</h2><p class="subtitulo-seccion">Tus temas, por cuánta gente los pide</p></div>
       <button class="enlace-ayuda" id="btn-ayuda-ranking" aria-expanded="false" aria-controls="ayuda-ranking">
@@ -88,7 +84,12 @@ export function armazon(){
       <p class="mini"><b>El buscador</b> mira el nombre del tema, sus sinónimos y lo que escribieron los
       médicos. Lo descartado como <b>Ruido</b> se revisa en el Ranking de críticas.</p>
     </div>
-    <div class="fila-buscar" style="margin-top:4px">
+    <div class="filtros-fila">
+      <span class="rotulo">Mejora</span>
+      <div class="filtros" id="f-foco" role="group" aria-label="Estado de mejora"></div>
+      <p class="resumen-sub" id="resumen-ranking"></p>
+    </div>
+    <div class="fila-buscar">
       <label class="buscador-lupa">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="q-ranking" type="search" placeholder="Buscar un tema: sepsis, dengue, falla cardiaca…" aria-label="Buscar en el ranking de temas">
