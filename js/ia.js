@@ -53,6 +53,13 @@ export function colorIndicador(slug){
   return i > -1 && i < COLOR_SIGUIENTE.length ? COLOR_SIGUIENTE[i] : COLOR_OTRO;
 }
 
+/* ¿Trae algo escrito? Lo que llega solo con estrellas no tiene nada que
+   clasificar: no entra al Inbox, no se reclasifica y no cuenta como
+   «Ruido» (sus estrellas sí cuentan en el Ranking de estrellas). */
+export function tieneTexto(x){
+  return [x.tema_puntual, x.mejora_texto, x.guia_de_referencia].some(t => String(t || "").trim());
+}
+
 export function nombreDe(slug){
   return catalogo.nombres.get(slug) || slug;
 }
@@ -196,16 +203,28 @@ export async function cargarMejoras(){
   return { mejoras: m.data || [], enlaces: e.data || [], personas: p.data || [] };
 }
 
-/* De cada tema o mejora global, la mejora enlazada más reciente.
-   El enlace (mejora_ia_tema) sirve para los dos: guarda el código del
-   catálogo, que no se repite entre temas y mejoras globales. */
-export function mejoraPorSlug(datos){
+/* De cada tema o indicador, TODAS sus mejoras (sin las descartadas),
+   de la más antigua a la más nueva. Un indicador como «Cantidad de
+   temas» suele tener varias: cada guía publicada es una mejora. */
+export function mejorasPorSlug(datos){
   const porId = new Map(datos.mejoras.map(m => [m.id, m]));
   const mapa = new Map();
-  datos.enlaces
-    .slice().sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
-    .forEach(e => { if (!mapa.has(e.tema_slug) && porId.has(e.mejora_id)) mapa.set(e.tema_slug, porId.get(e.mejora_id)); });
+  datos.enlaces.forEach(e => {
+    const m = porId.get(e.mejora_id);
+    if (!m || m.estado === "descartada") return;
+    if (!mapa.has(e.tema_slug)) mapa.set(e.tema_slug, []);
+    mapa.get(e.tema_slug).push(m);
+  });
+  mapa.forEach(lista => lista.sort((a, b) => a.id - b.id));
   return mapa;
+}
+
+/* Cuántos indicadores (mejoras globales) tiene una mejora: si es uno
+   solo, no se puede desvincular desde un ranking (quedaría sin nada que
+   medir en Impacto). */
+export function indicadoresDe(datos, mejoraId){
+  const globales = new Set(catalogo.mejoras.map(c => c.slug).filter(x => x !== RUIDO));
+  return datos.enlaces.filter(e => e.mejora_id === mejoraId && globales.has(e.tema_slug)).map(e => e.tema_slug);
 }
 
 /* extra: estado, y para una mejora del pasado su fecha de completada

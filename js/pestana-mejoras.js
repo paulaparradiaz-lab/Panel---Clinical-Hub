@@ -248,6 +248,7 @@ function marcarPaso(caja, estadoNuevo){
 const PASOS = ["pendiente", "en_curso", "hecha"];
 const ICONO_INDICADOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>';
 const LAPIZ = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
+const CANDADO = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>';
 const MAS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
 function tarjeta(m){
@@ -255,12 +256,16 @@ function tarjeta(m){
   const ps = personasDe(m);
   const id = m.id;
   const paso = PASOS.indexOf(m.estado);          // -1 si está descartada
+  /* Descartada: la tarjeta queda bloqueada, en gris. Nada se puede tocar
+     salvo «Recuperar», que la devuelve a Pendiente. */
+  const bloqueada = paso === -1;
+  const off = bloqueada ? ' disabled tabindex="-1"' : '';
 
   /* El indicador: la mejora global en la que impacta, con la flechita
      en un círculo de su color. Todo el botón abre la ventana para
      elegirlo o cambiarlo. */
   const indicador = '<button type="button" class="indicador-mejora' + (indicadores.length ? '' : ' vacio') +
-      '" data-indicador="' + id + '" title="' + (indicadores.length ? "Cambiar indicador" : "Elegir indicador") + '">' +
+      '" data-indicador="' + id + '" title="' + (indicadores.length ? "Cambiar indicador" : "Elegir indicador") + '"' + off + '>' +
     '<span class="indicador-rotulo">Impacta en</span>' +
     (indicadores.length
       ? indicadores.map(s => '<span class="indicador-item" style="--c:' + colorIndicador(s) + '">' + ICONO_INDICADOR +
@@ -276,17 +281,20 @@ function tarjeta(m){
 
   const pasos = PASOS.map((e, i) =>
     '<button type="button" class="paso-mejora' + (paso > -1 && i <= paso ? ' hecho' : '') + (i === paso ? ' actual' : '') +
-      '" data-estado="' + e + '" data-id="' + id + '" aria-pressed="' + (i === paso) + '">' +
+      '" data-estado="' + e + '" data-id="' + id + '" aria-pressed="' + (i === paso) + '"' + off + '>' +
       '<span class="paso-num" aria-hidden="true">' + (paso > -1 && i < paso ? '✓' : i + 1) + '</span>' +
       escapar(nombreEstado(e)) + '</button>').join('<i class="paso-linea" aria-hidden="true"></i>');
 
-  return '<article class="caja tarjeta-mejora" data-estado="' + escapar(m.estado) + '">' +
+  return '<article class="caja tarjeta-mejora' + (bloqueada ? ' bloqueada' : '') + '" data-estado="' + escapar(m.estado) + '">' +
     '<div class="tarjeta-mejora-top">' + indicador +
-      '<button type="button" class="boton-responsable" data-asignar="' + id + '" title="Asignar responsable">' +
+      '<button type="button" class="boton-responsable" data-asignar="' + id + '" title="Asignar responsable"' + off + '>' +
         responsable + '</button>' +
     '</div>' +
     '<div class="tarjeta-mejora-titulo"><h3>' + escapar(m.titulo) + '</h3>' +
-      '<button class="icono-btn" data-editar="' + id + '" title="Editar" aria-label="Editar mejora">' + LAPIZ + '</button></div>' +
+      (bloqueada
+        ? '<span class="candado-mejora" title="Descartada: está bloqueada">' + CANDADO + '</span>'
+        : '<button class="icono-btn" data-editar="' + id + '" title="Editar" aria-label="Editar mejora">' + LAPIZ + '</button>') +
+    '</div>' +
     (m.detalle ? '<p class="tarjeta-mejora-detalle">' + escapar(m.detalle) + '</p>' : '') +
     '<div class="pasos-mejora" role="group" aria-label="Estado de la mejora">' +
       '<span class="goma-paso" aria-hidden="true"></span>' + pasos +
@@ -296,7 +304,7 @@ function tarjeta(m){
     '<div class="tarjeta-mejora-pie">' +
       '<span class="mini tarjeta-mejora-id">#' + id + ' · ' + fecha(m.creado_en) + '</span>' +
       (paso === -1
-        ? '<button class="enlace-descartar" data-estado="pendiente" data-id="' + id + '">Recuperar</button>'
+        ? '<button class="boton-chico recuperar-mejora" data-estado="pendiente" data-id="' + id + '">Recuperar</button>'
         : '<button class="enlace-descartar" data-estado="descartada" data-id="' + id + '">Descartar</button>') +
     '</div>' +
   '</article>';
@@ -346,6 +354,8 @@ async function alTocar(e){
   const m = mejoraPorId(b.dataset.id || b.dataset.editar || b.dataset.asignar || b.dataset.indicador);
   if (!m) return;
 
+  /* Una descartada está bloqueada: solo responde «Recuperar» */
+  if (m.estado === "descartada" && !b.classList.contains("recuperar-mejora")) return;
   if (b.dataset.editar){ ventanaVerMejora({ mejora: m, alCambiar: trasCambio }); return; }
   if (b.dataset.indicador){ ventanaIndicador(m); return; }
   if (b.dataset.asignar){ ventanaAsignar(m); return; }

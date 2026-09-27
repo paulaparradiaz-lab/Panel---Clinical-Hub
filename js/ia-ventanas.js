@@ -11,7 +11,7 @@
                Devolver al Inbox.
    ============================================================ */
 import { $, escapar, fecha, num, abrirVentana, avisar, cerrarVentana, traducirError } from "./nucleo.js";
-import { catalogo, clasificar, devolverAlInbox, nombrePais, nombreOrigen, TIPOS } from "./ia.js";
+import { catalogo, clasificar, devolverAlInbox, nombrePais, nombreOrigen, TIPOS, tieneTexto } from "./ia.js";
 
 /* ============================================================
    0. La tarjeta del comentario (estilo chat)
@@ -334,14 +334,16 @@ export function ventanaComentarios({ titulo, guia, intro, lista, vacio, alCambia
 
 function tarjetaGrupo(x){
   const id = escapar(String(x.id));
-  const conTexto = [x.mejora_texto, x.tema_puntual, x.guia_de_referencia].some(t => String(t || "").trim());
+  /* Sin texto (solo estrellas) no hay nada que reclasificar ni devolver */
+  const conTexto = tieneTexto(x);
   return '<article class="comentario">' +
     '<div class="comentario-meta">' + metaDe(x) + '</div>' +
     textoDe(x) +
-    '<div class="comentario-pie">' +
-    '<button class="boton-chico" data-accion="reclasificar" data-id="' + id + '">' + ICONO_ETIQUETA + 'Reclasificar</button>' +
-    (conTexto ? '<button class="boton-chico" data-accion="devolver" data-id="' + id + '">Devolver al Inbox</button>' : '') +
-    '</div></article>';
+    (conTexto ? '<div class="comentario-pie">' +
+      '<button class="boton-chico" data-accion="reclasificar" data-id="' + id + '">' + ICONO_ETIQUETA + 'Reclasificar</button>' +
+      '<button class="boton-chico" data-accion="devolver" data-id="' + id + '">Devolver al Inbox</button>' +
+    '</div>' : '') +
+    '</article>';
 }
 
 export function plural(n, uno, varios){

@@ -14,7 +14,7 @@
    Etiqueta    Crea un tema pedido o una mejora global en el catálogo.
    ============================================================ */
 import { escapar, fecha, abrirVentana, avisar, cerrarVentana, leer } from "./nucleo.js";
-import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, nombreEstado, crearMejora, enlazarMejora,
+import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nombreEstado, crearMejora, enlazarMejora,
   desvincularMejora, editarMejora, cargarUsuarios, asignarPersona, crearEtiqueta } from "./ia.js";
 import { plural } from "./ia-ventanas.js";
 
@@ -277,15 +277,62 @@ export function ventanaVerMejora({ mejora: m, slug, alCambiar }){
   mostrarCompletada(document.getElementById("v-estado"), "v-fecha");
 }
 
-/* Desvincular: le quita la mejora a la fila, sin borrarla */
-export function ventanaDesvincular({ mejora: m, slug, que = "tema", alCambiar }){
+/* 👁 Las mejoras de una fila (tema o indicador) cuando tiene varias:
+   cada una con Ver y Desvincular. */
+export function ventanaMejorasDe({ slug, lista, datos, que = "tema", alCambiar }){
+  abrirVentana({
+    titulo: "Mejoras de " + nombreDe(slug),
+    guia: plural(lista.length, "mejora enlazada", "mejoras enlazadas"),
+    cuerpo:
+      '<p class="mini">' + (que === "tema"
+        ? 'Las mejoras que atienden este tema. Desvincular le quita el tema a esa mejora, sin borrarla.'
+        : 'Las mejoras que impactan en este indicador. Desvincular le quita el indicador a esa mejora, sin borrarla.') +
+      '</p><div class="lista-mejoras-fila">' + lista.map(m =>
+        '<div class="mejora-fila"><span class="impacto-num">' + m.id + '</span>' +
+        '<span class="mejora-fila-txt"><b>' + escapar(m.titulo) + '</b><small>' + escapar(nombreEstado(m.estado)) + '</small></span>' +
+        '<button type="button" class="boton-chico" data-ver="' + m.id + '">Ver</button>' +
+        '<button type="button" class="boton-chico secundario" data-desv="' + m.id + '">Desvincular</button></div>').join("") +
+      '</div>',
+    aceptar: "Cerrar",
+    ancha: true,
+    alAceptar: async () => {}
+  });
+  const cancelar = document.querySelector("#velo-forma [data-cerrar]");
+  if (cancelar) cancelar.hidden = true;
+  document.querySelector("#velo-forma .lista-mejoras-fila").addEventListener("click", e => {
+    const b = e.target.closest("button[data-ver], button[data-desv]");
+    if (!b) return;
+    const m = lista.find(x => String(x.id) === (b.dataset.ver || b.dataset.desv));
+    if (!m) return;
+    if (b.dataset.ver) ventanaVerMejora({ mejora: m, slug: slug, alCambiar: alCambiar });
+    else ventanaDesvincular({ mejora: m, slug: slug, que: que, datos: datos, alCambiar: alCambiar });
+  });
+}
+
+/* Desvincular: le quita la mejora a la fila, sin borrarla. Si la fila
+   es el ÚNICO indicador de esa mejora, no se deja: la mejora quedaría
+   sin nada que medir en Impacto; el indicador se cambia en Mejoras. */
+export function ventanaDesvincular({ mejora: m, slug, que = "tema", datos, alCambiar }){
+  if (que !== "tema" && datos && indicadoresDe(datos, m.id).length <= 1){
+    abrirVentana({
+      titulo: "No se puede desvincular",
+      guia: "#" + m.id + " · " + m.titulo,
+      cuerpo: '<p>«' + escapar(nombreDe(slug)) + '» es el único indicador de esta mejora.</p>' +
+        '<p class="mini">Si se lo quitas, la mejora quedaría sin nada que medir en Impacto. Para cambiarle el ' +
+        'indicador, ve a la pestaña Mejoras y toca «Impacta en» en su tarjeta.</p>',
+      aceptar: "Entendido",
+      alAceptar: async () => {}
+    });
+    const cancelar = document.querySelector("#velo-forma [data-cerrar]");
+    if (cancelar) cancelar.hidden = true;
+    return;
+  }
   abrirVentana({
     titulo: "Desvincular mejora",
     guia: nombreDe(slug),
     cuerpo:
       '<p>¿Quitarle la mejora “' + escapar(m.titulo) + '” a “' + escapar(nombreDe(slug)) + '”?</p>' +
-      '<p class="mini">La mejora no se borra y sigue enlazada a lo demás que tenga. ' +
-      (que === "tema" ? 'El tema' : 'La mejora global') + ' vuelve a quedar sin mejora.</p>',
+      '<p class="mini">La mejora no se borra y sigue enlazada a lo demás que tenga.</p>',
     aceptar: "Desvincular",
     alAceptar: async () => {
       await desvincularMejora(m.id, slug);

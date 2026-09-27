@@ -90,6 +90,9 @@ function armazon(){
 }
 
 function conectar(){
+  /* Cada vez que se abre el Inbox, el buscador arranca vacío (si no, al
+     volver de Métricas la caja salía vacía pero la lista seguía filtrada) */
+  q = "";
   $("#q-inbox").addEventListener("input", e => { q = e.target.value || ""; pintar(); });
   $("#comentarios").addEventListener("click", alClic);
   $("#barra-bandeja").addEventListener("click", alClic);
@@ -133,6 +136,10 @@ function buscableDe(x){
 function pintar(){
   const busca = q.trim().toLowerCase();
   const vistas = busca ? filas.filter(x => buscableDe(x).indexOf(busca) > -1) : filas;
+  /* Solo quedan elegidas las que se ven: si el buscador esconde una
+     tarjeta marcada, se desmarca, para no clasificarla sin verla */
+  const ids = new Set(vistas.map(x => String(x.id)));
+  seleccion = new Set(Array.from(seleccion).filter(id => ids.has(id)));
   visibles = vistas.map(x => String(x.id));
   /* El globito de la subpestaña Inbox dice cuántas quedan */
   document.dispatchEvent(new CustomEvent("ch-pendientes", { detail: filas.length }));

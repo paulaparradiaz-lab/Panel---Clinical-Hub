@@ -22,10 +22,10 @@
    ============================================================ */
 import { sb, $, COLORES, escapar, num, pct, avisar, traducirError, abrirVentana, cerrarVentana,
   leer } from "./nucleo.js";
-import { RUIDO, cargarCatalogo, cargarMejoras, mejoraPorSlug, nombreDe, renombrarTema,
+import { RUIDO, cargarCatalogo, cargarMejoras, mejorasPorSlug, nombreDe, renombrarTema, tieneTexto,
   quitarMejoraTecnica } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta } from "./mejora-ventanas.js";
+import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
 import * as rankingTemas from "./ranking-temas.js";
 
 /* ============================================================
@@ -115,7 +115,8 @@ ${rankingTemas.armazon()}
       <li><i style="background:#dc4a3d"></i><b>Malo:</b> menos de 3,5</li>
     </ul>
     <p class="mini">Una barra roja quiere decir que quienes piden eso están insatisfechos.</p>
-    <p class="mini"><b>Ruido</b> va al final, en gris: se cuenta, pero no es una mejora por hacer.</p>
+    <p class="mini"><b>Ruido</b> va al final, en gris: se cuenta, pero no es una mejora por hacer. Solo cuenta lo que
+    trae texto: lo que llega solo con estrellas es una calificación, no ruido.</p>
     <p class="mini"><b>Pasa el mouse</b> por una fila para ver cuántas notas hubo de cada estrella. Con
     pocas notas el promedio puede engañar: fíjate en cuántas lo forman.</p>
     <p class="mini"><b>Toca una fila</b> para ver los comentarios de ese tipo: desde ahí puedes reclasificar
@@ -123,7 +124,10 @@ ${rankingTemas.armazon()}
     <p class="mini"><b>La mejora</b> se enlaza al tipo completo, igual que en temas: <b>Crear mejora</b> hace
     una nueva (con este tipo ya marcado como su indicador, su estado y, si ya se hizo, la fecha en que se
     completó) o la enlaza a una que ya existe; <b>Ver mejora</b> la edita y <b>Desvincular</b> se la quita
-    sin borrarla. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
+    sin borrarla. Si un tipo tiene varias mejoras (por ejemplo, «Cantidad de temas», donde cada guía publicada es
+    una), dice cuántas y <b>Ver mejoras</b> abre la lista para elegir cuál ver o desvincular. No se puede
+    desvincular el único indicador de una mejora: quedaría sin nada que medir en Impacto; se cambia en la
+    pestaña Mejoras. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
     <p class="mini"><b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
     ese tipo a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox. <b>Nueva
     etiqueta</b> crea un tipo nuevo: aparece aquí cuando tenga su primer comentario.</p>
@@ -165,7 +169,8 @@ async function cargar(){
   pintarEstrellas(fb.data || []);
   rankingTemas.pintar(fb.data || [], datosMejoras);
   mejorasIA = datosMejoras.mejoras;
-  mejoraDe = mejoraPorSlug(datosMejoras);
+  datosMej = datosMejoras;
+  mejorasDe = mejorasPorSlug(datosMejoras);
   pintarMejoras(mj.data || [], fb.data || []);
 }
 
@@ -326,7 +331,8 @@ function conectarGlobo(puntos){
    ============================================================ */
 let focoMejoras = "todas";
 let mejorasIA = [];              // mejoras_ia
-let mejoraDe = new Map();        // tipo de mejora global -> mejora enlazada
+let mejorasDe = new Map();       // indicador -> todas sus mejoras (sin descartadas)
+let datosMej = null;             // mejoras y enlaces, para no dejar una mejora sin indicador
 let ultimo = null;               // lo último pintado, para volver a filtrar
 
 function pintarChipsMejoras(){
@@ -335,11 +341,19 @@ function pintarChipsMejoras(){
       escapar(par[1]) + '</button>').join("");
 }
 
-function pintarMejoras(todas, filas){
-  ultimo = { lista: todas, filas: filas };
+function pintarMejoras(todasVista, filas){
+  ultimo = { lista: todasVista, filas: filas };
+  /* Ruido: solo lo que trae texto. Lo que llega solo con estrellas no es
+     ruido, es una calificación; la vista lo cuenta, aquí se recalcula. */
+  const ruidoTexto = filas.filter(x => x.estado !== "por_revisar" && (x.mejoras || []).indexOf(RUIDO) > -1 && tieneTexto(x));
+  const conNota = ruidoTexto.filter(x => x.estrellas != null);
+  const todas = todasVista.map(m => m.slug !== RUIDO ? m : Object.assign({}, m, {
+    veces: ruidoTexto.length, con_estrellas: conNota.length,
+    promedio_estrellas: conNota.length ? conNota.reduce((a, x) => a + x.estrellas, 0) / conNota.length : null
+  })).filter(m => m.slug !== RUIDO || m.veces > 0);
   /* El filtro deja fuera Ruido: no es una mejora por hacer */
   const lista = focoMejoras === "todas" ? todas : todas.filter(m => m.slug !== RUIDO &&
-    (focoMejoras === "con_accion") === mejoraDe.has(m.slug));
+    (focoMejoras === "con_accion") === mejorasDe.has(m.slug));
   if (!todas.length){
     $("#mejoras-top").innerHTML = '<p class="vacio">Todavía no hay mejoras clasificadas.</p>';
     return;
@@ -347,7 +361,8 @@ function pintarMejoras(todas, filas){
   /* Cuántas notas de cada estrella tiene cada tipo (para el globito).
      Mismas filas que cuenta la vista: todo menos lo que sigue por revisar. */
   const notasDe = new Map();
-  const clasificadas = filas.filter(x => x.estado !== "por_revisar");
+  const clasificadas = filas.filter(x => x.estado !== "por_revisar" &&
+    (tieneTexto(x) || (x.mejoras || []).indexOf(RUIDO) === -1));
   /* Y cuántas formas distintas de decirlo tiene cada tipo, como en temas */
   const formasDe = new Map();
   clasificadas.forEach(x => (x.mejoras || []).forEach(m => {
@@ -449,14 +464,16 @@ function pintarMejoras(todas, filas){
    temas. Ruido no lleva: no es una mejora por hacer. */
 function accionesMejora(m){
   if (m.slug === RUIDO) return '<span class="fila-mejora"></span>';
-  const tiene = mejoraDe.has(m.slug);
+  const n = (mejorasDe.get(m.slug) || []).length;
   return '<span class="fila-mejora">' +
-    (tiene ? '<span class="etq lima">con mejora</span>' : '<span class="etq alerta">sin mejora</span>') +
+    (n > 1 ? '<span class="etq lima">' + n + ' mejoras</span>'
+      : n ? '<span class="etq lima">con mejora</span>' : '<span class="etq alerta">sin mejora</span>') +
     /* data-tema-accion: los mismos botones del ranking de temas (icono
-       de cadena, ojo y cadena rota, con su globito), que salen del CSS */
-    (tiene
-      ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejora</button>' +
-        '<button class="boton-chico" data-tema-accion="desvincular">Desvincular</button>'
+       de cadena, ojo y cadena rota, con su globito), que salen del CSS.
+       Con varias mejoras, el ojo abre la lista para elegir cuál. */
+    (n > 1 ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
+      : n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejora</button>' +
+            '<button class="boton-chico" data-tema-accion="desvincular">Desvincular</button>'
       : '<button class="boton-chico" data-tema-accion="mejora">Crear mejora</button>') +
     '</span>';
 }
@@ -468,12 +485,14 @@ function accionMejora(accion, m, clasificadas){
     ventanaQuitarTipo(m, clasificadas.filter(x => (x.mejoras || []).indexOf(m.slug) > -1), alCambiar);
     return;
   }
-  const enlazada = mejoraDe.get(m.slug);
-  if (accion === "mejora" || !enlazada)
+  const lista = mejorasDe.get(m.slug) || [];
+  if (accion === "mejora" || !lista.length)
     ventanaCrearMejora({ slug: m.slug, n: m.veces, mejoras: mejorasIA, alCambiar: alCambiar });
-  else if (accion === "vermejora") ventanaVerMejora({ mejora: enlazada, slug: m.slug, alCambiar: alCambiar });
+  else if (lista.length > 1)
+    ventanaMejorasDe({ slug: m.slug, lista: lista, datos: datosMej, que: "mejora global", alCambiar: alCambiar });
+  else if (accion === "vermejora") ventanaVerMejora({ mejora: lista[0], slug: m.slug, alCambiar: alCambiar });
   else if (accion === "desvincular")
-    ventanaDesvincular({ mejora: enlazada, slug: m.slug, que: "mejora global", alCambiar: alCambiar });
+    ventanaDesvincular({ mejora: lista[0], slug: m.slug, que: "mejora global", datos: datosMej, alCambiar: alCambiar });
 }
 
 /* ✏️ y 🗑️ de cada tipo, como en el ranking de temas */

@@ -25,13 +25,14 @@
 import { $, escapar, fecha, num, pct, abrirVentana, avisar, cerrarVentana, leer,
   traducirError } from "./nucleo.js";
 import { catalogo, nombreDe, nombrePais, nombreOrigen, quitarTema, renombrarTema, RUIDO,
-  mejoraPorSlug } from "./ia.js";
+  mejorasPorSlug, tieneTexto } from "./ia.js";
 import { ventanaClasificar, ventanaComentarios } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta } from "./mejora-ventanas.js";
+import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
 
 let filas = [];                 // v_ia_feedback ya clasificado
 let mejoras = [];               // mejoras_ia
-let mejoraDe = new Map();       // tema -> mejora enlazada
+let mejorasDe = new Map();      // tema -> todas sus mejoras (sin descartadas)
+let datosMej = null;
 let grupos = [];
 let verTodos = false;
 let qTemas = "";
@@ -144,7 +145,8 @@ function pintarChips(){
 export function pintar(todas, datosMejoras){
   filas = (todas || []).filter(x => x.estado !== "por_revisar");
   mejoras = datosMejoras.mejoras;
-  mejoraDe = mejoraPorSlug(datosMejoras);
+  datosMej = datosMejoras;
+  mejorasDe = mejorasPorSlug(datosMejoras);
   grupos = agrupar();
   pintarRanking();
 }
@@ -182,8 +184,8 @@ function pintarRanking(){
      coinciden, no solo los 10 primeros. */
   const busca = qTemas.trim().toLowerCase();
   const lista = grupos.filter(o => {
-    if (f.foco === "sin_accion" && mejoraDe.has(o.slug)) return false;
-    if (f.foco === "con_accion" && !mejoraDe.has(o.slug)) return false;
+    if (f.foco === "sin_accion" && mejorasDe.has(o.slug)) return false;
+    if (f.foco === "con_accion" && !mejorasDe.has(o.slug)) return false;
     if (busca && buscableTema(o).indexOf(busca) === -1) return false;
     return true;
   });
@@ -204,7 +206,7 @@ function pintarRanking(){
 
   const cuerpo = visibles.map(o => {
     const clave = escapar(o.slug);
-    const cubierto = mejoraDe.has(o.slug);
+    const cubierto = mejorasDe.has(o.slug);
     const marca = cubierto
       ? '<span class="etq lima">con mejora</span>'
       : '<span class="etq alerta">sin mejora</span>';
@@ -253,7 +255,7 @@ function pintarRanking(){
 function pintarResumen(){
   const res = $("#resumen-ranking");
   if (!res) return;
-  const conMej = grupos.filter(o => mejoraDe.has(o.slug)).length;
+  const conMej = grupos.filter(o => mejorasDe.has(o.slug)).length;
   const conTema = filas.filter(x => (x.temas || []).length).length;
   res.innerHTML = "<b>" + num(grupos.length) + "</b> temas pedidos · <b>" +
     num(conTema) + "</b> comentarios clasificados · <b>" + (grupos.length ? pct(conMej, grupos.length) : 0) +
@@ -268,11 +270,13 @@ function accionDeTema(bt){
   const accion = bt.dataset.temaAccion;
   if (accion === "renombrar") ventanaRenombrar(slug);
   if (accion === "borrar") ventanaDesetiquetar(slug);
-  const m = mejoraDe.get(slug);
-  if (accion === "mejora" || (accion === "vermejora" && !m))
+  const lista = mejorasDe.get(slug) || [];
+  if (accion === "mejora" || ((accion === "vermejora" || accion === "desvincular") && !lista.length))
     ventanaCrearMejora({ slug: slug, tema: true, n: comentariosDe(slug).length, mejoras: mejoras, alCambiar: trasCambio });
-  else if (accion === "vermejora") ventanaVerMejora({ mejora: m, slug: slug, alCambiar: trasCambio });
-  if (accion === "desvincular" && m) ventanaDesvincular({ mejora: m, slug: slug, alCambiar: trasCambio });
+  else if ((accion === "vermejora" || accion === "desvincular") && lista.length > 1)
+    ventanaMejorasDe({ slug: slug, lista: lista, datos: datosMej, que: "tema", alCambiar: trasCambio });
+  else if (accion === "vermejora") ventanaVerMejora({ mejora: lista[0], slug: slug, alCambiar: trasCambio });
+  else if (accion === "desvincular") ventanaDesvincular({ mejora: lista[0], slug: slug, alCambiar: trasCambio });
 }
 
 async function trasCambio(texto){
@@ -339,8 +343,10 @@ function catalogoTema(slug){
   return catalogo.temas.find(c => c.slug === slug);
 }
 
+/* Solo lo que trae texto: lo que llega solo con estrellas no es ruido,
+   es una calificación (cuenta en el Ranking de estrellas) */
 function comentariosRuido(){
-  return filas.filter(x => (x.mejoras || []).indexOf(RUIDO) > -1);
+  return filas.filter(x => (x.mejoras || []).indexOf(RUIDO) > -1 && tieneTexto(x));
 }
 
 function buscableTema(o){
