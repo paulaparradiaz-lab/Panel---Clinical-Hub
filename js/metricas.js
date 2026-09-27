@@ -22,7 +22,7 @@
    ============================================================ */
 import { sb, $, COLORES, escapar, num, pct, avisar, traducirError, abrirVentana, cerrarVentana,
   leer } from "./nucleo.js";
-import { RUIDO, cargarCatalogo, cargarMejoras, mejorasPorSlug, nombreDe, renombrarTema, tieneTexto,
+import { RUIDO, cargarCatalogo, cargarMejoras, mejorasPorSlug, nombreDe, renombrarTema, tieneTexto, nombrePais,
   quitarMejoraTecnica } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
 import { ventanaCrearMejora, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
@@ -48,10 +48,14 @@ export async function render(caja){
   $("#btn-nueva-global").addEventListener("click", () => ventanaNuevaEtiqueta({ tipo: "mejora",
     alCambiar: async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); } }));
   $("#ranking-criticas").addEventListener("click", e => {
+    /* En el celular no hay mouse: tocar fuera de un número cierra el globito */
+    if (!e.target.closest("[data-globo-critica], [data-globo-paises]")) ocultarGloboCritica();
     const ver = e.target.closest("[data-ver-critica]");
     if (ver){ ocultarGloboCritica(); abrirCritica(ordenCriticas[Number(ver.dataset.verCritica)]); return; }
     const nota = e.target.closest("[data-globo-critica]");
     if (nota){ mostrarGloboCritica(nota); return; }
+    const pais = e.target.closest("[data-globo-paises]");
+    if (pais){ mostrarGloboPaises(pais); return; }
     const bt = e.target.closest("button[data-tema-accion]");
     const tr = bt && bt.closest("tr");
     if (!bt || !tr) return;
@@ -61,9 +65,11 @@ export async function render(caja){
   $("#ranking-criticas").addEventListener("mouseover", e => {
     const nota = e.target.closest("[data-globo-critica]");
     if (nota) mostrarGloboCritica(nota);
+    const pais = e.target.closest("[data-globo-paises]");
+    if (pais) mostrarGloboPaises(pais);
   });
   $("#ranking-criticas").addEventListener("mouseout", e => {
-    if (e.target.closest("[data-globo-critica]")) ocultarGloboCritica();
+    if (e.target.closest("[data-globo-critica], [data-globo-paises]")) ocultarGloboCritica();
   });
   $("#f-foco-mejoras").addEventListener("click", e => {
     const b = e.target.closest("button[data-v]");
@@ -121,7 +127,7 @@ function armazon(){
     <p class="mini">Cada fila es una <b>crítica</b>: un tipo de lo que los médicos dicen de la plataforma (no de un
     tema clínico), ya clasificado por la IA o por ti. Es la misma tabla del ranking de temas: <b>el texto subrayado</b>
     dice cuántas formas distintas hay de decirlo (o cuántos comentarios, si todos dicen lo mismo), <b>Países</b> desde
-    cuántos países, y <b>Estrellas</b> el promedio que pusieron esos
+    cuántos países (pasa el mouse o toca el número para ver cuáles), y <b>Estrellas</b> el promedio que pusieron esos
     médicos al comentar (solo cuentan los que calificaron). El color de las estrellas usa la misma escala de la
     gráfica de estrellas:</p>
     <ul class="lista-niveles">
@@ -351,6 +357,7 @@ let mejorasIA = [];              // mejoras_ia
 let ordenCriticas = [];         // filas pintadas del ranking de críticas
 let clasificadasCriticas = [];   // comentarios que cuenta (para abrir cada crítica)
 let notasCriticas = new Map();   // crítica -> notas por estrella (globito)
+let paisesCriticas = new Map();  // crítica -> { país: comentarios } (globito)
 let mejorasDe = new Map();       // indicador -> todas sus mejoras (sin descartadas)
 let datosMej = null;             // mejoras y enlaces, para no dejar una mejora sin indicador
 let ultimo = null;               // lo último pintado, para volver a filtrar
@@ -382,7 +389,8 @@ function pintarMejoras(todasVista, filas){
   /* De cada crítica: notas por estrella (para el globito), formas de
      decirlo y países, como en el ranking de temas */
   notasCriticas = new Map();
-  const formasDe = new Map(), paisesDe = new Map();
+  const formasDe = new Map();
+  paisesCriticas = new Map();      // crítica -> { país: comentarios }
   clasificadasCriticas.forEach(x => (x.mejoras || []).forEach(m => {
     const o = notasCriticas.get(m) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
     if (x.estrellas != null) o[x.estrellas]++;
@@ -390,8 +398,8 @@ function pintarMejoras(todasVista, filas){
     const texto = String(x.mejora_texto || x.tema_puntual || "").trim().toLowerCase();
     if (!formasDe.has(m)) formasDe.set(m, new Set());
     if (texto) formasDe.get(m).add(texto);
-    if (!paisesDe.has(m)) paisesDe.set(m, new Set());
-    if (x.pais) paisesDe.get(m).add(x.pais);
+    if (!paisesCriticas.has(m)) paisesCriticas.set(m, {});
+    if (x.pais){ const o = paisesCriticas.get(m); o[x.pais] = (o[x.pais] || 0) + 1; }
   }));
 
   /* El filtro deja fuera Ruido: no es una mejora por hacer */
@@ -414,7 +422,12 @@ function pintarMejoras(todasVista, filas){
     const formas = (formasDe.get(m.slug) || new Set()).size;
     const texto = formas > 1 ? formas + " formas de decirlo" : (m.veces === 1 ? "1 comentario" : m.veces + " comentarios");
     const enlace = '<button class="enlace-formas" data-ver-critica="' + i + '" title="Ver los comentarios reales">' + texto + '</button>';
-    const paises = (paisesDe.get(m.slug) || new Set()).size;
+    /* El número de países es un botón: al pasar el mouse (o tocarlo)
+       dice cuáles son y cuántos comentarios llegaron de cada uno */
+    const nPaises = Object.keys(paisesCriticas.get(m.slug) || {}).length;
+    const paises = nPaises
+      ? '<button type="button" class="paises-critica" data-globo-paises="' + i + '">' + nPaises + '</button>'
+      : '0';
     if (m.slug === RUIDO) return '<tr class="fila-ruido">' +
       '<td><span class="tema-nombre">Ruido</span><br>' + enlace + '</td>' +
       '<td class="tabular"><b>' + num(m.veces) + '</b></td>' +
@@ -457,6 +470,24 @@ function mostrarGloboCritica(bt){
       '<b>' + num(notas[n]) + '</b><small>' + pct(notas[n], m.con_estrellas) + '%</small></div>').join("") +
     '<div class="globo-mes-total"><b>' + num(m.veces) + '</b> ' + (m.veces === 1 ? "comentario" : "comentarios") +
       ' · <b>' + num(m.con_estrellas) + '</b> con nota</div>';
+  globo.hidden = false;
+  const base = caja.getBoundingClientRect(), f = bt.getBoundingClientRect();
+  const ancho = globo.offsetWidth;
+  globo.style.left = Math.max(0, Math.min(f.left - base.left + f.width / 2 - ancho / 2, base.width - ancho)) + "px";
+  globo.style.top = (f.bottom - base.top + 6) + "px";
+}
+
+/* Globito de los países: cuáles son y cuántos comentarios de cada uno */
+function mostrarGloboPaises(bt){
+  const m = ordenCriticas[Number(bt.dataset.globoPaises)];
+  const globo = $("#globo-mejora"), caja = $("#ranking-criticas");
+  if (!m || !globo) return;
+  const lista = Object.entries(paisesCriticas.get(m.slug) || {}).sort((a, b) => b[1] - a[1]);
+  globo.innerHTML =
+    '<div class="globo-mes-cab"><b>' + escapar(m.nombre) + '</b><span>' +
+      plural(lista.length, "país", "países") + '</span></div>' +
+    lista.map(par => '<div class="globo-pais"><span>' + escapar(nombrePais(par[0])) + '</span><b>' +
+      plural(par[1], "comentario", "comentarios") + '</b></div>').join("");
   globo.hidden = false;
   const base = caja.getBoundingClientRect(), f = bt.getBoundingClientRect();
   const ancho = globo.offsetWidth;
