@@ -359,6 +359,7 @@ async function alTocar(e){
   if (b.dataset.editar){ ventanaVerMejora({ mejora: m, alCambiar: trasCambio }); return; }
   if (b.dataset.indicador){ ventanaIndicador(m); return; }
   if (b.dataset.asignar){ ventanaAsignar(m); return; }
+  if (b.classList.contains("recuperar-mejora")){ await recuperar(m, b); return; }
   /* El estado se guarda de una: se deshace igual de fácil. En los
      pasos, la goma viaja primero y la lista se repinta cuando termina. */
   if (b.dataset.estado){
@@ -377,6 +378,26 @@ async function alTocar(e){
       avisar(traducirError(err && err.message), "mal", "#aviso-panel");
     }
     return;
+  }
+}
+
+/* Recuperar una descartada: vuelve al estado que tenía antes de
+   descartarla (sale del historial). Si estaba Completada, conserva su
+   fecha de completada: el trigger pone la de hoy al cambiar el estado,
+   así que después se le devuelve la que tenía. */
+async function recuperar(m, b){
+  b.disabled = true;
+  try {
+    const { data, error } = await sb.from("mejora_ia_historial").select("estado")
+      .eq("mejora_id", m.id).order("cambiado_en", { ascending:false }).order("id", { ascending:false });
+    if (error) throw error;
+    const previo = ((data || []).find(h => h.estado !== "descartada") || {}).estado || "pendiente";
+    await editarMejora(m.id, { estado: previo });
+    if (previo === "hecha" && m.completada_en) await editarMejora(m.id, { completada_en: m.completada_en });
+    await trasCambio("Mejora #" + m.id + " recuperada: vuelve a " + nombreEstado(previo).toLowerCase() + ".");
+  } catch (err){
+    b.disabled = false;
+    avisar(traducirError(err && err.message), "mal", "#aviso-panel");
   }
 }
 

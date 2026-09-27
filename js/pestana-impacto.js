@@ -4,10 +4,10 @@
    indicador (mejora global: lo que dicen de toda la plataforma), con
    las mejoras completadas puestas sobre su línea de tiempo.
 
-   TODO VA EN PORCENTAJE: de los médicos que opinaron en cada semana
-   (los que respondieron la encuesta del sitio o escribieron por
-   WhatsApp), qué parte se quejó de ese indicador. Así, si llegan más
-   médicos (y con ellos más críticas), la gráfica no sube sola. El
+   TODO VA EN PORCENTAJE: de las críticas globales que llegaron en cada
+   semana (encuesta del sitio y WhatsApp; mensajes con alguna crítica
+   global, sin Ruido, sin temas pedidos ni solo estrellas), qué parte es
+   de ese indicador. Así, si llegan más críticas, la gráfica no sube sola. El
    buscador no cuenta: ahí nadie opina, solo se buscan temas. Una semana
    con menos de 10 opiniones no se calcula: sale en gris, «pocos datos».
 
@@ -28,7 +28,7 @@ import { catalogo, cargarCatalogo, cargarMejoras, nombreDe, RUIDO, colorIndicado
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
 
 const DIAS_PARA_IR_POR_MES = 182;     // pasados ~6 meses de historia, la gráfica va por mes
-const MINIMO = 10;                    // con menos opiniones que esto, «pocos datos»
+const MINIMO = 5;                     // con menos críticas globales que esto en la semana, «pocos datos»
 /* Las gráficas arrancan el 15 de agosto de 2026: lo de antes era muy poco
    y suelto (dos feedbacks de abril) y solo alargaba la línea en cero. */
 const DESDE = new Date(2026, 7, 15).getTime();
@@ -54,7 +54,7 @@ export async function render(){
 <div class="cabecera cabecera-compacta">
   <div>
     <div class="mast"><span class="etiqueta">Lo que cambió después de cada mejora</span><h1>Impacto</h1></div>
-    <p>Qué parte de los médicos que opinan se queja de cada indicador, y cómo cambia después de cada mejora.</p>
+    <p>Qué parte de las críticas que llegan es de cada indicador, y cómo cambia después de cada mejora.</p>
   </div>
   <button class="boton-recargar" id="btn-recargar" data-tip="Actualizar" aria-label="Actualizar">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 1 1 18 6.6L20.5 9"/><path d="M20.5 4v5h-5"/></svg>
@@ -73,23 +73,25 @@ export async function render(){
   </div>
   <div class="ayuda-plegable" id="ayuda-impacto" hidden>
     <p class="mini">Cada tarjeta es un <b>indicador</b>: una mejora global, lo que dicen los médicos de toda la
-    plataforma. <b>La línea</b> es el <b>porcentaje de los médicos que opinaron</b> cada semana que se quejó de ese
-    indicador. Por ejemplo, si una semana 20 médicos respondieron la encuesta o escribieron por WhatsApp y 3 se
-    quejaron de falta de temas, ese punto marca 15 %. Se mide en porcentaje para que, si llegan más médicos, la
-    gráfica no suba solo por eso. <b>Pasa el mouse</b> (o toca, en el celular) una semana para ver su dato.</p>
-    <p class="mini"><b>Quiénes cuentan:</b> solo la <b>encuesta del sitio</b> y <b>WhatsApp</b>, que es donde el médico
+    plataforma. <b>La línea</b> es el <b>porcentaje de las críticas globales</b> de cada semana que son de ese
+    indicador. Por ejemplo, si una semana llegaron 5 mensajes con críticas y 2 eran de la interfaz, el punto de
+    Interfaz marca 40 %. Solo cuentan los mensajes <b>con alguna crítica global</b>: no cuentan los que piden un
+    tema, los que llegan solo con estrellas ni el Ruido. Se cuentan <b>mensajes, no personas</b>: si un médico
+    escribe 3 veces, cuenta 3. Se mide en porcentaje para que, si llegan más críticas, la gráfica no suba solo
+    por eso. <b>Pasa el mouse</b> (o toca, en el celular) una semana para ver su dato.</p>
+    <p class="mini"><b>Qué mensajes cuentan:</b> solo los de la <b>encuesta del sitio</b> y <b>WhatsApp</b>, que es donde el médico
     opina. El buscador no cuenta: ahí solo se buscan temas, nunca llegan críticas, y si se usa mucho una semana
-    haría parecer que las críticas bajaron. Lo que sigue <b>en el Inbox</b> sí cuenta entre los que opinaron, pero
-    todavía no como crítica: al clasificarlo, el porcentaje de su semana puede subir.</p>
+    haría parecer que las críticas bajaron. Lo que sigue <b>en el Inbox</b> todavía no cuenta: al clasificarlo
+    como crítica, entra en su semana.</p>
     <p class="mini"><b>Cada punto es una semana de lunes a domingo</b>, fija: no se corre de un día para otro. Cada
     lunes aparece un punto nuevo. El último es la <b>semana en curso</b>: todavía le faltan días, así que su
-    porcentaje puede cambiar hasta el domingo; sale como punto hueco cuando ya opinaron 10 o más. Cuando la gráfica
+    porcentaje puede cambiar hasta el domingo; sale como punto hueco cuando ya llegaron ${MINIMO} críticas o más. Cuando la gráfica
     pase de 6 meses (hacia mediados de febrero de 2027), cada punto será un mes.</p>
-    <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas en que opinaron menos de 10 médicos. Con tan pocos, una
+    <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas en que llegaron menos de ${MINIMO} críticas. Con tan pocas, una
     sola crítica da un porcentaje que asusta y no significa nada, así que no se calcula y la línea se corta ahí.</p>
     <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas. Suaviza los
     altibajos para ver si, con el tiempo, las críticas van bajando. Aparece desde la cuarta semana y cuando esas 4
-    semanas suman al menos 10 opiniones; al final dice cuánto da hoy.</p>
+    semanas suman al menos ${MINIMO} críticas; al final dice cuánto da hoy.</p>
     <p class="mini"><b>Las mejoras completadas</b> se ven sobre la línea: una <b>raya con su número</b> el día en
     que se completó. Mira qué hace la línea después de cada raya: si baja y se queda abajo, las críticas de ese
     indicador disminuyeron. <b>Debajo</b> está la lista de esas mejoras, para saber qué es cada número. La fecha
@@ -155,13 +157,17 @@ async function cargar(){
     return;
   }
   if (!$("#impacto-indicadores")) return;
-  /* Los que opinaron: encuesta y WhatsApp, también lo que sigue en el
-     Inbox (son médicos que escribieron). De ahí salen el total y las
-     críticas, para que el porcentaje nunca pase de 100. */
+  /* Mensajes de encuesta y WhatsApp ya clasificados. El total de cada
+     semana son solo los que traen alguna crítica global (sin Ruido): ni
+     los temas pedidos, ni lo que llega solo con estrellas, ni lo que
+     sigue en el Inbox. Cada crítica sale de ahí, así el porcentaje
+     nunca pasa de 100. */
   const opinaron = (fb.data || []).filter(x => CANALES_OPINION.indexOf(x.origen) > -1);
-  /* Sin fecha (la base no la entendió): no se puede ubicar en una semana */
-  const todos = opinaron.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
   const clasificadas = opinaron.filter(x => x.estado !== "por_revisar");
+  const globales = new Set(catalogo.mejoras.map(c => c.slug).filter(s => s !== RUIDO));
+  const conCritica = clasificadas.filter(x => (x.mejoras || []).some(s => globales.has(s)));
+  /* Sin fecha (la base no la entendió): no se puede ubicar en una semana */
+  const todos = conCritica.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
 
   /* Fechas de cada mejora: la última vez que entró a cada estado. La
      de completada escrita en la mejora manda sobre el historial. */
@@ -181,11 +187,14 @@ async function cargar(){
      primera opinión si es después) para poder compararlas; si la
      historia pasa de 6 meses, van por mes */
   const fin = Date.now();
-  const inicio = Math.min(fin - 7 * DIA, Math.max(DESDE, Math.min(...todos.concat([fin]))));
+  /* El inicio sale de todos los mensajes (no solo de las críticas), para
+     que la gráfica siga arrancando el 15 de agosto */
+  const primeros = opinaron.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
+  const inicio = Math.min(fin - 7 * DIA, Math.max(DESDE, Math.min(...primeros.concat([fin]))));
   const modo = (fin - inicio) / DIA > DIAS_PARA_IR_POR_MES ? "mes" : "semana";
   $("#impacto-desde").textContent = "Desde el " + fechaCorta(new Date(inicio)) + ", por " +
     (modo === "semana" ? "semana (lunes a domingo)" : "mes") +
-    " · % de los médicos que opinaron (encuesta y WhatsApp)";
+    " · % de las críticas globales (encuesta y WhatsApp)";
   indicadores = catalogo.mejoras.filter(c => c.slug !== RUIDO).map(c => {
     const lista = clasificadas.filter(x => (x.mejoras || []).indexOf(c.slug) > -1);
     const dias = lista.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
@@ -211,8 +220,8 @@ async function cargar(){
    Por mes: meses del calendario.
    El último periodo es el que va corriendo («en curso»): todavía le
    faltan días y su porcentaje puede cambiar.
-   Cada punto: n críticas del indicador, total de opiniones y el %
-   (null si opinaron menos de 10). */
+   Cada punto: n críticas del indicador, total de críticas globales y
+   el % (null si llegaron menos de MINIMO). */
 function periodos(dias, todos, inicio, fin, modo){
   const lista = [];
   if (modo === "semana"){
@@ -291,9 +300,9 @@ function leyenda(o){
   const por = o.modo === "mes" ? "mes" : "semana";
   const k = o.modo === "mes" ? "3 meses" : "4 semanas";
   return '<div class="impacto-leyenda">' +
-    '<span><i class="ley-linea"></i>% de los que opinaron cada ' + por + ' que se quejó de esto</span>' +
+    '<span><i class="ley-linea"></i>% de las críticas de cada ' + por + ' que son de esto</span>' +
     '<span><i class="ley-tendencia"></i>Tendencia: las últimas ' + k + ' juntas</span>' +
-    (o.periodos.some(p => p.pct === null) ? '<span><i class="ley-pocos"></i>Pocos datos (opinaron menos de ' + MINIMO + ')</span>' : '') +
+    (o.periodos.some(p => p.pct === null) ? '<span><i class="ley-pocos"></i>Pocos datos (menos de ' + MINIMO + ' críticas)</span>' : '') +
     '<span><i class="ley-curso"></i>' + (o.modo === "mes" ? "Mes" : "Semana") + ' en curso (puede cambiar)</span>' +
     (o.mejoras.length ? '<span><i class="ley-hito">#</i>Mejora completada</span>' : '') +
   '</div>';
@@ -376,8 +385,8 @@ function grafica(o){
     '<g><rect class="zona" x="' + (x(i) - ancho / 2) + '" y="' + arr + '" width="' + ancho + '" height="' + (h - arr - abj) +
       '" fill="transparent" data-globo="semana" data-cab="' + quien(p) + '" data-pct="' + (p.pct === null ? "" : pct(p.pct)) +
       '" data-txt="' + (p.pct === null
-        ? 'Pocos datos: opinaron ' + p.total + ' (se necesitan ' + MINIMO + ')'
-        : p.n + ' de ' + p.total + ' que opinaron se quejaron de esto') + '"/>' +
+        ? 'Pocos datos: llegaron ' + plural(p.total, 'crítica', 'críticas') + ' (se necesitan ' + MINIMO + ')'
+        : p.n + ' de ' + plural(p.total, 'crítica', 'críticas') + ' son de esto') + '"/>' +
     (p.pct === null
       ? '<circle class="pocos" cx="' + x(i) + '" cy="' + y(0) + '" r="3" pointer-events="none"/>'
       : '<circle class="punto' + (p.enCurso ? ' en-curso' : '') + '" cx="' + x(i) + '" cy="' + y(p.pct) + '" r="' +
@@ -406,7 +415,7 @@ function grafica(o){
         '" text-anchor="end">últimas ' + k + ' ' + unidad + ': ' + pct(ult) + '</text>' : '')
     : '';
 
-  return '<svg class="impacto-grafica" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Porcentaje de los médicos que se quejó de ' +
+  return '<svg class="impacto-grafica" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Porcentaje de las críticas que son de ' +
       escapar(nombreDe(o.slug)) + ' y sus mejoras">' +
     ejes + areas + trazos + tendencia + puntos + rayas +
   '</svg>';
