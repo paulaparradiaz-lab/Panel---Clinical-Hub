@@ -19,14 +19,14 @@
                      global, de entrada "Cantidad de temas"), que es lo
                      que mide Impacto.
      Nueva etiqueta  crea un tema nuevo en el catálogo.
-     Ruido           última fila, en gris: lo descartado como ruido, para
-                     reclasificarlo o devolverlo al Inbox si fue un error.
+   Ruido no va aquí: vive en el Ranking de críticas (en la base es un
+   tipo de mejora global).
    ============================================================ */
 import { $, escapar, fecha, num, pct, abrirVentana, avisar, cerrarVentana, leer,
   traducirError } from "./nucleo.js";
-import { catalogo, nombreDe, nombrePais, nombreOrigen, quitarTema, renombrarTema, RUIDO,
-  mejorasPorSlug, tieneTexto } from "./ia.js";
-import { ventanaClasificar, ventanaComentarios } from "./ia-ventanas.js";
+import { catalogo, nombreDe, nombrePais, nombreOrigen, quitarTema, renombrarTema,
+  mejorasPorSlug } from "./ia.js";
+import { ventanaClasificar } from "./ia-ventanas.js";
 import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
 
 let filas = [];                 // v_ia_feedback ya clasificado
@@ -85,11 +85,8 @@ export function armazon(){
       borrarla. Al crearla eliges también su indicador (de entrada «Cantidad de temas»), que es lo que mide
       Impacto. <b>Las referencias</b> son las guías que el médico quiere que se citen. <b>Nueva etiqueta</b>
       crea un tema en el catálogo: aparece aquí cuando tenga su primer comentario.</p>
-      <p class="mini"><b>Ruido</b> es la última fila, en gris: lo que se descartó (tú o la IA) porque no decía
-      nada aprovechable. Tócala para revisarlo: si algo se descartó por error, lo reclasificas ahí mismo o lo
-      devuelves al Inbox. Solo sale con el filtro Todos.</p>
       <p class="mini"><b>El buscador</b> mira el nombre del tema, sus sinónimos y lo que escribieron los
-      médicos; escribe "ruido" para encontrar esa fila.</p>
+      médicos. Lo descartado como <b>Ruido</b> se revisa en el Ranking de críticas.</p>
     </div>
     <div class="fila-buscar" style="margin-top:4px">
       <label class="buscador-lupa">
@@ -127,7 +124,6 @@ export function conectar(alRecargar){
     if (e.target.closest("#btn-ver-todos")){ verTodos = !verTodos; pintarRanking(); return; }
     const ver = e.target.closest("button[data-ver]");
     if (ver){ ventanaVerTema(ver.dataset.ver); return; }
-    if (e.target.closest("[data-ver-ruido]")){ ventanaVerRuido(); return; }
     const bt = e.target.closest("button[data-tema-accion]");
     if (bt) accionDeTema(bt);
   });
@@ -196,7 +192,7 @@ function pintarRanking(){
   }
   if (!lista.length){
     $("#ranking").innerHTML = busca
-      ? '<p class="vacio">Ningún tema coincide con “' + escapar(qTemas.trim()) + '”. Prueba con otra palabra.</p>' + filaRuidoSuelta()
+      ? '<p class="vacio">Ningún tema coincide con “' + escapar(qTemas.trim()) + '”. Prueba con otra palabra.</p>'
       : '<p class="vacio">Ningún tema cumple ese filtro. Prueba con Todos.</p>';
     return;
   }
@@ -245,7 +241,7 @@ function pintarRanking(){
   $("#ranking").innerHTML =
     '<table class="tabla"><thead><tr><th>Tema</th><th>Piden</th><th>Países</th>' +
     '<th>Referencias que piden</th><th>Mejora</th><th>Acciones</th></tr></thead><tbody>' +
-    cuerpo + filaRuido() + '</tbody></table>' + alterna +
+    cuerpo + '</tbody></table>' + alterna +
     /* Solo el conteo; la explicación vive en "¿Cómo funciona?" */
     (busca ? '<p class="mini">' + plural(lista.length, "tema coincide", "temas coinciden") + ' con “' +
         escapar(qTemas.trim()) + '”</p>' :
@@ -334,59 +330,13 @@ function ventanaDesetiquetar(slug){
 }
 
 /* "N formas de decirlo": los comentarios reales del tema */
-/* ============================================================
-   Ruido: lo que se descartó (tú o la IA) como "no dice nada útil".
-   Va como última fila del ranking, en gris, para poder revisarlo y
-   rescatar lo que se haya descartado por error.
-   ============================================================ */
 function catalogoTema(slug){
   return catalogo.temas.find(c => c.slug === slug);
-}
-
-/* Solo lo que trae texto: lo que llega solo con estrellas no es ruido,
-   es una calificación (cuenta en el Ranking de estrellas) */
-function comentariosRuido(){
-  return filas.filter(x => (x.mejoras || []).indexOf(RUIDO) > -1 && tieneTexto(x));
 }
 
 function buscableTema(o){
   const cat = catalogoTema(o.slug);
   return [nombreDe(o.slug), o.slug, cat ? cat.sinonimos : "", Array.from(o.formas).join(" ")].join(" ").toLowerCase();
-}
-
-/* La fila de Ruido también responde al buscador ("ruido") */
-function filaRuido(){
-  const lista = comentariosRuido();
-  const busca = qTemas.trim().toLowerCase();
-  if (!lista.length || f.foco !== "todas") return "";
-  if (busca && "ruido descartado".indexOf(busca) === -1) return "";
-  const paises = new Set(lista.map(x => x.pais).filter(Boolean)).size;
-  const texto = lista.length === 1 ? "1 comentario" : lista.length + " comentarios";
-  return '<tr class="fila-ruido">' +
-    '<td><span class="tema-nombre">Ruido</span><br>' +
-      '<button class="enlace-formas" data-ver-ruido title="Ver lo que se descartó como ruido">' + texto + '</button></td>' +
-    '<td class="tabular"><b>' + lista.length + '</b></td>' +
-    '<td class="tabular">' + paises + '</td>' +
-    '<td><span class="mini">Descartados: no decían nada aprovechable</span></td>' +
-    '<td><span class="etq">descartado</span></td>' +
-    '<td><button class="boton-chico" data-ver-ruido>Revisar</button></td></tr>';
-}
-
-function filaRuidoSuelta(){
-  const fila = filaRuido();
-  return fila ? '<table class="tabla"><tbody>' + fila + '</tbody></table>' : '';
-}
-
-function ventanaVerRuido(){
-  const lista = comentariosRuido();
-  ventanaComentarios({
-    titulo: "Ruido",
-    guia: plural(lista.length, "comentario descartado", "comentarios descartados"),
-    intro: "Lo que se marcó como ruido, tal cual llegó. Si algo se descartó por error, reclasifícalo aquí mismo o devuélvelo al Inbox.",
-    lista: lista,
-    vacio: "No hay nada en ruido.",
-    alCambiar: trasCambio
-  });
 }
 
 function ventanaVerTema(slug){
