@@ -25,7 +25,7 @@ import { sb, $, COLORES, escapar, num, pct, avisar, traducirError, abrirVentana,
 import { RUIDO, cargarCatalogo, cargarMejoras, mejorasPorSlug, nombreDe, renombrarTema, tieneTexto,
   quitarMejoraTecnica } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
+import { ventanaCrearMejora, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
 import * as rankingTemas from "./ranking-temas.js";
 
 /* ============================================================
@@ -134,9 +134,9 @@ function armazon(){
     reclasificar cualquiera o devolverlo al Inbox.</p>
     <p class="mini"><b>La mejora</b> se enlaza a la crítica completa, que es su indicador en Impacto: <b>Crear
     mejora</b> hace una nueva (con esta crítica ya marcada como su indicador, su estado y, si ya se hizo, la fecha
-    en que se completó) o la enlaza a una que ya existe; <b>el ojo</b> la ve y edita y <b>la cadena rota</b> se la
-    quita sin borrarla. Si una crítica tiene varias mejoras (por ejemplo, «Cantidad de temas», donde cada guía
-    publicada es una), dice cuántas y el ojo abre la lista para elegir cuál ver o desvincular. No se puede
+    en que se completó) o la enlaza a una que ya existe; <b>el ojo</b> abre la lista de sus mejoras, cada una con <b>Ver</b>
+    (para editarla) y <b>Desvincular</b> (se la quita sin borrarla). Si una crítica tiene varias (por ejemplo,
+    «Cantidad de temas», donde cada guía publicada es una), la marca dice cuántas. No se puede
     desvincular el único indicador de una mejora: quedaría sin nada que medir en Impacto; se cambia en la pestaña
     Mejoras. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
     <p class="mini"><b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
@@ -488,11 +488,9 @@ function abrirCritica(m){
 function accionesMejora(m){
   const n = (mejorasDe.get(m.slug) || []).length;
   /* data-tema-accion: los mismos botones del ranking de temas (icono de
-     cadena, ojo y cadena rota, con su globito), que salen del CSS. Con
-     varias mejoras, el ojo abre la lista para elegir cuál. */
-  return n > 1 ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
-    : n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejora</button>' +
-          '<button class="boton-chico" data-tema-accion="desvincular">Desvincular</button>'
+     cadena y ojo, con su globito), que salen del CSS. El ojo siempre abre
+     la lista de sus mejoras, con Ver y Desvincular para cada una. */
+  return n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
     : '<button class="boton-chico" data-tema-accion="mejora">Crear mejora</button>';
 }
 
@@ -506,11 +504,8 @@ function accionMejora(accion, m, clasificadas){
   const lista = mejorasDe.get(m.slug) || [];
   if (accion === "mejora" || !lista.length)
     ventanaCrearMejora({ slug: m.slug, n: m.veces, mejoras: mejorasIA, alCambiar: alCambiar });
-  else if (lista.length > 1)
+  else if (accion === "vermejora")
     ventanaMejorasDe({ slug: m.slug, lista: lista, datos: datosMej, que: "mejora global", alCambiar: alCambiar });
-  else if (accion === "vermejora") ventanaVerMejora({ mejora: lista[0], slug: m.slug, alCambiar: alCambiar });
-  else if (accion === "desvincular")
-    ventanaDesvincular({ mejora: lista[0], slug: m.slug, que: "mejora global", datos: datosMej, alCambiar: alCambiar });
 }
 
 /* ✏️ y 🗑️ de cada tipo, como en el ranking de temas */

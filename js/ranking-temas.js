@@ -27,7 +27,7 @@ import { $, escapar, fecha, num, pct, abrirVentana, avisar, cerrarVentana, leer,
 import { catalogo, nombreDe, nombrePais, nombreOrigen, quitarTema, renombrarTema,
   mejorasPorSlug } from "./ia.js";
 import { ventanaClasificar } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaVerMejora, ventanaDesvincular, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
+import { ventanaCrearMejora, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
 
 let filas = [];                 // v_ia_feedback ya clasificado
 let mejoras = [];               // mejoras_ia
@@ -81,8 +81,8 @@ export function armazon(){
       reclasificar cualquiera o sacarlo del tema. <b>El lápiz</b> cambia el nombre del tema (la IA sigue
       usando el mismo). <b>La caneca</b> le quita el tema a sus comentarios sin borrar nada: lo que queda
       sin clasificar vuelve al Inbox.</p>
-      <p class="mini"><b>La mejora</b> se enlaza al tema completo; con Desvincular se la quitas al tema sin
-      borrarla. Al crearla eliges también su indicador (de entrada «Cantidad de temas»), que es lo que mide
+      <p class="mini"><b>La mejora</b> se enlaza al tema completo. <b>El ojo</b> abre la lista de sus mejoras: cada
+      una con <b>Ver</b> y <b>Desvincular</b>, que se la quita al tema sin borrarla. Al crearla eliges también su indicador (de entrada «Cantidad de temas»), que es lo que mide
       Impacto. <b>Las referencias</b> son las guías que el médico quiere que se citen. <b>Nueva etiqueta</b>
       crea un tema en el catálogo: aparece aquí cuando tenga su primer comentario.</p>
       <p class="mini"><b>El buscador</b> mira el nombre del tema, sus sinónimos y lo que escribieron los
@@ -217,11 +217,11 @@ function pintarRanking(){
       '" title="Renombrar tema" aria-label="Renombrar tema">' + LAPIZ + '</button>' +
       '<button class="icono-btn peligro" data-tema-accion="borrar" data-clave="' + clave +
       '" title="Quitar este tema de sus comentarios" aria-label="Quitar este tema de sus comentarios">' + CANECA + '</button>';
+    /* Igual que en el Ranking de críticas: solo el ojo, que abre la lista
+       de sus mejoras con Ver y Desvincular */
     const botones = cubierto
       ? '<button class="boton-chico" data-tema-accion="vermejora" data-clave="' + clave +
-        '" title="Ver mejora">Ver mejora</button> ' +
-        '<button class="boton-chico" data-tema-accion="desvincular" data-clave="' + clave +
-        '" title="Desvincular mejora">Desvincular</button>'
+        '" title="Ver mejoras">Ver mejoras</button>'
       : '<button class="boton-chico" data-tema-accion="mejora" data-clave="' + clave +
         '">Crear mejora</button>';
     return '<tr>' +
@@ -267,12 +267,10 @@ function accionDeTema(bt){
   if (accion === "renombrar") ventanaRenombrar(slug);
   if (accion === "borrar") ventanaDesetiquetar(slug);
   const lista = mejorasDe.get(slug) || [];
-  if (accion === "mejora" || ((accion === "vermejora" || accion === "desvincular") && !lista.length))
+  if (accion === "mejora" || (accion === "vermejora" && !lista.length))
     ventanaCrearMejora({ slug: slug, tema: true, n: comentariosDe(slug).length, mejoras: mejoras, alCambiar: trasCambio });
-  else if ((accion === "vermejora" || accion === "desvincular") && lista.length > 1)
+  else if (accion === "vermejora")
     ventanaMejorasDe({ slug: slug, lista: lista, datos: datosMej, que: "tema", alCambiar: trasCambio });
-  else if (accion === "vermejora") ventanaVerMejora({ mejora: lista[0], slug: slug, alCambiar: trasCambio });
-  else if (accion === "desvincular") ventanaDesvincular({ mejora: lista[0], slug: slug, alCambiar: trasCambio });
 }
 
 async function trasCambio(texto){
