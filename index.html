@@ -513,6 +513,20 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .impacto-indicador-cab .indicador-item b{font-size:15.5px;font-weight:800;letter-spacing:-.015em}
 .impacto-indicador-cab .mini{margin:0}
 .impacto-indicador-cab .enlace-formas{margin-left:auto;font-size:12.5px}
+/* Globito propio de la gráfica (el título del navegador tarda o no sale) */
+.impacto-lienzo{position:relative}
+.impacto-globo{
+  position:absolute;z-index:5;display:flex;flex-direction:column;gap:2px;max-width:240px;padding:10px 12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;pointer-events:none;
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.35);font-size:12px;color:var(--ink);animation:ch-aparece .15s ease both;
+}
+.impacto-globo[hidden]{display:none}
+.impacto-globo b{font-weight:600}
+.impacto-globo-pct{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:var(--c)}
+.impacto-globo small{color:var(--faint);font-size:11.5px}
+.impacto-grafica .zona{cursor:pointer}
+.impacto-grafica .zona.activa{fill:var(--c);fill-opacity:.08}
+.impacto-grafica .hito{cursor:pointer}
 .impacto-grafica{display:block;width:100%;height:auto;overflow:visible;font-family:var(--sans)}
 .impacto-grafica .eje{font-size:11px;fill:var(--faint)}
 .impacto-grafica .guia{stroke:var(--border2);stroke-dasharray:3 5}

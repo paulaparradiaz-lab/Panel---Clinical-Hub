@@ -113,6 +113,17 @@ export async function render(){
   $("#impacto-indicadores").addEventListener("click", e => {
     const b = e.target.closest("[data-comentarios]");
     if (b) abrirComentarios(indicadores[Number(b.dataset.comentarios)]);
+    /* En el celular no hay mouse: tocar una semana o una mejora muestra su globito */
+    const z = e.target.closest("[data-globo]");
+    if (z) mostrarGlobo(z);
+  });
+  $("#impacto-indicadores").addEventListener("mouseover", e => {
+    const z = e.target.closest("[data-globo]");
+    if (z) mostrarGlobo(z);
+  });
+  $("#impacto-indicadores").addEventListener("mouseout", e => {
+    const z = e.target.closest("[data-globo]");
+    if (z && !(e.relatedTarget && z.contains(e.relatedTarget))) ocultarGlobo(z);
   });
 
   await cargar();
@@ -262,7 +273,7 @@ function tarjeta(o, i){
         plural(o.mejoras.length, "mejora completada", "mejoras completadas") + '</span>' +
       '<button class="enlace-formas" data-comentarios="' + i + '">Ver comentarios</button>' +
     '</div>' +
-    grafica(o) + leyenda(o) +
+    '<div class="impacto-lienzo">' + grafica(o) + '<div class="impacto-globo" role="tooltip" hidden></div></div>' + leyenda(o) +
     (o.mejoras.length
       ? '<ul class="impacto-mejoras">' + o.mejoras.map(renglon).join("") + '</ul>'
       : '<p class="mini impacto-sin">Todavía no hay mejoras completadas en este indicador.</p>') +
@@ -329,8 +340,8 @@ function grafica(o){
       nivel = px - ultima < 30 ? (nivel + 1) % 2 : 0;
       ultima = px;
       const cx = px + (nivel ? 16 : 0);
-      return '<g class="hito"><title>#' + r.mejora.id + ' ' + escapar(r.mejora.titulo) + ' · completada el ' +
-          fechaCorta(r.fechas.hecha) + '</title>' +
+      return '<g class="hito" data-globo="hito" data-cab="#' + r.mejora.id + ' ' + escapar(r.mejora.titulo) +
+          '" data-txt="Mejora completada el ' + fechaCorta(r.fechas.hecha) + '">' +
         '<line x1="' + px + '" x2="' + px + '" y1="' + (arr - 6) + '" y2="' + (h - abj) + '"/>' +
         '<circle cx="' + cx + '" cy="12" r="10"/><text x="' + cx + '" y="16" text-anchor="middle">' +
           r.mejora.id + '</text></g>';
@@ -352,12 +363,15 @@ function grafica(o){
   const ancho = Math.min(24, (w - izq - der) / Math.max(1, N - 1));
   const quien = p => (o.modo === "mes" ? "Mes de " + etiqueta(p)
     : "Semana del " + fechaCorta(new Date(p.desde)) + " al " + fechaCorta(domingo(p))) +
-    (p.enCurso ? " (en curso: todavía faltan días)" : "");
+    (p.enCurso ? " · en curso" : "");
+  /* Cada semana tiene una zona invisible del alto de la gráfica: al pasar
+     el mouse (o tocarla) sale el globito con su dato */
   const puntos = P.map((p, i) =>
-    '<g><rect x="' + (x(i) - ancho / 2) + '" y="' + arr + '" width="' + ancho + '" height="' + (h - arr - abj) + '" fill="transparent">' +
-      '<title>' + quien(p) + ': ' + (p.pct === null
-        ? 'pocos datos (opinaron ' + p.total + ')'
-        : pct(p.pct) + ' · ' + p.n + ' de ' + p.total + ' que opinaron') + '</title></rect>' +
+    '<g><rect class="zona" x="' + (x(i) - ancho / 2) + '" y="' + arr + '" width="' + ancho + '" height="' + (h - arr - abj) +
+      '" fill="transparent" data-globo="semana" data-cab="' + quien(p) + '" data-pct="' + (p.pct === null ? "" : pct(p.pct)) +
+      '" data-txt="' + (p.pct === null
+        ? 'Pocos datos: opinaron ' + p.total + ' (se necesitan ' + MINIMO + ')'
+        : p.n + ' de ' + p.total + ' que opinaron se quejaron de esto') + '"/>' +
     (p.pct === null
       ? '<circle class="pocos" cx="' + x(i) + '" cy="' + y(0) + '" r="3" pointer-events="none"/>'
       : '<circle class="punto' + (p.enCurso ? ' en-curso' : '') + '" cx="' + x(i) + '" cy="' + y(p.pct) + '" r="' +
@@ -390,6 +404,32 @@ function grafica(o){
       escapar(nombreDe(o.slug)) + ' y sus mejoras">' +
     ejes + areas + trazos + tendencia + puntos + rayas +
   '</svg>';
+}
+
+/* Globito de la gráfica: el dato de la semana (o la mejora) bajo el mouse.
+   Es propio y no el título del navegador, que tarda o ni siquiera sale. */
+function mostrarGlobo(z){
+  const lienzo = z.closest(".impacto-lienzo");
+  const globo = lienzo && lienzo.querySelector(".impacto-globo");
+  if (!globo) return;
+  globo.innerHTML = '<b>' + escapar(z.dataset.cab) + '</b>' +
+    (z.dataset.pct ? '<span class="impacto-globo-pct">' + escapar(z.dataset.pct) + '</span>' : '') +
+    '<small>' + escapar(z.dataset.txt) + '</small>';
+  globo.hidden = false;
+  lienzo.querySelectorAll(".zona.activa").forEach(x => x.classList.remove("activa"));
+  if (z.classList.contains("zona")) z.classList.add("activa");
+  /* Arriba de la zona, sin salirse de la tarjeta */
+  const caja = lienzo.getBoundingClientRect(), r = z.getBoundingClientRect();
+  const x = r.left + r.width / 2 - caja.left - globo.offsetWidth / 2;
+  globo.style.left = Math.max(0, Math.min(caja.width - globo.offsetWidth, x)) + "px";
+  globo.style.top = Math.max(0, r.top - caja.top + 6) + "px";
+}
+
+function ocultarGlobo(z){
+  const lienzo = z.closest(".impacto-lienzo");
+  if (!lienzo) return;
+  lienzo.querySelector(".impacto-globo").hidden = true;
+  lienzo.querySelectorAll(".zona.activa").forEach(x => x.classList.remove("activa"));
 }
 
 /* «Ver comentarios»: lo que escribieron sobre ese indicador */
