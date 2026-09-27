@@ -73,28 +73,33 @@ export async function render(){
   </div>
   <div class="ayuda-plegable" id="ayuda-impacto" hidden>
     <p class="mini">Cada tarjeta es un <b>indicador</b>: una mejora global, lo que dicen los médicos de toda la
-    plataforma. <b>La línea</b> es el <b>porcentaje de los médicos que opinaron</b> esa semana (o ese mes, cuando la
-    historia pase de 6 meses) que se quejó de ese indicador. Por ejemplo, si una semana 20 médicos respondieron la
-    encuesta o escribieron por WhatsApp y 3 se quejaron de falta de temas, ese punto marca 15 %. Se mide en
-    porcentaje para que, si llegan más médicos, la gráfica no suba solo por eso.</p>
+    plataforma. <b>La línea</b> es el <b>porcentaje de los médicos que opinaron</b> cada semana que se quejó de ese
+    indicador. Por ejemplo, si una semana 20 médicos respondieron la encuesta o escribieron por WhatsApp y 3 se
+    quejaron de falta de temas, ese punto marca 15 %. Se mide en porcentaje para que, si llegan más médicos, la
+    gráfica no suba solo por eso. <b>Pasa el mouse</b> (o toca, en el celular) una semana para ver su dato.</p>
     <p class="mini"><b>Quiénes cuentan:</b> solo la <b>encuesta del sitio</b> y <b>WhatsApp</b>, que es donde el médico
     opina. El buscador no cuenta: ahí solo se buscan temas, nunca llegan críticas, y si se usa mucho una semana
-    haría parecer que las críticas bajaron.</p>
+    haría parecer que las críticas bajaron. Lo que sigue <b>en el Inbox</b> sí cuenta entre los que opinaron, pero
+    todavía no como crítica: al clasificarlo, el porcentaje de su semana puede subir.</p>
     <p class="mini"><b>Cada punto es una semana de lunes a domingo</b>, fija: no se corre de un día para otro. Cada
-    lunes aparece un punto nuevo. El último es la <b>semana en curso</b> (punto hueco): todavía le faltan días, así
-    que su porcentaje puede cambiar hasta el domingo.</p>
+    lunes aparece un punto nuevo. El último es la <b>semana en curso</b>: todavía le faltan días, así que su
+    porcentaje puede cambiar hasta el domingo; sale como punto hueco cuando ya opinaron 10 o más. Cuando la gráfica
+    pase de 6 meses (hacia mediados de febrero de 2027), cada punto será un mes.</p>
     <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas en que opinaron menos de 10 médicos. Con tan pocos, una
-    sola crítica da un porcentaje que asusta y no significa nada, así que no se calcula.</p>
-    <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas (o 3
-    meses). Suaviza los altibajos para ver si, con el tiempo, las críticas van bajando.</p>
+    sola crítica da un porcentaje que asusta y no significa nada, así que no se calcula y la línea se corta ahí.</p>
+    <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas. Suaviza los
+    altibajos para ver si, con el tiempo, las críticas van bajando. Aparece desde la cuarta semana y cuando esas 4
+    semanas suman al menos 10 opiniones; al final dice cuánto da hoy.</p>
     <p class="mini"><b>Las mejoras completadas</b> se ven sobre la línea: una <b>raya con su número</b> el día en
     que se completó. Mira qué hace la línea después de cada raya: si baja y se queda abajo, las críticas de ese
     indicador disminuyeron. <b>Debajo</b> está la lista de esas mejoras, para saber qué es cada número. La fecha
-    es la de «Completada el», que puedes escribir a mano si se hizo antes, por fuera del sistema.</p>
-    <p class="mini"><b>«Ver comentarios»</b> abre lo que escribieron los médicos sobre ese indicador.</p>
-    <p class="mini"><b>Fechas:</b> el número de críticas de cada indicador y «Ver comentarios» incluyen <b>todo el
-    historial</b>; la gráfica muestra <b>desde el 15 de agosto</b>. Por eso los números no siempre cuadran exactamente
-    con lo que se ve en la línea.</p>
+    es la de «Completada el», que puedes escribir a mano si se hizo antes, por fuera del sistema. Las mejoras
+    pendientes o en curso no salen aquí: se ven en la pestaña Mejoras.</p>
+    <p class="mini"><b>«Ver comentarios»</b> abre lo que escribieron los médicos sobre ese indicador por la encuesta y
+    WhatsApp, ya clasificado, del más reciente al más antiguo.</p>
+    <p class="mini"><b>Por qué los números no siempre cuadran con la línea:</b> el número de críticas de cada indicador
+    y «Ver comentarios» incluyen <b>todo el historial</b> y también las semanas grises; la línea empieza en la semana
+    del 15 de agosto (del lunes 10 al domingo 16) y no muestra las semanas con pocos datos.</p>
   </div>
   <div id="impacto-indicadores" class="impacto-indicadores"><p class="vacio">Cargando…</p></div>
 </section>`;
