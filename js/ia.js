@@ -317,6 +317,10 @@ export async function quitarPersona(mejoraId, usuarioId){
 /* Un borrado que no tocó filas: si la fila ya no existe (un intento
    anterior sí la quitó) está bien; si sigue ahí, fue falta de permiso. */
 async function siguePuesto(tabla, filtro){
+  /* Sin el código de la app la fila tampoco se ve: no se puede dar por
+     quitada, así que se avisa de que falta verificar el código */
+  const nivel = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (nivel.error || (nivel.data || {}).currentLevel !== "aal2") throw new Error("aal2 requerido");
   let q = sb.from(tabla).select("mejora_id");
   Object.keys(filtro).forEach(k => { q = q.eq(k, filtro[k]); });
   const { data, error } = await q.limit(1);

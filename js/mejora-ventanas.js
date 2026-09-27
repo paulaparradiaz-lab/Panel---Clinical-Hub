@@ -272,8 +272,15 @@ export function ventanaVerMejora({ mejora: m, slug, alCambiar }){
       const dia = leer("v-fecha");
       if (cambios.estado === "hecha" && dia){
         if (dia > hoyTexto()){ avisar("La fecha de completada no puede ser en el futuro.", "mal", "#aviso-forma"); return false; }
-        if (m.estado === "hecha" ? dia !== fechaTexto(m.completada_en) : dia !== hoyTexto())
-          cambios.completada_en = fechaISO(dia);
+        if (m.estado === "hecha" ? dia !== fechaTexto(m.completada_en) : dia !== hoyTexto()){
+          let iso = fechaISO(dia);
+          /* Si al volver a completarla escribes justo la fecha que ya tenía,
+             Supabase la tomaría por «no la tocaste» y pondría la de hoy: un
+             segundo de diferencia basta para que respete la que escribiste. */
+          if (m.estado !== "hecha" && m.completada_en && new Date(iso).getTime() === new Date(m.completada_en).getTime())
+            iso = new Date(new Date(iso).getTime() + 1000).toISOString();
+          cambios.completada_en = iso;
+        }
       }
       await editarMejora(m.id, cambios);
       cerrarVentana();

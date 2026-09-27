@@ -9,7 +9,7 @@
    global, sin Ruido, sin temas pedidos ni solo estrellas), qué parte es
    de ese indicador. Así, si llegan más críticas, la gráfica no sube sola. El
    buscador no cuenta: ahí nadie opina, solo se buscan temas. Una semana
-   con menos de 10 opiniones no se calcula: sale en gris, «pocos datos».
+   con menos de MINIMO (5) críticas no se calcula: sale en gris, «pocos datos».
 
    GRÁFICA      Porcentaje por semana y, pasados 6 meses de historia, por
                 mes, desde el 15 de agosto de 2026; en el color del indicador.
@@ -75,8 +75,8 @@ export async function render(){
     <p class="mini">Cada tarjeta es un <b>indicador</b>: una mejora global, lo que dicen los médicos de toda la
     plataforma. <b>La línea</b> es el <b>porcentaje de las críticas globales</b> de cada semana que son de ese
     indicador. Por ejemplo, si una semana llegaron 5 mensajes con críticas y 2 eran de la interfaz, el punto de
-    Interfaz marca 40 %. Solo cuentan los mensajes <b>con alguna crítica global</b>: no cuentan los que piden un
-    tema, los que llegan solo con estrellas ni el Ruido. Se cuentan <b>mensajes, no personas</b>: si un médico
+    Interfaz marca 40 %. Solo cuentan los mensajes <b>con alguna crítica global</b>: no cuentan los que solo piden un
+    tema (si además traen una crítica, sí cuentan), los que llegan solo con estrellas ni el Ruido. Se cuentan <b>mensajes, no personas</b>: si un médico
     escribe 3 veces, cuenta 3. Se mide en porcentaje para que, si llegan más críticas, la gráfica no suba solo
     por eso. <b>Pasa el mouse</b> (o toca, en el celular) una semana para ver su dato.</p>
     <p class="mini"><b>Qué mensajes cuentan:</b> solo los de la <b>encuesta del sitio</b> y <b>WhatsApp</b>, que es donde el médico
@@ -87,7 +87,7 @@ export async function render(){
     lunes aparece un punto nuevo. El último es la <b>semana en curso</b>: todavía le faltan días, así que su
     porcentaje puede cambiar hasta el domingo; sale como punto hueco cuando ya llegaron ${MINIMO} críticas o más. Cuando la gráfica
     pase de 6 meses (hacia mediados de febrero de 2027), cada punto será un mes.</p>
-    <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas en que llegaron menos de ${MINIMO} críticas. Con tan pocas, una
+    <p class="mini"><b>«Pocos datos»</b> (punto gris): semanas (o meses, cuando la gráfica vaya por mes) en que llegaron menos de ${MINIMO} críticas. Con tan pocas, una
     sola crítica da un porcentaje que asusta y no significa nada, así que no se calcula y la línea se corta ahí.</p>
     <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas. Suaviza los
     altibajos para ver si, con el tiempo, las críticas van bajando. Aparece desde la cuarta semana y cuando esas 4
@@ -317,10 +317,10 @@ function renglon(r){
   '</li>';
 }
 
-/* % de los que opinaron por periodo y, encima, las mejoras completadas
+/* % de las críticas globales por periodo y, encima, las mejoras completadas
    (una raya numerada el día en que se completó cada una). Los periodos
    con pocos datos cortan la línea y salen como un punto gris abajo. La
-   línea punteada es la tendencia: las críticas y las opiniones de los
+   línea punteada es la tendencia: las críticas del indicador y todas las críticas globales de los
    últimos 4 (semanas) o 3 (meses) periodos juntos. */
 function grafica(o){
   const w = anchoGrafica, h = ALTO, izq = 36, der = 14, arr = 34, abj = 28;
@@ -393,7 +393,7 @@ function grafica(o){
           (p.enCurso ? 4.5 : N > 30 ? 2.5 : 3.5) + '" pointer-events="none"/>') +
     '</g>').join("");
 
-  /* Tendencia: críticas y opiniones de los últimos k periodos juntos */
+  /* Tendencia: críticas del indicador y críticas globales de los últimos k periodos juntos */
   const k = o.modo === "mes" ? 3 : 4;
   const unidad = o.modo === "mes" ? "meses" : "semanas";
   const tend = P.map((p, i) => {

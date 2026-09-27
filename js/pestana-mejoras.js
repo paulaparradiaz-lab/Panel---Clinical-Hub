@@ -257,7 +257,7 @@ function tarjeta(m){
   const id = m.id;
   const paso = PASOS.indexOf(m.estado);          // -1 si está descartada
   /* Descartada: la tarjeta queda bloqueada, en gris. Nada se puede tocar
-     salvo «Recuperar», que la devuelve a Pendiente. */
+     salvo «Recuperar», que la devuelve al estado que tenía antes. */
   const bloqueada = paso === -1;
   const off = bloqueada ? ' disabled tabindex="-1"' : '';
 
@@ -304,7 +304,7 @@ function tarjeta(m){
     '<div class="tarjeta-mejora-pie">' +
       '<span class="mini tarjeta-mejora-id">#' + id + ' · ' + fecha(m.creado_en) + '</span>' +
       (paso === -1
-        ? '<button class="boton-chico recuperar-mejora" data-estado="pendiente" data-id="' + id + '">Recuperar</button>'
+        ? '<button class="boton-chico recuperar-mejora" data-id="' + id + '">Recuperar</button>'
         : '<button class="enlace-descartar" data-estado="descartada" data-id="' + id + '">Descartar</button>') +
     '</div>' +
   '</article>';
