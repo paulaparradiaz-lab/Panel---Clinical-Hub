@@ -73,8 +73,8 @@ export function armazon(){
         ¿Cómo funciona?</button>
     </div>
     <div class="ayuda-plegable" id="ayuda-ranking" hidden>
-      <p class="mini">Tus temas, ordenados por cuántos comentarios los piden (<b>Piden</b>) y desde cuántos
-      países (<b>Países</b>). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
+      <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos comentarios los piden), con
+      desde cuántos países (<b>Países</b>). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
       y el botón de abajo muestra todos. El filtro de arriba deja ver <b>Todos</b>, solo los que están
       <b>Sin mejora</b> o solo los que ya tienen <b>Con mejora</b>.</p>
       <p class="mini"><b>El texto subrayado</b> abre los comentarios reales de ese tema; desde ahí puedes
@@ -203,8 +203,9 @@ function pintarRanking(){
   const cuerpo = visibles.map(o => {
     const clave = escapar(o.slug);
     const cubierto = mejorasDe.has(o.slug);
-    const marca = cubierto
-      ? '<span class="etq lima">con mejora</span>'
+    const nMej = (mejorasDe.get(o.slug) || []).length;
+    const marca = nMej > 1 ? '<span class="etq lima">' + nMej + ' mejoras</span>'
+      : cubierto ? '<span class="etq lima">con mejora</span>'
       : '<span class="etq alerta">sin mejora</span>';
     const refs = Array.from(o.refs).join(" / ");
     const formas = o.formas.size;

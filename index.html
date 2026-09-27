@@ -1379,7 +1379,10 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 :is(#ranking,#ranking-criticas) .tabla td .mini{margin:0}
 :is(#ranking,#ranking-criticas) .tema-nombre{display:flex;align-items:center;gap:6px;font-weight:600;line-height:1.25}
 :is(#ranking,#ranking-criticas) .tema-nombre .icono-btn{flex:none}
-:is(#ranking,#ranking-criticas) .tema-nombre .icono-btn:first-of-type{margin-left:auto}
+/* Lápiz y caneca pegados al nombre (no al borde). Si el nombre ocupa
+   dos líneas, quedan a la altura de la primera. */
+:is(#ranking,#ranking-criticas) .tema-nombre{align-items:flex-start}
+:is(#ranking,#ranking-criticas) .tema-nombre .icono-btn{margin-top:calc((1lh - 28px) / 2)}
 :is(#ranking,#ranking-criticas) .enlace-formas{margin-top:2px;text-align:left}
 :is(#ranking,#ranking-criticas) .etq{display:inline-flex;justify-content:center;min-width:92px}
 /* Estado de la mejora como en la vista previa C: tinte suave, sin borde. */
@@ -1422,8 +1425,8 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(2),:is(#ranking,#ranking-criticas) .tabla td:nth-child(2),
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3){text-align:center}
 /* Acciones del ranking: solo Crear mejora parece botón, con el lima de
-   la subpestaña activa (Ranking) y un icono de cadena puesto desde
-   el CSS. Ver mejora (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
+   la subpestaña activa (Ranking) y un bombillo con destello puesto desde
+   el CSS (la cadena queda solo para vincular y desvincular). Ver mejora (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
    data-tema-accion, sin tocar el JS. El ranking de mejoras globales
    (#ranking-criticas) usa la misma tabla y los mismos botones. */
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{
@@ -1437,7 +1440,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   content:"";display:inline-block;width:15px;height:15px;background:currentColor;
   -webkit-mask:var(--icono) center/contain no-repeat;mask:var(--icono) center/contain no-repeat;
 }
-:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3C/svg%3E")}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M12 6a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9z'/%3E%3Cpath d='M12 2v1M4.5 5.5l.7.7M19.5 5.5l-.7.7M2 12h1M21 12h1'/%3E%3C/svg%3E")}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]::before{width:13px;height:13px;margin-right:5px;vertical-align:-2px}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]:hover{
@@ -1645,7 +1648,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3),
   :is(#ranking,#ranking-criticas) .tabla th:nth-child(4),:is(#ranking,#ranking-criticas) .tabla td:nth-child(4){display:none}
   /* Cada tema, una tarjeta compacta: el nombre arriba y debajo
-     "9 piden", el estado y las acciones. Sin desplazarse de lado. */
+     el estado y las acciones. Sin desplazarse de lado. */
   :is(#ranking,#ranking-criticas){overflow-x:visible}
   :is(#ranking,#ranking-criticas) .tabla{display:block;min-width:0}
   :is(#ranking,#ranking-criticas) .tabla thead{display:none}
@@ -1657,7 +1660,6 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(n){display:block;width:auto;padding:0;border:0;border-radius:0;background:none;text-align:left}
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(1){grid-column:1/-1}
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(3),:is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(4){display:none}
-  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(2)::after{content:" piden";font-size:12px;font-weight:500;color:var(--faint)}
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6){justify-self:end}
   :is(#ranking,#ranking-criticas){padding:4px 10px 10px}
   :is(#ranking,#ranking-criticas) .etq{min-width:0}
@@ -1674,11 +1676,12 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
     transition:transform .5s var(--ease);
   }
 }
-/* Ranking de críticas: sin la columna «Veces» (ya lo dice «N formas de
-   decirlo»). La tabla comparte estructura y anchos con la de temas, por
-   eso la columna se esconde en vez de quitarse. */
-#ranking-criticas .tabla thead th:nth-child(2),
-#ranking-criticas .tabla tbody td:nth-child(2){display:none}
+/* Sin la columna «Veces» en críticas ni «Piden» en temas (ya lo dice
+   «N formas de decirlo»; el orden sigue siendo de más a menos). Las dos
+   tablas comparten estructura y anchos, por eso la columna se esconde en
+   vez de quitarse. */
+:is(#ranking,#ranking-criticas) .tabla thead th:nth-child(2),
+:is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(2){display:none}
 }
 /* El número de países es un botón con su globito */
 .paises-critica{
@@ -1704,7 +1707,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #ranking-criticas .tabla tbody tr.fila-ruido td:nth-child(4){display:none}
   #ranking-criticas .paises-critica,
   #ranking-criticas .nota-critica,
-  #ranking-criticas .tabla tbody td:nth-child(5) .etq{
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(5) .etq{
     display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border:0;border-radius:999px;
     font-size:12px;font-weight:600;line-height:1;text-decoration:none;white-space:nowrap;
   }
@@ -1716,10 +1719,35 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   }
   #ranking-criticas .nota-critica::before{width:7px;height:7px}
   /* El botón de mejora queda redondo, solo con su ícono */
-  #ranking-criticas .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{
     font-size:0;width:32px;height:32px;padding:0;border-radius:50%;display:inline-grid;place-items:center;
   }
-  #ranking-criticas .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]::before{margin:0}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]::before{margin:0}
+  /* Temas pedidos (sin países ni estrellas): el nombre arriba y debajo
+     la pastilla de mejora con el botón redondo a la derecha. */
+  #ranking .tabla tbody tr{
+    grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n n" "m a";row-gap:10px;
+  }
+  #ranking .tabla tbody td:nth-child(1){grid-area:n}
+  #ranking .tabla tbody td:nth-child(5){grid-area:m;justify-self:start}
+  #ranking .tabla tbody td:nth-child(6){grid-area:a;justify-self:end}
+}
+/* ============================================================
+   Métricas en celular: ajustes finos de alineación
+   ============================================================ */
+@media (max-width:760px){
+  /* Temas pedidos con el mismo margen interno que las otras dos cajas
+     (estrellas y críticas): título, buscador y tarjetas en la misma línea. */
+  #panel-ranking{padding:16px}
+  /* «¿Cómo funciona?» centrado con la primera línea del título */
+  .cabeza-seccion .enlace-ayuda{margin-top:-3px}
+  /* Filtro de mejora de críticas: las tres opciones llenan el ancho */
+  #f-foco-mejoras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  #f-foco-mejoras .chip{justify-content:center;white-space:nowrap;padding-left:6px;padding-right:6px}
+  /* Botón redondo (ojo o bombillo): el icono en el centro exacto del
+     círculo, y el círculo centrado bajo la caneca. */
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{position:relative;margin-right:-2px}
+  :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]::before{position:absolute;inset:0;margin:auto}
 }
 </style>
 </head>
