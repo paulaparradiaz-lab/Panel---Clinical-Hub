@@ -565,7 +565,7 @@ function ventanaRenombrarTipo(m, alCambiar){
       const nuevo = leer("r-nombre");
       if (!nuevo){ avisar("Escribe el nombre nuevo.", "mal", "#aviso-forma"); return false; }
       if (nuevo === actual) return;
-      await renombrarTema(m.slug, nuevo);
+      await renombrarTema(m.slug, nuevo, "mejora");
       cerrarVentana();
       await alCambiar("Mejora global renombrada: “" + nuevo + "”.");
       return false;

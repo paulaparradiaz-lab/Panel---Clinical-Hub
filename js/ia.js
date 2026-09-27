@@ -146,9 +146,21 @@ export async function devolverAlInbox(filas){
 /* Renombrar un tema o un tipo de mejora global: cambia solo el nombre bonito. El código (slug)
    sigue igual, así la IA sigue clasificando con él. El nombre viejo se
    guarda en los sinónimos para que la IA lo siga reconociendo. */
-export async function renombrarTema(slug, nuevo){
-  const actual = catalogo.temas.concat(catalogo.mejoras).find(c => c.slug === slug) ||
-    { nombre: slug, sinonimos: "", tipo: "tema" };
+export async function renombrarTema(slug, nuevo, tipo){
+  /* tipo: "tema" desde temas pedidos, "mejora" desde críticas. Si la
+     etiqueta no está en el catálogo activo se busca en Supabase, para no
+     renombrar otra ni dar un falso «no tienes permiso». */
+  const deTipo = c => c.slug === slug && (!tipo || c.tipo === tipo);
+  let actual = (tipo === "mejora" ? catalogo.mejoras : tipo === "tema" ? catalogo.temas
+    : catalogo.temas.concat(catalogo.mejoras)).find(deTipo);
+  if (!actual){
+    let q = sb.from("categorias_para_ia").select("slug, nombre, sinonimos, tipo").eq("slug", slug);
+    if (tipo) q = q.eq("tipo", tipo);
+    const { data, error } = await q.limit(1);
+    if (error) throw error;
+    actual = (data || [])[0];
+    if (!actual) throw new Error("No se encontró la etiqueta «" + slug + "» en el catálogo.");
+  }
   const lista = String(actual.sinonimos || "").split("|").map(t => t.trim()).filter(Boolean);
   const viejo = String(actual.nombre || "").trim();
   if (viejo && viejo.toLowerCase() !== nuevo.trim().toLowerCase() &&
@@ -173,6 +185,14 @@ export async function crearEtiqueta(tipo, nombre, sinonimos){
       .insert({ slug: slug, nombre: nombre.trim(), tipo: tipo, sinonimos: sinonimos || null });
     if (!error){ catalogo.temas = []; return slug; }   // el catálogo se vuelve a leer con la nueva
     if (error.code !== "23505") throw error;           // 23505: ese código ya existe, prueba el siguiente
+    /* Si ese código ya es esta misma etiqueta (un intento anterior sí se
+       guardó y se perdió la respuesta), no se crea otra */
+    const { data: ya } = await sb.from("categorias_para_ia").select("nombre, tipo").eq("slug", slug).limit(1);
+    const previa = (ya || [])[0];
+    if (previa && previa.tipo === tipo && String(previa.nombre).trim().toLowerCase() === nombre.trim().toLowerCase()){
+      catalogo.temas = [];
+      return slug;
+    }
   }
   throw new Error("No se pudo crear la etiqueta.");
 }
@@ -237,6 +257,22 @@ export async function crearMejora(titulo, detalle, extra){
   return data.id;
 }
 
+/* Mejora nueva en un solo paso (función crear_mejora_completa en
+   Supabase): la crea, la enlaza y le asigna personas en una sola
+   transacción. «clave» nace al abrir la ventana: si Guardar llega dos
+   veces (doble clic o reintento tras un corte), Supabase devuelve la
+   mejora ya creada en vez de hacer otra. */
+export async function crearMejoraCompleta({ clave, titulo, detalle, extra, enlaces, personas }){
+  const e = extra || {};
+  const { data, error } = await sb.rpc("crear_mejora_completa", {
+    p_clave: clave, p_titulo: titulo, p_detalle: detalle || null,
+    p_estado: e.estado || "pendiente", p_completada_en: e.completada_en || null,
+    p_creado_en: e.creado_en || null, p_enlaces: enlaces, p_personas: personas || []
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function enlazarMejora(mejoraId, slug){
   const { error } = await sb.from("mejora_ia_tema").insert({ mejora_id: mejoraId, tema_slug: slug });
   /* 23505: ya estaba enlazada (una mejora que existía); no es un error */
@@ -247,7 +283,7 @@ export async function desvincularMejora(mejoraId, slug){
   const { data, error } = await sb.from("mejora_ia_tema").delete()
     .eq("mejora_id", mejoraId).eq("tema_slug", slug).select("mejora_id");
   if (error) throw error;
-  if (!(data || []).length) throw new Error("row-level security: no se guardó");
+  if (!(data || []).length) await siguePuesto("mejora_ia_tema", { mejora_id: mejoraId, tema_slug: slug });
 }
 
 export async function editarMejora(mejoraId, cambios){
@@ -267,14 +303,25 @@ export async function cargarUsuarios(){
 
 export async function asignarPersona(mejoraId, usuarioId){
   const { error } = await sb.from("mejora_ia_persona").insert({ mejora_id: mejoraId, usuario_id: usuarioId });
-  if (error) throw error;
+  /* 23505: ya estaba asignada (un intento anterior sí se guardó); no es un error */
+  if (error && error.code !== "23505") throw error;
 }
 
 export async function quitarPersona(mejoraId, usuarioId){
   const { data, error } = await sb.from("mejora_ia_persona").delete()
     .eq("mejora_id", mejoraId).eq("usuario_id", usuarioId).select("mejora_id");
   if (error) throw error;
-  if (!(data || []).length) throw new Error("row-level security: no se guardó");
+  if (!(data || []).length) await siguePuesto("mejora_ia_persona", { mejora_id: mejoraId, usuario_id: usuarioId });
+}
+
+/* Un borrado que no tocó filas: si la fila ya no existe (un intento
+   anterior sí la quitó) está bien; si sigue ahí, fue falta de permiso. */
+async function siguePuesto(tabla, filtro){
+  let q = sb.from(tabla).select("mejora_id");
+  Object.keys(filtro).forEach(k => { q = q.eq(k, filtro[k]); });
+  const { data, error } = await q.limit(1);
+  if (error) throw error;
+  if ((data || []).length) throw new Error("row-level security: no se guardó");
 }
 
 /* ============================================================

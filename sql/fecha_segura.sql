@@ -39,7 +39,8 @@ end;
 $$;
 
 -- La vista usa la función en vez de convertir directo (mismas columnas)
-create or replace view public.v_ia_feedback as
+create or replace view public.v_ia_feedback
+with (security_invoker = true) as
  SELECT id,
     public.fecha_feedback(fecha) AS fecha,
     pais,

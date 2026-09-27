@@ -295,7 +295,7 @@ function ventanaRenombrar(slug){
       const nuevo = leer("r-nombre");
       if (!nuevo){ avisar("Escribe el nombre nuevo.", "mal", "#aviso-forma"); return false; }
       if (nuevo === actual){ return; }
-      await renombrarTema(slug, nuevo);
+      await renombrarTema(slug, nuevo, "tema");
       cerrarVentana();
       await trasCambio("Tema renombrado: “" + nuevo + "”.");
       return false;

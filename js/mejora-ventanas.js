@@ -14,7 +14,7 @@
    Etiqueta    Crea un tema pedido o una mejora global en el catálogo.
    ============================================================ */
 import { escapar, fecha, abrirVentana, avisar, cerrarVentana, leer } from "./nucleo.js";
-import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nombreEstado, crearMejora, enlazarMejora,
+import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nombreEstado, crearMejoraCompleta, enlazarMejora,
   desvincularMejora, editarMejora, cargarUsuarios, asignarPersona, crearEtiqueta } from "./ia.js";
 import { plural } from "./ia-ventanas.js";
 
@@ -26,6 +26,7 @@ import { plural } from "./ia-ventanas.js";
 export async function ventanaCrearMejora({ slug, tema = false, n, mejoras, alCambiar }){
   await cargarCatalogo();
   const sugerido = nombreDe(slug).slice(0, 80);
+  const clave = crypto.randomUUID();   // una por ventana: un reintento no crea otra mejora
   abrirVentana({
     titulo: tema ? "Mejora del tema" : "Crear mejora",
     guia: sugerido + " · " + plural(n, "comentario", "comentarios"),
@@ -59,11 +60,14 @@ export async function ventanaCrearMejora({ slug, tema = false, n, mejoras, alCam
         if (!titulo){ avisar("Ponle un título a la mejora.", "mal", "#aviso-forma"); return false; }
         const extra = leerEstado("m-estado", "m-fecha");
         if (!extra) return false;
-        id = await crearMejora(titulo, leer("m-detalle"), extra);
-        for (const u of elegidas) await asignarPersona(Number(id), u);
+        /* Nueva: se crea, se enlaza y se asignan personas en un solo paso */
+        id = await crearMejoraCompleta({ clave: clave, titulo: titulo, detalle: leer("m-detalle"), extra: extra,
+          enlaces: tema ? [indicador, slug] : [indicador], personas: Array.from(elegidas) });
+      } else {
+        /* Una que ya existe: solo se enlaza (repetirlo no duplica nada) */
+        await enlazarMejora(Number(id), indicador);
+        if (tema) await enlazarMejora(Number(id), slug);
       }
-      await enlazarMejora(Number(id), indicador);
-      if (tema) await enlazarMejora(Number(id), slug);
       cerrarVentana();
       await alCambiar("Mejora #" + id + (tema ? " enlazada a “" + nombreDe(slug) + "”" : "") +
         ": impacta en “" + nombreDe(indicador) + "”.");
@@ -172,6 +176,7 @@ function leerEstado(idEstado, idFecha){
    (una mejora global) y puede ser una que ya se hizo. */
 export async function ventanaNuevaMejora({ alCambiar }){
   await cargarCatalogo();
+  const clave = crypto.randomUUID();   // una por ventana: un reintento no crea otra mejora
   abrirVentana({
     titulo: "Nueva mejora",
     guia: "Para algo que no nació de un feedback, o que ya se hizo",
@@ -192,9 +197,8 @@ export async function ventanaNuevaMejora({ alCambiar }){
       if (!slug){ avisar("Elige el indicador en el que impacta.", "mal", "#aviso-forma"); return false; }
       const extra = leerEstado("n-estado", "n-fecha");
       if (!extra) return false;
-      const id = await crearMejora(titulo, leer("n-detalle"), extra);
-      await enlazarMejora(Number(id), slug);
-      for (const u of elegidas) await asignarPersona(Number(id), u);
+      const id = await crearMejoraCompleta({ clave: clave, titulo: titulo, detalle: leer("n-detalle"), extra: extra,
+        enlaces: [slug], personas: Array.from(elegidas) });
       cerrarVentana();
       await alCambiar("Mejora #" + id + " creada: impacta en “" + nombreDe(slug) + "”.");
       return false;
@@ -252,7 +256,9 @@ export function ventanaVerMejora({ mejora: m, slug, alCambiar }){
       '<select class="campo" id="v-estado">' + ESTADOS.map(e =>
         '<option value="' + e[0] + '"' + (e[0] === m.estado ? " selected" : "") + '>' + e[1] + '</option>').join("") +
       '</select>' +
-      campoCompletada("v-fecha", fechaTexto(m.completada_en)) +
+      /* Si ya está Completada se ve su fecha; si no, al completarla
+         arranca en hoy: la fecha es la de la última vez que se completó. */
+      campoCompletada("v-fecha", m.estado === "hecha" ? fechaTexto(m.completada_en) : "") +
       '<p class="mini explica">Una mejora no se borra: si ya no va, ponla en Descartada y la historia se conserva.</p>',
     aceptar: "Guardar cambios",
     ancha: true,
@@ -261,7 +267,8 @@ export function ventanaVerMejora({ mejora: m, slug, alCambiar }){
       if (!titulo){ avisar("La mejora necesita un título.", "mal", "#aviso-forma"); return false; }
       const cambios = { titulo: titulo, detalle: leer("v-detalle"), estado: leer("v-estado") || m.estado };
       /* La fecha escrita a mano solo cuenta si quedó Completada y es distinta:
-         si no la tocaste, al completarla Supabase pone la de hoy. */
+         si no la tocaste, al completarla Supabase pone la de hoy (la de la
+         última vez que se completó, no la de una vez anterior). */
       const dia = leer("v-fecha");
       if (cambios.estado === "hecha" && dia){
         if (dia > hoyTexto()){ avisar("La fecha de completada no puede ser en el futuro.", "mal", "#aviso-forma"); return false; }

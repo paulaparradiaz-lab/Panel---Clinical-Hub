@@ -75,6 +75,7 @@ export function traducirError(msg){
     return "Código incorrecto o vencido. Usa el que aparece ahora en la app.";
   if (m.includes("rate limit") || m.includes("too many")) return "Demasiados intentos seguidos. Espera un minuto.";
   if (m.includes("duplicate key")) return "Eso ya estaba registrado.";
+  if (m.includes("no se encontró la etiqueta")) return String(msg);
   if (m.includes("failed to fetch")) return "Sin conexión con el servidor. Revisa tu internet.";
   return "No se pudo completar. Intenta de nuevo en un momento.";
 }
