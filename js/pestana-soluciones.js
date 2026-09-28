@@ -4,7 +4,7 @@
    Feedback › Métricas; aquí solo se manejan:
 
    ESTADO       Pendiente, En curso, Completada o Descartada (un toque).
-   INDICADOR    La solución global en la que impacta (Cantidad de temas,
+   INDICADOR    La crítica global en la que impacta (Cantidad de temas,
                 Interfaz/estética…): se ve arriba y se cambia tocándolo.
                 Es lo que mide Impacto.
    PERSONAS     Una o varias por solución, elegidas de los usuarios del
@@ -127,18 +127,18 @@ function nombreUsuario(id){
   return u ? u.nombre : "Usuario sin acceso";
 }
 
-function esSolucionTecnica(slug){
+function esCriticaGlobal(slug){
   return catalogo.mejoras.some(c => c.slug === slug);
 }
 
-/* Los indicadores de una solución: las soluciones globales a las que está
+/* Los indicadores de una solución: las críticas globales a las que está
    enlazada (si quedara algún tema viejo enlazado, no cuenta). */
 function temasDe(m){
-  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(t => !esSolucionTecnica(t));
+  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(t => !esCriticaGlobal(t));
 }
 
 function indicadoresDe(m){
-  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(esSolucionTecnica);
+  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(esCriticaGlobal);
 }
 
 /* ============================================================
@@ -228,7 +228,7 @@ function marcarPaso(caja, estadoNuevo){
   moverGomaPaso(caja);
 }
 
-/* La tarjeta: arriba el indicador (la solución global en la que impacta)
+/* La tarjeta: arriba el indicador (la crítica global en la que impacta)
    y el responsable; en medio el título y los pasos Pendiente → En curso
    → Completada, que se tocan para cambiar el estado; abajo el número,
    la fecha y Descartar / Recuperar. */
@@ -248,7 +248,7 @@ function tarjeta(m){
   const bloqueada = paso === -1;
   const off = bloqueada ? ' disabled tabindex="-1"' : '';
 
-  /* El indicador: la solución global en la que impacta, con la flechita
+  /* El indicador: la crítica global en la que impacta, con la flechita
      en un círculo de su color. Todo el botón abre la ventana para
      elegirlo o cambiarlo. */
   const indicador = '<button type="button" class="indicador-solucion' + (indicadores.length ? '' : ' vacio') +
@@ -427,7 +427,7 @@ function ventanaAsignar(m){
   });
 }
 
-/* Indicador: las soluciones globales, se marcan una o varias. Al guardar
+/* Indicador: las críticas globales, se marcan una o varias. Al guardar
    se enlazan las nuevas y se desvinculan las que se desmarcaron. */
 function ventanaIndicador(m){
   const antes = indicadoresDe(m);
@@ -437,7 +437,7 @@ function ventanaIndicador(m){
     titulo: "Indicador de la solución",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
-      '<p class="mini explica">¿En qué solución global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
+      '<p class="mini explica">¿En qué crítica global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
       'de ese indicador después de completarla. Puedes marcar más de uno.</p>' +
       '<div class="bandeja-opciones" id="i-globales" style="max-height:50vh">' +
       globales.map(c =>
@@ -446,7 +446,7 @@ function ventanaIndicador(m){
         '<span><b>' + escapar(c.nombre) + '</b><span class="mini">' + plural(cuenta.get(c.slug) || 0, "comentario", "comentarios") +
         '</span></span></span><span class="marca-opcion" aria-hidden="true"></span></button>').join("") +
       '</div>' +
-      '<p class="mini explica">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de soluciones globales.</p>',
+      '<p class="mini explica">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de críticas globales.</p>',
     aceptar: "Guardar",
     alAceptar: async () => {
       if (!elegidos.size){ avisar("Elige al menos un indicador.", "mal", "#aviso-forma"); return false; }

@@ -139,6 +139,7 @@ textarea.campo{min-height:90px;resize:vertical}
 .aviso{margin-top:14px;font-size:14px;min-height:1.5em}
 .aviso.ok{color:var(--ok)}
 .aviso.mal{color:var(--warn)}
+#aviso-dinero:empty{display:none}
 
 /* ============================================================
    ACCESO
@@ -659,7 +660,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 /* Métricas · ranking de soluciones: todas las barras arrancan en la misma
    línea, aunque los nombres tengan largos distintos. */
 /* PESTAÑA SOLUCIONES: una tarjeta por solución con su estado, lo que
-   tiene enlazado (temas y soluciones globales) y sus personas. */
+   tiene enlazado (temas y críticas globales) y sus personas. */
 /* PESTAÑA IMPACTO: una tarjeta por indicador con su gráfica de
    críticas (en el color del indicador) y sus soluciones encima */
 /* Una debajo de la otra, a todo el ancho: la línea de tiempo crece con la historia */
@@ -773,7 +774,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .tarjeta-solucion{display:flex;flex-direction:column;gap:10px;transition:transform .35s var(--ease),box-shadow .3s,border-color .2s}
 /* Como las tarjetas del dashboard: se elevan al pasar el mouse */
 .tarjeta-solucion:hover{transform:translateY(-3px);box-shadow:var(--sombra);border-color:var(--border2)}
-/* Arriba: el indicador (la solución global en la que impacta) a la
+/* Arriba: el indicador (la crítica global en la que impacta) a la
    izquierda y el responsable a la derecha */
 .indicador-solucion{
   display:inline-flex;align-items:center;gap:6px 10px;flex-wrap:wrap;min-width:0;padding:4px 12px 4px 10px;
@@ -1598,7 +1599,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 /* Acciones del ranking: solo Crear solución parece botón, con el lima de
    la subpestaña activa (Ranking) y un bombillo con destello puesto desde
    el CSS (la cadena queda solo para vincular y desvincular). Ver solución (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
-   data-tema-accion, sin tocar el JS. El ranking de soluciones globales
+   data-tema-accion, sin tocar el JS. El ranking de críticas globales
    (#ranking-criticas) usa la misma tabla y los mismos botones. */
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{
   width:auto;padding:6px 12px 6px 10px;white-space:nowrap;background:var(--brand);color:var(--brand-ink);

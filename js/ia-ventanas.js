@@ -7,7 +7,7 @@
                un comentario). Guarda en
                feedback_prueba_clasificacion_por_ia por medio de ia.js.
    Comentarios La lista de comentarios de un grupo (la fila de Ruido,
-               un tipo de solución global), cada uno con Reclasificar y
+               un tipo de crítica global), cada uno con Reclasificar y
                Devolver al Inbox.
    ============================================================ */
 import { $, escapar, fecha, num, abrirVentana, avisar, cerrarVentana, traducirError } from "./nucleo.js";
@@ -42,7 +42,7 @@ export function textoDe(x){
    1. Ventana de clasificar
    Desde el Inbox arranca en blanco y sin sugerencias de la IA, para no
    sesgar a quien clasifica; al reclasificar abre con lo que ya tiene. Primero solo pregunta qué es (tema
-   pedido, solución global o las dos); al marcar una opción se
+   pedido, crítica global o las dos); al marcar una opción se
    despliega debajo su parte. Estética del resto del panel: el
    control de las subpestañas y la bandeja del ranking. Lo que elijas reemplaza lo que tuviera
    cada comentario. Lo marcado vive en «marcadas» y no en el DOM,
@@ -96,7 +96,7 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       '<div id="c-temas-nota"></div>' +
     '</div>' +
     '<div id="c-bloque-soluciones">' +
-      '<span class="etiqueta">¿Qué tipo de solución?</span>' +
+      '<span class="etiqueta">¿Qué tipo de crítica?</span>' +
       '<div class="bandeja-opciones" id="c-soluciones"></div>' +
     '</div>' +
     (una ? '' : '<p class="mini">Se aplica a las ' + lista.length +
@@ -111,9 +111,9 @@ export function ventanaClasificar(lista, alTerminar, opciones){
     alAceptar: async () => {
       const temas = tipos.has("tema_pedido") ? Array.from(marcadas.temas) : [];
       const mejoras = tipos.has("mejora_tecnica") ? Array.from(marcadas.mejoras) : [];
-      if (!tipos.size){ avisar("Elige si es tema pedido, solución global o las dos.", "mal", "#aviso-forma"); return false; }
+      if (!tipos.size){ avisar("Elige si es tema pedido, crítica global o las dos.", "mal", "#aviso-forma"); return false; }
       if (tipos.has("tema_pedido") && !temas.length){ avisar("Elige al menos un tema.", "mal", "#aviso-forma"); return false; }
-      if (tipos.has("mejora_tecnica") && !mejoras.length){ avisar("Elige al menos un tipo de solución.", "mal", "#aviso-forma"); return false; }
+      if (tipos.has("mejora_tecnica") && !mejoras.length){ avisar("Elige al menos un tipo de crítica.", "mal", "#aviso-forma"); return false; }
       await clasificar(lista, temas, mejoras);
       cerrarVentana();
       if (alTerminar) await alTerminar(lista.length);

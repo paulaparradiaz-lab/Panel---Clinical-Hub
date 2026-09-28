@@ -2,16 +2,16 @@
    CLINICAL HUB · VENTANAS DE LA SOLUCIÓN
    Las usan los dos rankings de Métricas (temas pedidos y soluciones
    globales) y la pestaña Soluciones. Cada fila del ranking es un código
-   del catálogo (slug): un tema o un tipo de solución global.
+   del catálogo (slug): un tema o un tipo de crítica global.
 
    Crear       Nueva solución, o enlazar la fila a una que ya existe.
                Al crearla se le asignan una o varias personas.
    Nueva       Desde la pestaña Soluciones, sin salir de un feedback: se
-               enlaza a su indicador (una solución global) y puede ser
+               enlaza a su indicador (una crítica global) y puede ser
                del pasado, con su fecha de completada.
    Ver         Título, detalle, estado y fecha de completada, editables.
    Desvincular Le quita la solución a la fila, sin borrarla.
-   Etiqueta    Crea un tema pedido o una solución global en el catálogo.
+   Etiqueta    Crea un tema pedido o una crítica global en el catálogo.
    ============================================================ */
 import { escapar, fecha, abrirVentana, avisar, cerrarVentana, leer } from "./nucleo.js";
 import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nombreEstado, crearSolucionCompleta, enlazarSolucion,
@@ -19,7 +19,7 @@ import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nomb
 import { plural } from "./ia-ventanas.js";
 
 /* Crear solución desde un ranking: nueva, o enlazar una que ya existe.
-   Desde el de soluciones globales, «Impacta en» arranca con la fila donde
+   Desde el de críticas globales, «Impacta en» arranca con la fila donde
    se tocó. Desde el de temas (tema: true), la solución queda enlazada al
    tema y además a su indicador, que de entrada es «Cantidad de temas».
    La nueva lleva estado y, si ya se hizo, su fecha. */
@@ -138,9 +138,9 @@ function mostrarCompletada(selEstado, id){
   ver();
 }
 
-/* Indicador: la solución global en la que impacta (sin Ruido) */
+/* Indicador: la crítica global en la que impacta (sin Ruido) */
 function campoIndicador(id, seleccionado){
-  return '<span class="etiqueta">Impacta en: ¿qué solución global mide su efecto?</span>' +
+  return '<span class="etiqueta">Impacta en: ¿qué crítica global mide su efecto?</span>' +
     '<select class="campo" id="' + id + '">' +
       '<option value="">Elige un indicador</option>' +
       catalogo.mejoras.filter(c => c.slug !== RUIDO).map(c => '<option value="' + escapar(c.slug) + '"' +
@@ -148,7 +148,7 @@ function campoIndicador(id, seleccionado){
     '</select>' +
     '<p class="mini explica">En Impacto se verá si bajaron las críticas de ese indicador. Por ejemplo, publicar una ' +
     'guía nueva impacta en «Cantidad de temas». Si no está, créalo con «Nueva etiqueta» en el ranking de ' +
-    'soluciones globales.</p>';
+    'críticas globales.</p>';
 }
 
 function campoEstado(id){
@@ -173,7 +173,7 @@ function leerEstado(idEstado, idFecha){
 }
 
 /* ➕ Nueva solución: sin salir de un feedback. Se enlaza a su indicador
-   (una solución global) y puede ser una que ya se hizo. */
+   (una crítica global) y puede ser una que ya se hizo. */
 export async function ventanaNuevaSolucion({ alCambiar }){
   await cargarCatalogo();
   const clave = crypto.randomUUID();   // una por ventana: un reintento no crea otra solución
@@ -208,12 +208,12 @@ export async function ventanaNuevaSolucion({ alCambiar }){
   const elegidas = elegirPersonas(document.getElementById("m-personas"));
 }
 
-/* 🏷 Nueva etiqueta: un tema pedido o una solución global nuevos en el
+/* 🏷 Nueva etiqueta: un tema pedido o una crítica global nuevos en el
    catálogo. Los sinónimos ayudan a la IA a reconocerla. */
 export function ventanaNuevaEtiqueta({ tipo, alCambiar }){
   const esTema = tipo === "tema";
   abrirVentana({
-    titulo: esTema ? "Nuevo tema pedido" : "Nueva solución global",
+    titulo: esTema ? "Nuevo tema pedido" : "Nueva crítica global",
     guia: esTema ? "Una etiqueta nueva para los temas que piden los médicos"
                  : "Una etiqueta nueva para lo que dicen de toda la plataforma",
     cuerpo:
@@ -235,7 +235,7 @@ export function ventanaNuevaEtiqueta({ tipo, alCambiar }){
       const sinonimos = (leer("e-sinonimos") || "").split("|").map(t => t.trim()).filter(Boolean).join(" | ");
       await crearEtiqueta(tipo === "tema" ? "tema" : "mejora", nombre, sinonimos);
       cerrarVentana();
-      await alCambiar((esTema ? "Tema" : "Solución global") + " “" + nombre + "” creado.");
+      await alCambiar((esTema ? "Tema “" + nombre + "” creado." : "Crítica global “" + nombre + "” creada."));
       return false;
     }
   });

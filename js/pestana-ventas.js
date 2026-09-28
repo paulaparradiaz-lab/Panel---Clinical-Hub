@@ -14,7 +14,7 @@
    Lee hotmart_eventos (lo llena n8n desde Hotmart; historial cargado
    el 28-sep-2026). Ingresos en US$ netos; egresos en pesos (con su TRM).
    ============================================================ */
-import { sb, $, escapar } from "./nucleo.js";
+import { sb, $, escapar, avisar } from "./nucleo.js";
 import { modelo } from "./ventas-calculos.js";
 import * as resumen from "./ventas-resumen.js";
 import * as suscripciones from "./ventas-suscripciones.js";
@@ -26,7 +26,11 @@ let sub = "ingresos";
 
 const COLUMNAS = "evento,fecha,transaccion,suscriptor,correo,nombre,telefono,pais,plan,cupon,forma_pago,neto_usd,cobro_numero";
 
+/* Turno de carga: si se sale y se vuelve a Dinero mientras carga, solo sigue la última */
+let turno = 0;
+
 export async function render(){
+  const mio = ++turno;
   $("#vista").innerHTML = `
 <div class="cabecera cabecera-compacta">
   <div>
@@ -45,6 +49,7 @@ export async function render(){
   <button class="subpestana" role="tab" data-sub="rentabilidad" aria-selected="false" aria-controls="sub-vista">Rentabilidad</button>
 </div>
 
+<p class="aviso" id="aviso-dinero" role="status"></p>
 <div id="sub-vista" role="tabpanel"><p class="vacio">Cargando…</p></div>`;
 
   $("#subpestanas").addEventListener("click", e => {
@@ -61,19 +66,24 @@ export async function render(){
     const b = $("#btn-recargar");
     if (b.classList.contains("girando")) return;
     b.classList.add("girando");
+    avisar("", "", "#aviso-dinero");
     try {
       if (sub === "egresos") await egresos.recargar();
       else if (sub === "rentabilidad") { await cargar(); await rentabilidad.render($("#sub-vista"), datos); }
       else { await cargar(); await pintar(); }
+    } catch (err){
+      /* Sin conexión o Supabase no respondió: se avisa y se deja lo que ya estaba */
+      avisar("No se pudo actualizar: " + (err.message || err) + ". Revisa la conexión y vuelve a intentar.", "mal", "#aviso-dinero");
     } finally { b.classList.remove("girando"); }
   });
 
   try { await cargar(); }
   catch (err){
-    if (!$("#sub-vista")) return;
+    if (mio !== turno || !$("#sub-vista")) return;
     $("#sub-vista").innerHTML = '<p class="vacio">No se pudieron leer las ventas. ' + escapar(err.message || err) + '</p>';
     return;
   }
+  if (mio !== turno) return;
   await abrir(sub);
 }
 
@@ -83,6 +93,8 @@ async function abrir(id){
   document.querySelectorAll("#subpestanas .subpestana").forEach(b =>
     b.setAttribute("aria-selected", String(b.dataset.sub === sub)));
   moverGoma();
+  /* Si todavía no llegan las ventas, la carga inicial abre la subpestaña elegida al terminar */
+  if (!datos){ $("#sub-vista").innerHTML = '<p class="vacio">Cargando…</p>'; return; }
   if (sub === "egresos") await egresos.render($("#sub-vista"), datos);
   else if (sub === "rentabilidad") await rentabilidad.render($("#sub-vista"), datos);
   else await pintar();
@@ -92,6 +104,7 @@ async function abrir(id){
 async function pintar(){
   const vista = $("#sub-vista");
   if (!vista) return;
+  vista.dataset.vista = "ingresos";
   vista.innerHTML = '<div id="ventas-resumen"></div><div id="ventas-suscripciones"></div>';
   await resumen.render($("#ventas-resumen"), datos);
   await suscripciones.render($("#ventas-suscripciones"), datos);
@@ -115,7 +128,9 @@ async function cargar(){
   const PAGINA = 1000;
   for (let desde = 0; ; desde += PAGINA){
     const { data, error } = await sb.from("hotmart_eventos").select(COLUMNAS)
-      .order("fecha", { ascending:true }).range(desde, desde + PAGINA - 1);
+      /* Desempate por la clave (única): con la misma hora exacta, el orden
+         sería distinto en cada tanda y un evento podría salir dos veces o ninguna */
+      .order("fecha", { ascending:true }).order("clave", { ascending:true }).range(desde, desde + PAGINA - 1);
     if (error) throw error;
     eventos.push(...data);
     if (data.length < PAGINA) break;

@@ -17,7 +17,7 @@ import { sb, sesionSegura } from "./nucleo.js";
 
 const TABLA = "feedback_prueba_clasificacion_por_ia";
 
-export const TIPOS = [["tema_pedido", "Tema pedido"], ["mejora_tecnica", "Solución global"]];
+export const TIPOS = [["tema_pedido", "Tema pedido"], ["mejora_tecnica", "Crítica global"]];
 export const RUIDO = "ruido";
 
 /* Catálogo: se lee una vez y se guarda aquí */
@@ -36,7 +36,7 @@ export async function cargarCatalogo(){
   catalogo.nombres = new Map((data || []).map(c => [c.slug, c.nombre]));
 }
 
-/* Color de cada indicador (solución global). Sigue al indicador, nunca a
+/* Color de cada indicador (crítica global). Sigue al indicador, nunca a
    su puesto: los de hoy tienen el suyo fijo y los que se creen después
    toman los siguientes en orden de creación. Es la paleta categórica
    validada para daltonismo; el nombre siempre va escrito al lado. */
@@ -117,9 +117,9 @@ export async function quitarTema(filas, slug){
   if (respuestas.some(r => !(r.data || []).length)) throw new Error("row-level security: no se guardó");
 }
 
-/* Lo mismo con un tipo de solución global: se le quita a sus comentarios
+/* Lo mismo con un tipo de crítica global: se le quita a sus comentarios
    y conservan lo demás. Sin tema ni solución, vuelven al Inbox. */
-export async function quitarSolucionTecnica(filas, slug){
+export async function quitarCriticaGlobal(filas, slug){
   const cambios = filas.map(x => {
     const temas = x.temas || [];
     const mejoras = (x.mejoras || []).filter(m => m !== slug);
@@ -143,7 +143,7 @@ export async function devolverAlInbox(filas){
   if ((data || []).length !== ids.length) throw new Error("row-level security: no se guardó");
 }
 
-/* Renombrar un tema o un tipo de solución global: cambia solo el nombre bonito. El código (slug)
+/* Renombrar un tema o un tipo de crítica global: cambia solo el nombre bonito. El código (slug)
    sigue igual, así la IA sigue clasificando con él. El nombre viejo se
    guarda en los sinónimos para que la IA lo siga reconociendo. */
 export async function renombrarTema(slug, nuevo, tipo){
@@ -174,7 +174,7 @@ export async function renombrarTema(slug, nuevo, tipo){
 }
 
 /* Etiqueta nueva en el catálogo: un tema pedido (tipo "tema") o una
-   solución global (tipo "mejora"). El código (slug) sale del nombre, sin
+   crítica global (tipo "mejora"). El código (slug) sale del nombre, sin
    tildes ni espacios; si ya existe, se le pone un número al final. */
 export async function crearEtiqueta(tipo, nombre, sinonimos){
   const base = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
@@ -201,7 +201,7 @@ export async function crearEtiqueta(tipo, nombre, sinonimos){
    3. Soluciones (mejoras_ia), su enlace con los temas y las soluciones
    globales (mejora_ia_tema) y sus personas (mejora_ia_persona).
    Una solución no se borra: para descartarla se cambia su estado.
-   Desvincular solo quita el enlace con el tema o la solución global.
+   Desvincular solo quita el enlace con el tema o la crítica global.
    ============================================================ */
 export const ESTADOS = [["pendiente", "Pendiente"], ["en_curso", "En curso"],
   ["hecha", "Completada"], ["descartada", "Descartada"]];
@@ -239,7 +239,7 @@ export function solucionesPorSlug(datos){
   return mapa;
 }
 
-/* Cuántos indicadores (soluciones globales) tiene una solución: si es uno
+/* Cuántos indicadores (críticas globales) tiene una solución: si es uno
    solo, no se puede desvincular desde un ranking (quedaría sin nada que
    medir en Impacto). */
 export function indicadoresDe(datos, solucionId){

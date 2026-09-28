@@ -63,6 +63,7 @@ let datosVentas = null;
 export async function render(c, datos){
   caja = c;
   datosVentas = datos;
+  caja.dataset.vista = "egresos";
   caja.innerHTML = `
 <section class="caja" style="margin-top:18px">
   ${cabecera("ayuda-egresos", "Egresos", { id: "eg-resumen", texto: "" }, [
@@ -93,7 +94,8 @@ export async function render(c, datos){
 export async function recargar(){
   const { data, error } = await sb.from("egresos").select("*")
     .order("fecha", { ascending:false }).order("id", { ascending:false });
-  if (!caja || !caja.isConnected) return;
+  /* Si mientras llegaban los datos se cambió de subpestaña, no se dibuja encima */
+  if (!caja || !caja.isConnected || caja.dataset.vista !== "egresos") return;
   if (error){
     caja.querySelector("#eg-lista").innerHTML = '<p class="vacio">No se pudieron leer los egresos. ' + escapar(traducirError(error.message)) + '</p>';
     return;
@@ -305,17 +307,22 @@ function ventana(g){
   /* Los botones van uno debajo del otro */
   document.querySelector("#velo-forma .ventana").classList.add("vt-ventana-egreso");
   /* La TRM oficial se trae sola al abrir (gasto nuevo) y al cambiar la fecha */
+  /* Solo cuenta la respuesta de la última fecha elegida: si se cambia rápido,
+     una respuesta vieja que llegue tarde no pisa la TRM de la fecha nueva */
+  let pedido = 0;
   const traerTrm = async () => {
     const dia = leer("eg-fecha"), nota = document.getElementById("eg-trm-nota");
     if (!dia || !nota) return;
+    const mio = ++pedido;
     nota.textContent = "Buscando la TRM oficial…";
     try {
       const valor = await trmDelDia(dia);
       const campo = document.getElementById("eg-trm");
-      if (!campo) return;
+      if (!campo || mio !== pedido) return;
       campo.value = valor;
       nota.textContent = "TRM oficial vigente ese día (datos.gov.co). Puedes cambiarla si usaste otra tasa.";
     } catch (err){
+      if (mio !== pedido) return;
       nota.textContent = "No se pudo traer la TRM oficial: escríbela a mano.";
     }
   };

@@ -5,7 +5,7 @@
    ESTRELLAS   Promedio de estrellas por mes, en chupetes con la nota,
                la ★ y cuántas reseñas, sobre un área sombreada del
                color de cada nivel.
-   CRÍTICAS    Ranking de críticas: los tipos de solución global en la
+   CRÍTICAS    Ranking de críticas: los tipos de crítica global en la
                misma tabla que temas (veces, países, estrellas con su
                color y globito), cada uno con sus soluciones: crear, ver y
                desvincular, con el filtro con / sin solución.
@@ -23,7 +23,7 @@
 import { sb, $, COLORES, escapar, num, pct, avisar, traducirError, abrirVentana, cerrarVentana,
   leer } from "./nucleo.js";
 import { RUIDO, cargarCatalogo, cargarSoluciones, solucionesPorSlug, nombreDe, renombrarTema, tieneTexto, nombrePais,
-  quitarSolucionTecnica } from "./ia.js";
+  quitarCriticaGlobal } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
 import { ventanaCrearSolucion, ventanaNuevaEtiqueta, ventanaSolucionesDe } from "./solucion-ventanas.js";
 import * as rankingTemas from "./ranking-temas.js";
@@ -348,7 +348,7 @@ function conectarGlobo(puntos){
 }
 
 /* ============================================================
-   5. Ranking de soluciones globales
+   5. Ranking de críticas globales
    Barras como las de Tipo de problema. Ruido va en gris al final:
    se cuenta, pero no es una solución que haya que hacer.
    ============================================================ */
@@ -537,7 +537,7 @@ function accionSolucion(accion, m, clasificadas){
   if (accion === "mejora" || !lista.length)
     ventanaCrearSolucion({ slug: m.slug, n: m.veces, mejoras: solucionesIA, alCambiar: alCambiar });
   else if (accion === "vermejora")
-    ventanaSolucionesDe({ slug: m.slug, lista: lista, datos: datosMej, que: "solución global", alCambiar: alCambiar });
+    ventanaSolucionesDe({ slug: m.slug, lista: lista, datos: datosMej, que: "crítica global", alCambiar: alCambiar });
 }
 
 /* ✏️ y 🗑️ de cada tipo, como en el ranking de temas */
@@ -553,7 +553,7 @@ const ICONOS =
 function ventanaRenombrarTipo(m, alCambiar){
   const actual = nombreDe(m.slug);
   abrirVentana({
-    titulo: "Renombrar solución global",
+    titulo: "Renombrar crítica global",
     guia: actual,
     cuerpo:
       '<input class="campo" id="r-nombre" value="' + escapar(actual) + '">' +
@@ -567,7 +567,7 @@ function ventanaRenombrarTipo(m, alCambiar){
       if (nuevo === actual) return;
       await renombrarTema(m.slug, nuevo, "mejora");
       cerrarVentana();
-      await alCambiar("Solución global renombrada: “" + nuevo + "”.");
+      await alCambiar("Crítica global renombrada: “" + nuevo + "”.");
       return false;
     }
   });
@@ -577,7 +577,7 @@ function ventanaRenombrarTipo(m, alCambiar){
 function ventanaQuitarTipo(m, lista, alCambiar){
   const vuelven = lista.filter(x => (x.mejoras || []).length === 1 && !(x.temas || []).length).length;
   abrirVentana({
-    titulo: "Quitar solución global",
+    titulo: "Quitar crítica global",
     guia: nombreDe(m.slug) + " · " + plural(lista.length, "comentario", "comentarios"),
     cuerpo:
       '<p>¿Quitar “' + escapar(nombreDe(m.slug)) + '” de sus ' + plural(lista.length, "comentario", "comentarios") + '?</p>' +
@@ -588,7 +588,7 @@ function ventanaQuitarTipo(m, lista, alCambiar){
         ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.</p>' : ''),
     aceptar: "Quitar",
     alAceptar: async () => {
-      await quitarSolucionTecnica(lista, m.slug);
+      await quitarCriticaGlobal(lista, m.slug);
       cerrarVentana();
       await alCambiar("“" + nombreDe(m.slug) + "” quitado de " + plural(lista.length, "comentario", "comentarios") +
         (vuelven ? " · " + vuelven + " volvieron al Inbox" : "") + ".");

@@ -1,7 +1,7 @@
 /* ============================================================
    CLINICAL HUB · PESTAÑA IMPACTO (panel nuevo)
    ¿Bajaron las críticas después de cada solución? Una tarjeta por cada
-   indicador (solución global: lo que dicen de toda la plataforma), con
+   indicador (crítica global: lo que dicen de toda la plataforma), con
    las soluciones completadas puestas sobre su línea de tiempo.
 
    TODO VA EN PORCENTAJE: de las críticas globales que llegaron en cada
@@ -65,7 +65,7 @@ export async function render(caja){
       ¿Cómo funciona?</button>
   </div>
   <div class="ayuda-plegable" id="ayuda-impacto" hidden>
-    <p class="mini">Cada tarjeta es un <b>indicador</b>: una solución global, lo que dicen los médicos de toda la
+    <p class="mini">Cada tarjeta es un <b>indicador</b>: una crítica global, lo que dicen los médicos de toda la
     plataforma. <b>La línea</b> es el <b>porcentaje de las críticas globales</b> de cada semana que son de ese
     indicador. Por ejemplo, si una semana llegaron 5 mensajes con críticas y 2 eran de la interfaz, el punto de
     Interfaz marca 40 %. Solo cuentan los mensajes <b>con alguna crítica global</b>: no cuentan los que solo piden un
@@ -250,7 +250,7 @@ function pintar(){
 
   if (!indicadores.length){
     $("#impacto-indicadores").innerHTML = '<p class="vacio">Todavía no hay indicadores. Créalos con «Nueva etiqueta» ' +
-      'en el ranking de soluciones globales de Feedback › Métricas.</p>';
+      'en el ranking de críticas globales de Feedback › Métricas.</p>';
     return;
   }
   /* El ancho real de la gráfica: el de la lista menos el relleno de la tarjeta */

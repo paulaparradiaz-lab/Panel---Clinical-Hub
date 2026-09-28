@@ -61,7 +61,12 @@ function posiciones(l){
   };
 }
 
+/* Turno de carga: si se sale y se vuelve a Hitos mientras carga, solo
+   dibuja la última (si no, las dos activaban las ayudas y se anulaban) */
+let turno = 0;
+
 export async function render(){
+  const mio = ++turno;
   $("#vista").innerHTML = `
 <div class="cabecera cabecera-compacta">
   <div>
@@ -82,6 +87,7 @@ export async function render(){
     sb.from("v_hotmart_hitos").select("dia,medicos,activos,activos_record,neta").order("dia", { ascending:true }),
     corredores().catch(() => null)
   ]);
+  if (mio !== turno || !$("#metro-lineas")) return;   // ya se abrió otra pestaña o otra carga
   const error = cinco.error || hotmart.error;
   if (error){
     $("#metro-lineas").innerHTML = '<p class="vacio">No se pudieron leer los datos. ' + escapar(error.message) + '</p>';
@@ -92,7 +98,8 @@ export async function render(){
   const hoy = dias[dias.length - 1] || {};
   const serie = campo => ({
     actual: Number(hoy[campo] || 0),
-    fechaDe: n => { const d = dias.find(x => Number(x[campo]) >= n); return d ? d.dia : null; }
+    /* dia llega como «2026-09-28» (sin hora): se fija al mediodía de Colombia para que no salga un día antes */
+    fechaDe: n => { const d = dias.find(x => Number(x[campo]) >= n); return d ? d.dia + "T12:00:00-05:00" : null; }
   });
   const datos = {
     activos: { ...serie("activos_record"), hoy: Number(hoy.activos || 0) },

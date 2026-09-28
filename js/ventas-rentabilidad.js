@@ -23,19 +23,37 @@ let datosVentas = null;
 export async function render(c, datos){
   caja = c;
   datosVentas = datos;
+  caja.dataset.vista = "rentabilidad";
   await recargar();
 }
 
 export async function recargar(){
   const { data, error } = await sb.from("egresos").select("fecha,monto_usd");
-  if (!caja || !caja.isConnected) return;
+  /* Si mientras llegaban los datos se cambió de subpestaña, no se dibuja encima */
+  if (!caja || !caja.isConnected || caja.dataset.vista !== "rentabilidad") return;
   if (error){ caja.innerHTML = '<p class="vacio">No se pudieron leer los egresos. ' + escapar(error.message) + '</p>'; return; }
   pintar(calcular(data || []));
 }
 
-/* Un renglón por mes, desde la primera venta hasta hoy */
+/* Un renglón por mes, desde la primera venta o el primer gasto (lo que
+   ocurra primero) hasta hoy: un gasto de antes de vender también resta */
 function calcular(egresos){
-  return meses(datosVentas.modelo, Date.now()).map(x => {
+  const ventas = meses(datosVentas.modelo, Date.now());
+  const clave = (a, m) => a + "-" + String(m + 1).padStart(2, "0");
+  const hoy = new Date(Date.now() - 5 * 3600e3);
+  const fin = ventas.length ? ventas[0] : { anio: hoy.getUTCFullYear(), mes: hoy.getUTCMonth() };
+  const primerGasto = egresos.map(e => e.fecha.slice(0, 7)).sort()[0];
+  const antes = [];
+  if (primerGasto && primerGasto < clave(fin.anio, fin.mes)){
+    let [a, m] = primerGasto.split("-").map(Number); m -= 1;
+    while (clave(a, m) < clave(fin.anio, fin.mes)){
+      antes.push({ anio: a, mes: m, cerrado: true, ingresos: 0 });
+      m === 11 ? (a++, m = 0) : m++;
+    }
+    /* Sin ventas todavía: se llega hasta el mes en curso */
+    if (!ventas.length) antes.push({ anio: fin.anio, mes: fin.mes, cerrado: false, ingresos: 0 });
+  }
+  return [...antes, ...ventas].map(x => {
     const clave = x.anio + "-" + String(x.mes + 1).padStart(2, "0");
     const delMes = egresos.filter(e => e.fecha.startsWith(clave));
     const gasto = delMes.reduce((s, e) => s + Number(e.monto_usd), 0);

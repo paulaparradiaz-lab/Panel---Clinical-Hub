@@ -20,7 +20,7 @@
                      que mide Impacto.
      Nueva etiqueta  crea un tema nuevo en el catálogo.
    Ruido no va aquí: vive en el Ranking de críticas (en la base es un
-   tipo de solución global).
+   tipo de crítica global).
    ============================================================ */
 import { $, escapar, fecha, num, pct, abrirVentana, avisar, cerrarVentana, leer,
   traducirError } from "./nucleo.js";

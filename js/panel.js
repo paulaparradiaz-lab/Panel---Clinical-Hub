@@ -77,7 +77,17 @@ function claveInvalida(nueva, repetir){
 /* Si se llega desde el enlace de «¿Olvidaste tu contraseña?», después del
    código de la app se pide la contraseña nueva en vez de abrir el panel. */
 let modoRecuperacion = /type=recovery/.test(location.hash);
-sb.auth.onAuthStateChange(evento => { if (evento === "PASSWORD_RECOVERY") modoRecuperacion = true; });
+/* El enlace del correo es una sesión nueva: arranca con el reloj de
+   inactividad en cero (si no, tras 12 h sin usar el panel, te sacaría
+   antes de poner la contraseña nueva y el enlace quedaría gastado) */
+if (modoRecuperacion){ marcadoEn = 0; marcarActividad(); }
+let panelAbierto = false;
+sb.auth.onAuthStateChange(evento => {
+  if (evento === "PASSWORD_RECOVERY"){ modoRecuperacion = true; marcadoEn = 0; marcarActividad(); }
+  /* Se cerró la sesión desde otro equipo (o venció): de vuelta al inicio,
+     en vez de dejar el panel abierto mostrando todo en cero */
+  if (evento === "SIGNED_OUT" && panelAbierto) location.reload();
+});
 
 function mostrarPaso(id){
   PASOS.forEach(p => { $("#" + p).hidden = (p !== id); });
@@ -261,6 +271,7 @@ $("#volver").addEventListener("click", salir);
    ============================================================ */
 async function abrirPanel(sesion){
   if (!$("#panel").hidden) return;
+  panelAbierto = true;
   $("#acceso").hidden = true;
   $("#panel").hidden = false;
 

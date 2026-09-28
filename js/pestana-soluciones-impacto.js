@@ -17,7 +17,7 @@ import * as impacto from "./pestana-impacto.js";
 
 const SUBS = {
   tablero: { modulo: tablero, etiqueta: "Lo que vamos a cambiar",
-    texto: "Cambia el estado, desvincula temas o soluciones globales y asigna quién la hace." },
+    texto: "Cambia el estado, desvincula temas o críticas globales y asigna quién la hace." },
   impacto: { modulo: impacto, etiqueta: "Lo que cambió después de cada solución",
     texto: "Qué parte de las críticas que llegan es de cada indicador, y cómo cambia después de cada solución." }
 };
