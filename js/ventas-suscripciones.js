@@ -13,6 +13,7 @@ import { meses, cohortes, mrrDiario, activa, PASOS_COHORTE } from "./ventas-calc
 import { porcentaje, grafica, cabecera, armarAyudas } from "./ventas-comun.js";
 
 const DIA = 864e5;
+const ICONO_WHATSAPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35zM12.04 2C6.5 2 2 6.48 2 12c0 1.77.46 3.5 1.34 5.02L2 22l5.12-1.34A10 10 0 0 0 12.04 22C17.56 22 22 17.52 22 12S17.56 2 12.04 2zm0 18.3c-1.5 0-2.97-.4-4.25-1.16l-.3-.18-3.04.8.81-2.96-.2-.31A8.3 8.3 0 1 1 12.04 20.3z"/></svg>';
 const ZONA = -5 * 3600e3;
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
 const nombreMes = (anio, mes) => MESES[mes] + " " + anio;
@@ -92,8 +93,10 @@ export async function render(caja, datos){
   /* Atrasados: vigentes cuyo último movimiento de cobro fue un atraso */
   const atrasados = m.subs.filter(s => s.baja == null && s.atrasos.length && !activa(s, ahora))
     .sort((a, b) => Math.max(...b.atrasos) - Math.max(...a.atrasos));
+  /* Ícono de WhatsApp (en vez del botón con texto); el nombre va en el globito y para lectores de pantalla */
   const whatsapp = s => s.telefono
-    ? '<a class="boton-chico" href="https://wa.me/' + escapar(String(s.telefono).replace(/\D/g, "")) + '" target="_blank" rel="noopener">WhatsApp</a>' : '';
+    ? '<a class="vt-whatsapp" href="https://wa.me/' + escapar(String(s.telefono).replace(/\D/g, "")) + '" target="_blank" rel="noopener"' +
+      ' title="Escribir por WhatsApp" aria-label="Escribir por WhatsApp a ' + escapar(s.nombre || "este médico") + '">' + ICONO_WHATSAPP + '</a>' : '';
   const plan = s => (s.plan || "—").replace("Miembro founder ", "Founder ");
   document.getElementById("vs-atrasados").innerHTML = atrasados.length
     /* En celular, una tarjeta por médico; en computador, la tabla */
