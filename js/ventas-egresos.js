@@ -66,13 +66,14 @@ export async function render(c, datos){
   caja.dataset.vista = "egresos";
   caja.innerHTML = `
 <section class="caja" style="margin-top:18px">
-  ${cabecera("ayuda-egresos", "Egresos", { id: "eg-resumen", texto: "" }, [
+  ${cabecera("ayuda-egresos", "Egresos", "Gastos en pesos, con su soporte", [
     "Los gastos que ustedes anotan a mano, <b>en pesos</b>. Por ahora la categoría es <b>Anuncios</b>.",
     "Cada gasto guarda la <b>TRM de su día</b> (la tasa oficial, que el panel trae sola y se puede corregir). Con ella se calcula su equivalente en dólares para la <b>rentabilidad estimada</b>.",
     "Cada gasto necesita al menos un <b>soporte</b> (foto de la factura, pantallazo o PDF); puede llevar varios. Se guardan en un espacio privado: solo se abren desde el panel.",
     "<b>Pagó</b> es quién puso la plata: Paula, Hámilton o <b>mitad y mitad</b> (en los totales se suma la mitad a cada uno). También queda anotado quién lo registró y quién lo cambió por última vez.",
     "Con los ingresos (subpestaña Ingresos) y estos egresos armamos después la <b>rentabilidad estimada</b> del mes."])}
   <div class="vt-egresos-barra">
+    <div id="eg-mes" class="vt-mes"></div>
     <button class="boton-chico boton-nueva" type="button" id="eg-nuevo">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar gasto</button>
   </div>
@@ -112,8 +113,7 @@ function pintar(){
   const claveHoy = hoy.getUTCFullYear() + "-" + String(hoy.getUTCMonth() + 1).padStart(2, "0");
   const delMes = egresos.filter(e => e.fecha.startsWith(claveHoy));
   const suma = lista => lista.reduce((x, e) => x + Number(e.monto_cop), 0);
-  caja.querySelector("#eg-resumen").textContent = "Este mes: " + cop(suma(delMes)) +
-    QUIENES.map(q => " · " + q + " " + cop(delMes.reduce((x, e) => x + parte(e, q), 0))).join("");
+  pintarMes(delMes, suma(delMes), MESES[hoy.getUTCMonth()]);
 
   const lista = caja.querySelector("#eg-lista");
   if (!egresos.length){
@@ -137,10 +137,9 @@ function pintar(){
 const ICONO_LAPIZ = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
 const ICONO_BASURA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 function tarjeta(e){
-  const quien = e.pagado_por === MITAD ? "mitad y mitad" : e.pagado_por;
   return '<div class="vt-tc"><div class="vt-tc-fila"><b class="vt-tc-concepto">' + escapar(e.concepto) + '</b><b class="vt-tc-monto">' + escapar(cop(e.monto_cop)) + '</b></div>' +
     '<div class="vt-tc-fila vt-tc-abajo"><span class="vt-tc-chips"><span class="vt-chip">' + escapar(fecha(e.fecha + "T12:00:00-05:00")) + '</span>' +
-      '<span class="vt-chip">' + escapar(quien) + '</span></span>' +
+      pastillaQuien(e) + '</span>' +
       iconosFila(e) + '</div></div>';
 }
 
@@ -163,6 +162,18 @@ function botonSoportes(e){
   const n = e.soportes.length, que = "Ver " + (n === 1 ? "el soporte" : "los " + n + " soportes");
   return '<button class="vt-sop" type="button" data-ver="' + e.id + '" title="' + que + '" aria-label="' + que + '">' +
     ICONO_DOC + '<span class="vt-sop-n">' + n + '</span></button>';
+}
+
+/* Resumen del mes: total y una barra repartida según cuánto puso cada uno
+   (mitad y mitad suma la mitad a cada uno) */
+function pintarMes(delMes, total, mes){
+  const por = Object.fromEntries(QUIENES.map(q => [q, delMes.reduce((x, e) => x + parte(e, q), 0)]));
+  const clase = q => q === "Paula" ? "paula" : "hamilton";
+  caja.querySelector("#eg-mes").innerHTML =
+    '<div class="vt-mes-cab"><span class="mini">Gastos de ' + escapar(mes) + '</span><b>' + escapar(cop(total)) + '</b></div>' +
+    '<div class="vt-mes-barra" role="img" aria-label="' + escapar(QUIENES.map(q => q + " " + cop(por[q])).join(", ")) + '">' +
+      QUIENES.map(q => '<span class="' + clase(q) + '" style="width:' + (total ? por[q] / total * 100 : 50) + '%"></span>').join("") + '</div>' +
+    '<div class="vt-mes-leyenda">' + QUIENES.map(q => '<span><i class="' + clase(q) + '"></i>' + q + ' <b>' + escapar(cop(por[q])) + '</b></span>').join("") + '</div>';
 }
 
 /* Cuánto le toca a una persona de un gasto: todo si lo pagó, la mitad si fue a mitades */

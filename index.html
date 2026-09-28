@@ -296,16 +296,33 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-pc .vt-eg-enlaces{justify-items:end}
 .vt-pc .vt-chip{background:var(--surface2)}
 .vt-quien{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
-.vt-quien.paula{background:#e9f4d6;color:#2a4927}
-.vt-quien.hamilton{background:#dfe9fb;color:#2a4f8f}
-.vt-quien.mitad{background:linear-gradient(90deg,#e9f4d6 50%,#dfe9fb 50%);color:#18181b}
+.vt-quien.paula{background:var(--paula-suave);color:var(--paula-texto)}
+.vt-quien.hamilton{background:var(--hamilton-suave);color:var(--hamilton-texto)}
+.vt-quien.mitad{background:linear-gradient(90deg,var(--paula-suave) 50%,var(--hamilton-suave) 50%);color:#18181b}
 /* Botón de soportes: documento con el número en una burbujita */
 .vt-sop{position:relative;display:inline-grid;place-items:center;width:38px;height:34px;padding:0;border:0;background:none;color:var(--ink,#18181b);cursor:pointer;border-radius:10px;transition:background .2s}
 .vt-sop:hover{background:var(--surface2,#f1f1ef)}
 .vt-sop svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .vt-sop-n{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#2a4927;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 
-.vt-egresos-barra{display:flex;justify-content:flex-end;margin-top:12px}
+.vt-egresos-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:14px;margin:12px 0 16px}
+#aviso-egresos:empty{display:none}
+/* Resumen del mes: total y barra repartida entre los dos */
+:root{/* colores de cada cofundador (Paula coral, Hámilton azul) */--paula:#f08a6c;--paula-suave:#fde6dd;--paula-texto:#a4452c;--hamilton:#8fb0ea;--hamilton-suave:#dfe9fb;--hamilton-texto:#2a4f8f}
+.vt-mes{flex:1 1 100%;min-width:0;display:grid;gap:8px;padding:14px;border-radius:14px;background:var(--surface2)}
+.vt-mes:empty{display:none}
+.vt-mes b{white-space:nowrap}
+.vt-mes-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.vt-mes-cab b{font-size:20px}
+.vt-mes-barra{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--surface,#fff)}
+.vt-mes-barra .paula{background:var(--paula)}
+.vt-mes-barra .hamilton{background:var(--hamilton)}
+.vt-mes-leyenda{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13.5px;color:var(--muted,#6b6b76)}
+.vt-mes-leyenda b{color:var(--ink,#18181b)}
+.vt-mes-leyenda i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.vt-mes-leyenda i.paula{background:var(--paula)}
+.vt-mes-leyenda i.hamilton{background:var(--hamilton)}
+
 .vt-archivo-boton{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-top:4px}
 .vt-archivo-boton svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .vt-archivos{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:6px}
