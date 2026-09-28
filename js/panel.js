@@ -208,7 +208,15 @@ async function enviarOlvido(){
    passkey sin aprobar en la cuenta), decidir() pide el código de la app. */
 async function entrarConPasskey(){
   const { error } = await sb.auth.signInWithPasskey();
-  if (error){ avisar(traducirError((error.code || "") + " " + (error.message || "") + " " + (error.name || "")), "mal"); return; }
+  if (error){
+    const texto = (error.code || "") + " " + (error.message || "") + " " + (error.name || "");
+    /* El navegador no distingue «canceló» de «no tiene passkey»: el aviso
+       sirve para los dos casos */
+    if (/notallowederror|not allowed|aborted|cancel/i.test(texto))
+      avisar("No se usó ninguna passkey. Si todavía no tienes una en este dispositivo, entra con tu correo y contraseña; después puedes agregarla en tu menú, en «Tus passkeys».", "mal");
+    else avisar(traducirError(texto), "mal");
+    return;
+  }
   avisar("");
   marcadoEn = 0; marcarActividad();
   await decidir();
