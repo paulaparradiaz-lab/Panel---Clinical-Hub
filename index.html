@@ -270,10 +270,10 @@ textarea.campo{min-height:90px;resize:vertical}
   .vt-tarjeta-egreso{display:grid;gap:6px;padding:12px 14px;border-radius:14px;background:var(--surface2)}
   .vt-eg-cab{display:flex;justify-content:space-between;gap:10px}
 }
-/* Atrasados: ícono de WhatsApp, centrado con la primera línea del médico */
-.vt-whatsapp{display:inline-grid;place-items:center;width:34px;height:34px;margin:-6px 0;border-radius:50%;background:#25d366;color:#fff;transition:transform .2s,box-shadow .2s}
-.vt-whatsapp:hover{transform:translateY(-1px);box-shadow:0 6px 14px -6px rgba(37,211,102,.7)}
-.vt-whatsapp svg{width:19px;height:19px;fill:currentColor}
+/* Atrasados: solo el ícono de WhatsApp (sin fondo), centrado con la primera línea del médico */
+.vt-whatsapp{display:inline-grid;place-items:center;width:28px;height:28px;margin:-3px 0;color:#25d366;transition:transform .2s,color .2s}
+.vt-whatsapp:hover{transform:translateY(-1px) scale(1.08);color:#1da851}
+.vt-whatsapp svg{width:24px;height:24px;fill:currentColor}
 /* Egresos */
 .vt-egresos-barra{display:flex;justify-content:flex-end;margin-top:12px}
 .vt-eg-acciones{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}

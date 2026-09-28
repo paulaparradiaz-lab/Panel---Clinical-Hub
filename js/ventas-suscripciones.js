@@ -93,7 +93,7 @@ export async function render(caja, datos){
   /* Atrasados: vigentes cuyo último movimiento de cobro fue un atraso */
   const atrasados = m.subs.filter(s => s.baja == null && s.atrasos.length && !activa(s, ahora))
     .sort((a, b) => Math.max(...b.atrasos) - Math.max(...a.atrasos));
-  /* Ícono de WhatsApp (en vez del botón con texto); el nombre va en el globito y para lectores de pantalla */
+  /* Solo el ícono de WhatsApp, sin fondo; el nombre va en el globito y para lectores de pantalla */
   const whatsapp = s => s.telefono
     ? '<a class="vt-whatsapp" href="https://wa.me/' + escapar(String(s.telefono).replace(/\D/g, "")) + '" target="_blank" rel="noopener"' +
       ' title="Escribir por WhatsApp" aria-label="Escribir por WhatsApp a ' + escapar(s.nombre || "este médico") + '">' + ICONO_WHATSAPP + '</a>' : '';
