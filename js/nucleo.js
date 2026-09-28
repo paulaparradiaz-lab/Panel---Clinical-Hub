@@ -64,6 +64,13 @@ export async function ocupado(boton, texto, fn){
   try { await fn(); } finally { boton.disabled = false; boton.innerHTML = original; }
 }
 
+/* ¿La sesión vale como contraseña + código? Sí con aal2, o si entró con
+   una passkey aprobada (sesion_segura en Supabase, sql/passkey_sin_codigo.sql). */
+export async function sesionSegura(){
+  const { data, error } = await sb.rpc("sesion_segura");
+  return !error && data === true;
+}
+
 export function traducirError(msg){
   const m = String(msg || "").toLowerCase();
   if (m.includes("invalid login credentials")) return "Correo o contraseña incorrectos.";

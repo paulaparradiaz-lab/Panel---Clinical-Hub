@@ -4,7 +4,7 @@
    Cada pestaña vive en su propio archivo.
    ============================================================ */
 import { sb, $, estado, escapar, avisar, ocupado, traducirError,
-         cerrarVentana, abrirVentana } from "./nucleo.js";
+         cerrarVentana, abrirVentana, sesionSegura } from "./nucleo.js";
 import * as feedback from "./pestana-feedback.js";
 import * as mejoras from "./pestana-mejoras.js";
 import * as impacto from "./pestana-impacto.js";
@@ -61,7 +61,7 @@ function vigilarInactividad(){
 /* ============================================================
    1. ACCESO: contraseña + código TOTP (nivel aal2)
    ============================================================ */
-const PASOS = ["paso-login", "paso-enrolar", "paso-codigo", "paso-olvido", "paso-nueva"];
+const PASOS = ["paso-login", "paso-enrolar", "paso-codigo", "paso-olvido", "paso-nueva", "paso-passkey"];
 
 /* Reglas de la contraseña: las mismas que exige Supabase (Authentication ›
    Providers › Email). Si allá cambian, se ajustan aquí. */
@@ -81,7 +81,7 @@ sb.auth.onAuthStateChange(evento => { if (evento === "PASSWORD_RECOVERY") modoRe
 
 function mostrarPaso(id){
   PASOS.forEach(p => { $("#" + p).hidden = (p !== id); });
-  $("#volver").hidden = (id === "paso-login");
+  $("#volver").hidden = (id === "paso-login" || id === "paso-passkey");
   $("#acceso").hidden = false;
   $("#panel").hidden = true;
   const primero = $("#" + id + " input");
@@ -100,7 +100,11 @@ async function decidir(){
   if (inactivaDemasiado()) return cerrarPorInactividad();
   const { data: nivel, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
   if (error){ avisar(traducirError(error.message), "mal"); return mostrarPaso("paso-login"); }
-  if (nivel.currentLevel === "aal2"){
+  /* Una passkey aprobada vale como contraseña + código: no se pide el código */
+  const conPasskey = nivel.currentLevel !== "aal2" &&
+    (nivel.currentAuthenticationMethods || []).some(m => m.method === "passkey") &&
+    await sesionSegura();
+  if (nivel.currentLevel === "aal2" || conPasskey){
     /* Contraseña propia: la primera vez (la inicial la puso quien creó la
        cuenta, o llegó por invitación sin contraseña) y al recuperarla */
     const { data: u } = await sb.auth.getUser();
@@ -184,8 +188,11 @@ async function guardarClaveNueva(){
   if (!modoRecuperacion) cambios.current_password = actual;
   const { error } = await sb.auth.updateUser(cambios);
   if (error){ avisar(traducirError(error.message), "mal"); return; }
+  const primeraVez = !modoRecuperacion;
   modoRecuperacion = false;
   avisar("");
+  /* La primera vez se sugiere registrar una passkey (si el navegador puede) */
+  if (primeraVez && window.PublicKeyCredential) return mostrarPaso("paso-passkey");
   await decidir();
 }
 
@@ -197,8 +204,8 @@ async function enviarOlvido(){
   avisar("Listo. Si ese correo tiene cuenta, te llegará un enlace para poner una contraseña nueva.", "ok");
 }
 
-/* Passkey: reemplaza la contraseña. Si Supabase no la cuenta como segundo
-   factor, decidir() pide igual el código de la app. */
+/* Passkey: si está aprobada vale como contraseña + código; si no (una
+   passkey sin aprobar en la cuenta), decidir() pide el código de la app. */
 async function entrarConPasskey(){
   const { error } = await sb.auth.signInWithPasskey();
   if (error){ avisar(traducirError((error.code || "") + " " + (error.message || "") + " " + (error.name || "")), "mal"); return; }
@@ -222,6 +229,14 @@ $("#verificar").addEventListener("click", () =>
 $("#codigo").addEventListener("keydown", e => { if (e.key === "Enter") $("#verificar").click(); });
 $("#salir").addEventListener("click", salir);
 $("#entrar-passkey").addEventListener("click", () => ocupado($("#entrar-passkey"), "Esperando la passkey…", entrarConPasskey));
+$("#agregar-passkey-inicio").addEventListener("click", () =>
+  ocupado($("#agregar-passkey-inicio"), "Esperando la passkey…", async () => {
+    const error = await registrarPasskeyAprobada();
+    if (error){ avisar(errorTexto(error), "mal"); return; }
+    avisar("");
+    await decidir();
+  }));
+$("#saltar-passkey").addEventListener("click", () => { avisar(""); decidir(); });
 $("#ir-olvido").addEventListener("click", () => {
   $("#correo-olvido").value = $("#correo").value.trim();
   avisar("");
@@ -473,6 +488,31 @@ function errorTexto(error){
 const ICONO_HUELLA = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>';
 const ICONO_MAS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
+/* Registra la passkey de este dispositivo y la aprueba para que valga sin
+   código. Supabase solo la aprueba con una sesión que pasó el código (aal2);
+   si la aprobación falla se borra, porque mientras haya una sin aprobar
+   ninguna passkey de la cuenta sirve sin código. */
+async function registrarPasskeyAprobada(){
+  const { data, error } = await sb.auth.registerPasskey();
+  if (error) return error;
+  const { error: errorAprobar } = await sb.rpc("aprobar_passkey", { p_credencial: data.id });
+  if (errorAprobar){ await sb.auth.passkey.delete({ passkeyId: data.id }); return errorAprobar; }
+  return null;
+}
+
+/* Si entró con passkey (sin código), para agregar otra se pide el código:
+   así la sesión pasa a aal2 y la passkey nueva se puede aprobar. */
+async function confirmarCodigoVentana(){
+  const code = ($("#pk-codigo").value || "").replace(/\D/g, "");
+  if (code.length !== 6){ avisar("Escribe los 6 dígitos del código de tu app.", "mal", "#aviso-forma"); return false; }
+  const { data: f } = await sb.auth.mfa.listFactors();
+  const totp = ((f && f.totp) || [])[0];
+  if (!totp){ avisar("No encontramos tu app de autenticación.", "mal", "#aviso-forma"); return false; }
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: totp.id, code });
+  if (error){ avisar(traducirError(error.message), "mal", "#aviso-forma"); return false; }
+  return true;
+}
+
 async function pintarPasskeys(){
   const caja = document.getElementById("lista-passkeys");
   if (!caja) return;
@@ -488,8 +528,10 @@ async function pintarPasskeys(){
     : '<div class="passkeys-vacio"><span>' + ICONO_HUELLA + '</span>Todavía no tienes passkeys.<br>Agrega la de este dispositivo.</div>';
 }
 
-$("#abrir-passkeys").addEventListener("click", () => {
+$("#abrir-passkeys").addEventListener("click", async () => {
   abrirMenu(false);
+  const { data: nivel } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  const pideCodigo = (nivel || {}).currentLevel !== "aal2";
   abrirVentana({
     titulo: "Tus passkeys",
     guia: "Entra con tu huella, Face ID o el PIN de tu dispositivo, sin escribir la contraseña.",
@@ -498,10 +540,15 @@ $("#abrir-passkeys").addEventListener("click", () => {
       'contraseñas (el llavero de iCloud, Google o 1Password), y se sincroniza entre tus dispositivos. Supabase solo ' +
       'guarda la parte pública: nadie puede copiarla ni adivinarla. Agrega una en cada dispositivo o llavero que uses; ' +
       'si pierdes uno, borra su passkey aquí.</p>' +
-      '<div class="passkeys-lista" id="lista-passkeys"><p class="vacio">Cargando…</p></div>',
+      '<div class="passkeys-lista" id="lista-passkeys"><p class="vacio">Cargando…</p></div>' +
+      (pideCodigo
+        ? '<p class="mini">Entraste con passkey: para agregar otra, escribe el código de tu app.</p>' +
+          '<input class="campo codigo" id="pk-codigo" placeholder="000000" inputmode="numeric" maxlength="6" autocomplete="one-time-code">'
+        : ''),
     aceptar: "Agregar passkey",
     alAceptar: async () => {
-      const { error } = await sb.auth.registerPasskey();
+      if (pideCodigo && !(await confirmarCodigoVentana())) return false;
+      const error = await registrarPasskeyAprobada();
       if (error){ avisar(errorTexto(error), "mal", "#aviso-forma"); return false; }
       avisar("Listo: la próxima vez puedes entrar con «Entrar con passkey».", "ok", "#aviso-forma");
       await pintarPasskeys();

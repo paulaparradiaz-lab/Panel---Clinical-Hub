@@ -13,7 +13,7 @@
    El panel solo puede editar cuatro columnas de la primera tabla:
    tipos, tema_slug, mejora_slug y estado. Lo demás es del médico.
    ============================================================ */
-import { sb } from "./nucleo.js";
+import { sb, sesionSegura } from "./nucleo.js";
 
 const TABLA = "feedback_prueba_clasificacion_por_ia";
 
@@ -319,8 +319,7 @@ export async function quitarPersona(mejoraId, usuarioId){
 async function siguePuesto(tabla, filtro){
   /* Sin el código de la app la fila tampoco se ve: no se puede dar por
      quitada, así que se avisa de que falta verificar el código */
-  const nivel = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (nivel.error || (nivel.data || {}).currentLevel !== "aal2") throw new Error("aal2 requerido");
+  if (!(await sesionSegura())) throw new Error("aal2 requerido");
   let q = sb.from(tabla).select("mejora_id");
   Object.keys(filtro).forEach(k => { q = q.eq(k, filtro[k]); });
   const { data, error } = await q.limit(1);
