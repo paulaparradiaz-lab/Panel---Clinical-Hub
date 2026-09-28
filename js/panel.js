@@ -542,7 +542,7 @@ $("#abrir-passkeys").addEventListener("click", async () => {
   const pideCodigo = (nivel || {}).currentLevel !== "aal2";
   abrirVentana({
     titulo: "Tus passkeys",
-    guia: "Entra con tu huella, Face ID o el PIN de tu dispositivo, sin escribir la contraseña.",
+    guia: "Entra con tu huella, Face ID o el PIN de tu dispositivo, sin contraseña ni código.",
     cuerpo:
       '<p class="mini explica">Una passkey es una llave que queda guardada en tu celular, tu computador o tu gestor de ' +
       'contraseñas (el llavero de iCloud, Google o 1Password), y se sincroniza entre tus dispositivos. Supabase solo ' +
