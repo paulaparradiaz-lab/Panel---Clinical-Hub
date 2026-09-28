@@ -293,12 +293,28 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-pc .vt-der{text-align:right}
 .vt-pc .vt-gris{color:var(--muted,#6b6b76);white-space:nowrap}
 .vt-pc td:last-child{width:1%;white-space:nowrap}
-.vt-pc .vt-eg-enlaces{justify-items:end}
 .vt-pc .vt-chip{background:var(--surface2)}
 .vt-quien{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
 .vt-quien.paula{background:var(--paula-suave);color:var(--paula-texto)}
 .vt-quien.hamilton{background:var(--hamilton-suave);color:var(--hamilton-texto)}
 .vt-quien.mitad{background:linear-gradient(90deg,var(--paula-suave) 50%,var(--hamilton-suave) 50%);color:#18181b}
+/* Soportes de un gasto: lista debajo del gasto */
+.vt-sl{display:grid;gap:6px;min-width:0}
+.vt-sl-caja{margin-top:4px;padding-top:10px;border-top:1px solid rgba(24,24,27,.08)}
+.vt-sl-fila td{padding-top:0;background:none}
+.vt-sl-item{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 10px;border-radius:12px;background:var(--surface,#fff);color:var(--ink,#18181b);text-decoration:none;transition:background .2s}
+.vt-sl-fila .vt-sl-item{background:var(--surface2)}
+.vt-sl-item:hover{background:#e9f4d6}
+.vt-sl-item.falta{color:var(--muted,#6b6b76)}
+.vt-sl-tipo{flex:none;display:inline-grid;place-items:center;min-width:34px;height:22px;padding:0 6px;border-radius:6px;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.03em;color:#fff}
+.vt-sl-tipo.pdf{background:#d9654d}
+.vt-sl-tipo.foto{background:#5b7fd6}
+.vt-sl-txt{display:grid;min-width:0;flex:1}
+.vt-sl-txt b{font-size:14px}
+.vt-sl-txt .mini{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vt-sl-abrir{flex:none;color:var(--muted,#6b6b76)}
+.vt-sl-abrir svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vt-sl-nota{margin:6px 0 0}
 /* Botón de soportes: documento con el número en una burbujita */
 .vt-sop{position:relative;display:inline-grid;place-items:center;width:38px;height:34px;padding:0;border:0;background:none;color:var(--ink,#18181b);cursor:pointer;border-radius:10px;transition:background .2s}
 .vt-sop:hover{background:var(--surface2,#f1f1ef)}
@@ -332,9 +348,6 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-archivo-quitar{flex:none;width:28px;height:28px;border:0;border-radius:50%;background:none;color:#8b8e96;cursor:pointer;font-size:14px}
 .vt-archivo-quitar:hover{color:var(--ink);background:rgba(24,24,27,.06)}
 .vt-archivo-boton{margin-bottom:10px}
-.vt-eg-enlaces{display:grid;gap:4px;margin-top:8px;justify-items:end;text-align:right}
-.vt-tc .vt-eg-enlaces{justify-items:start;text-align:left}
-.vt-eg-enlaces a{font-size:14px;overflow-wrap:anywhere}
 /* Rentabilidad estimada */
 .vt-rent-aviso{margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:#fff6e0;font-size:13px;line-height:1.45}
 .vt-rent-mas{color:#2a4927}

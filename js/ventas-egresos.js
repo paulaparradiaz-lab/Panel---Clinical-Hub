@@ -149,8 +149,7 @@ function tarjeta(e){
 function iconosFila(e){
   return '<span class="vt-tc-iconos">' + botonSoportes(e) +
     '<button class="vt-ico" type="button" data-editar="' + e.id + '" title="Editar" aria-label="Editar gasto">' + ICONO_LAPIZ + '</button>' +
-    '<button class="vt-ico vt-ico-borrar" type="button" data-borrar="' + e.id + '" title="Borrar" aria-label="Borrar gasto">' + ICONO_BASURA + '</button></span>' +
-    '<div class="vt-eg-enlaces" data-enlaces="' + e.id + '" hidden></div>';
+    '<button class="vt-ico vt-ico-borrar" type="button" data-borrar="' + e.id + '" title="Borrar" aria-label="Borrar gasto">' + ICONO_BASURA + '</button></span>';
 }
 function pastillaQuien(e){
   const cls = e.pagado_por === MITAD ? "mitad" : e.pagado_por === "Paula" ? "paula" : "hamilton";
@@ -176,6 +175,30 @@ function pintarMes(delMes, total, mes){
     '<div class="vt-mes-leyenda">' + QUIENES.map(q => '<span><i class="' + clase(q) + '"></i>' + q + ' <b>' + escapar(cop(por[q])) + '</b></span>').join("") + '</div>';
 }
 
+/* Soportes de un gasto: lista debajo del gasto, a lo ancho. Cada archivo
+   como «Soporte N» con su tipo (PDF o Foto) y el nombre original recortado */
+const ICONO_ABRIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+const tipoDe = ruta => /\.pdf$/i.test(ruta) ? "PDF" : "Foto";
+function itemsSoportes(data){
+  return data.map((d, i) => {
+    const tipo = tipoDe(d.path || ""), n = "Soporte " + (i + 1);
+    if (!d.signedUrl) return '<span class="vt-sl-item falta">' + n + ' · no se encontró</span>';
+    const url = escapar(d.signedUrl);
+    return '<a class="vt-sl-item" href="' + url + '" target="_blank" rel="noopener"><i class="vt-sl-tipo ' + tipo.toLowerCase() + '">' + tipo + '</i>' +
+      '<span class="vt-sl-txt"><b>' + n + '</b><span class="mini">' + escapar(nombreDe(d.path)) + '</span></span><span class="vt-sl-abrir">' + ICONO_ABRIR + '</span></a>';
+  }).join("");
+}
+async function mostrarSoportes(g, boton){
+  /* Si ya está abierta debajo de este gasto, se cierra */
+  const tarjeta = boton.closest(".vt-tc"), fila = boton.closest("tr");
+  const abierta = tarjeta ? tarjeta.querySelector(".vt-sl-caja") : fila && fila.nextElementSibling && fila.nextElementSibling.classList.contains("vt-sl-fila") ? fila.nextElementSibling : null;
+  if (abierta){ abierta.remove(); return; }
+  const { data, error } = await sb.storage.from(ESPACIO).createSignedUrls(g.soportes, 300);
+  if (error){ avisar("No se pudieron abrir los soportes. " + traducirError(error.message), "mal", "#aviso-egresos"); return; }
+  const html = '<div class="vt-sl">' + itemsSoportes(data) + '</div><p class="mini vt-sl-nota">Los enlaces vencen en 5 minutos.</p>';
+  if (tarjeta){ const d = document.createElement("div"); d.className = "vt-sl-caja"; d.innerHTML = html; tarjeta.appendChild(d); }
+  else { const tr = document.createElement("tr"); tr.className = "vt-sl-fila"; tr.innerHTML = '<td colspan="6">' + html + '</td>'; fila.after(tr); }
+}
 /* Cuánto le toca a una persona de un gasto: todo si lo pagó, la mitad si fue a mitades */
 function parte(e, quien){
   if (e.pagado_por === quien) return Number(e.monto_cop);
@@ -246,16 +269,7 @@ async function alTocar(e){
         '<a href="' + escapar(data.signedUrl) + '" target="_blank" rel="noopener">Abrir el soporte</a> (el enlace vence en 5 minutos)';
       return;
     }
-    /* Varios: se despliega la lista de archivos debajo del gasto (se abre y se cierra) */
-    const cajaEnlaces = ver.closest(".vt-tc, td").querySelector("[data-enlaces]");
-    if (!cajaEnlaces.hidden){ cajaEnlaces.hidden = true; return; }
-    const { data, error } = await sb.storage.from(ESPACIO).createSignedUrls(g.soportes, 300);
-    if (error){ avisar("No se pudieron abrir los soportes. " + traducirError(error.message), "mal", "#aviso-egresos"); return; }
-    cajaEnlaces.innerHTML = data.map(d => d.signedUrl
-      ? '<a href="' + escapar(d.signedUrl) + '" target="_blank" rel="noopener">' + escapar(nombreDe(d.path)) + '</a>'
-      : '<span class="mini">' + escapar(nombreDe(d.path || "")) + ' · no se encontró</span>').join("") +
-      '<span class="mini">Los enlaces vencen en 5 minutos.</span>';
-    cajaEnlaces.hidden = false;
+    await mostrarSoportes(g, ver);
   }
   if (editar) ventana(buscar(editar.dataset.editar));
   if (borrar){
