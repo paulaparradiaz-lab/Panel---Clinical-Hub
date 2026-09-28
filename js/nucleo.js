@@ -59,9 +59,9 @@ export function avisar(texto, tipo, donde = "#aviso"){
 }
 
 export async function ocupado(boton, texto, fn){
-  const original = boton.textContent;
+  const original = boton.innerHTML;   // innerHTML: conserva el icono si lo tiene
   boton.disabled = true; boton.textContent = texto;
-  try { await fn(); } finally { boton.disabled = false; boton.textContent = original; }
+  try { await fn(); } finally { boton.disabled = false; boton.innerHTML = original; }
 }
 
 export function traducirError(msg){
