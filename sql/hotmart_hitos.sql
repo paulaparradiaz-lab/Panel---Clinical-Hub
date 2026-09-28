@@ -34,6 +34,8 @@ estados as (
     and evento in ('PURCHASE_APPROVED', 'PURCHASE_COMPLETE', 'PURCHASE_DELAYED',
                    'SUBSCRIPTION_CANCELLATION', 'SUBSCRIPTION_INACTIVE',
                    'PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK', 'PURCHASE_CANCELED')
+    -- una compra que después se reembolsó no cuenta como activa
+    and not (evento = 'PURCHASE_APPROVED' and transaccion in (select transaccion from devueltas))
 ),
 cambios as (
   select fecha,

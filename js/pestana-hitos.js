@@ -23,18 +23,29 @@ const NIVEL = { numero: 1, meta: 1000, linea: "activos", texto: "1.000 médicos 
 
 const LINEAS = [
   { clave:"activos", nombre:"Médicos activos", unidad:"médicos activos", color:"#2fa9a0",
-    metas:[100, 200, 300, 400, 500, 600, 700, 800, 900, 1000], valor:num, corto:num, record:true },
+    metas:[1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000], valor:num, corto:num, record:true,
+    ayuda:"Médicos con la suscripción <b>al día hoy</b>: su último cobro está pagado. No cuenta a quien canceló " +
+          "(aunque todavía tenga acceso hasta fin de mes), ni a quien tiene un pago atrasado. Se muestra el " +
+          "<b>récord</b>: la cifra más alta que han tenido a la vez. Llegar a <b>1.000</b> es la meta para pasar al Nivel 2." },
   { clave:"medicos", nombre:"Médicos que han comprado", unidad:"médicos", color:"#5b7fd6",
-    metas:[50, 100, 250, 500, 1000, 1500], valor:num, corto:num },
+    metas:[1, 50, 100, 250, 500, 1000, 1500], valor:num, corto:num,
+    ayuda:"Médicos distintos que han <b>pagado al menos una vez</b>, aunque hoy ya no estén suscritos. " +
+          "Cada médico cuenta <b>una sola vez</b>, aunque renueve todos los meses. No cuenta a quien pidió reembolso." },
   { clave:"cinco", nombre:"5 ★", unidad:"calificaciones de 5 ★", color:"#7ab447",
-    metas:[10, 25, 50, 100, 250, 500], valor:num, corto:num },
+    metas:[1, 10, 25, 50, 100, 250, 500], valor:num, corto:num,
+    ayuda:"Calificaciones de <b>5 estrellas</b> que han dejado los médicos al opinar sobre Clinical Hub." },
   { clave:"facturacion", nombre:"Facturación neta", unidad:"facturados", color:"#e2a83c",
-    metas:[500, 1000, 2500, 5000, 10000, 25000], valor:usd, corto:usdCorto }
+    metas:[1, 500, 1000, 2500, 5000, 10000, 25000], valor:usd, corto:usdCorto,
+    ayuda:"Lo que le queda a <b>Clinical Hub</b> (los dos cofundadores) de todas las ventas, en dólares. " +
+          "<b>Ya descuenta</b> la tarifa de Hotmart, los impuestos de cada país y los reembolsos." }
 ];
 
+const ICONO_AYUDA = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+
 /* Posición en la línea (en %): estaciones a la misma distancia, y el
-   número avanza entre la estación anterior y la siguiente. En la meta del
-   nivel las estaciones van cada 100, así la distancia es la real. */
+   número avanza entre la estación anterior y la siguiente. Todas empiezan
+   en 1 (el primer logro). En la meta del nivel van cada 100 después del 1,
+   así la distancia es la real. */
 const INICIO = 4, ANCHO = 92;
 function posiciones(l){
   const estacion = j => INICIO + j * ANCHO / (l.metas.length - 1);
@@ -58,11 +69,13 @@ export async function render(){
     <p>Se desbloquean solos a medida que Clinical Hub crece.</p>
   </div>
 </div>
-<section class="caja metro-nivel" id="metro-nivel"></section>
-<section class="caja metro-caja">
-  <div class="metro-cab"><h2 class="titulo-seccion">Las líneas de Clinical Hub</h2><span class="metro-mini" id="metro-total"></span></div>
-  <div id="metro-lineas"><p class="vacio">Cargando…</p></div>
-</section>`;
+<div id="metro">
+  <section class="caja metro-nivel" id="metro-nivel"></section>
+  <section class="caja metro-caja">
+    <div class="metro-cab"><h2 class="titulo-seccion">Las líneas de Clinical Hub</h2><span class="metro-mini" id="metro-total"></span></div>
+    <div id="metro-lineas"><p class="vacio">Cargando…</p></div>
+  </section>
+</div>`;
 
   const [cinco, hotmart, imagen] = await Promise.all([
     sb.from("v_ia_feedback").select("fecha").eq("estrellas", 5).order("fecha", { ascending:true }),
@@ -89,6 +102,7 @@ export async function render(){
   };
   pintarNivel(datos[NIVEL.linea]);
   pintar(datos, imagen);
+  armarAyudas();
 }
 
 /* Arriba: en qué nivel van y cuánto falta para el siguiente */
@@ -97,6 +111,8 @@ function pintarNivel(d){
   const logrado = d.actual >= NIVEL.meta;
   $("#metro-nivel").innerHTML =
     '<div class="metro-nivel-cab"><span class="metro-nivel-num">Nivel ' + NIVEL.numero + '</span>' +
+      '<button class="enlace-ayuda" type="button" data-ayuda="ayuda-nivel" aria-expanded="false" aria-controls="ayuda-nivel">' +
+        ICONO_AYUDA + '¿Cómo funciona?</button>' +
       '<span class="metro-mini">' + (logrado
         ? '<b>¡Meta cumplida!</b> Toca definir las metas del Nivel ' + (NIVEL.numero + 1)
         : 'Meta para el Nivel ' + (NIVEL.numero + 1) + ': <b>' + escapar(NIVEL.texto) + '</b>') + '</span></div>' +
@@ -104,7 +120,13 @@ function pintarNivel(d){
       '" aria-valuenow="' + d.actual + '" aria-label="Avance hacia el Nivel ' + (NIVEL.numero + 1) + '"><span style="width:' + avance + '%"></span></div>' +
     '<div class="metro-nivel-pie"><span>Récord <b>' + num(d.actual) + '</b> de ' + num(NIVEL.meta) +
       (d.hoy != null ? ' · hoy ' + num(d.hoy) : '') + '</span>' +
-      (logrado ? '' : '<span>faltan <b>' + num(NIVEL.meta - d.actual) + '</b></span>') + '</div>';
+      (logrado ? '' : '<span>faltan <b>' + num(NIVEL.meta - d.actual) + '</b></span>') + '</div>' +
+    '<div class="ayuda-plegable" id="ayuda-nivel" hidden>' +
+      '<p class="mini">Cada línea del metro se va llenando sola a medida que Clinical Hub crece, y cada estación es una meta. ' +
+      'Una estación ganada <b>no se pierde</b> aunque después el número baje: cuenta el récord.</p>' +
+      '<p class="mini">Todas las líneas pueden avanzar, pero <b>solo la meta del nivel hace pasar al siguiente</b>: ' +
+      'en el Nivel ' + NIVEL.numero + ', llegar a ' + escapar(NIVEL.texto) + '. Si otra línea se completa antes, queda esperando.</p>' +
+    '</div>';
 }
 
 function pintar(datos, imagen){
@@ -127,7 +149,10 @@ function pintar(datos, imagen){
     return '<div class="metro-linea' + (sig ? '' : ' completa') + '" style="--c:' + l.color + '">' +
       '<div class="metro-cab"><span class="metro-num">' + (i + 1) + '</span><b>' + escapar(l.nombre) + '</b>' +
         (esMeta ? '<span class="metro-etiqueta-meta">meta del nivel</span>' : '') +
+        '<button class="enlace-ayuda" type="button" data-ayuda="ayuda-' + l.clave + '" aria-expanded="false" aria-controls="ayuda-' + l.clave + '">' +
+          ICONO_AYUDA + '¿Qué significa?</button>' +
         '<span class="metro-mini">' + estado + '</span></div>' +
+      '<div class="ayuda-plegable" id="ayuda-' + l.clave + '" hidden><p class="mini">' + l.ayuda + '</p></div>' +
       '<div class="metro-via"><div class="metro-riel"></div><div class="metro-hecho" style="width:' + pos + '%"></div>' +
         l.metas.map((n, j) => {
           const cuando = j < hechas ? d.fechaDe(n) : null;
@@ -139,6 +164,17 @@ function pintar(datos, imagen){
       '</div></div>';
   }).join("");
   $("#metro-total").textContent = logradas + " de " + total + " estaciones";
+}
+
+/* «¿Qué significa?» / «¿Cómo funciona?»: despliegan su explicación */
+function armarAyudas(){
+  $("#metro").addEventListener("click", e => {
+    const b = e.target.closest("[data-ayuda]");
+    if (!b) return;
+    const caja = document.getElementById(b.dataset.ayuda);
+    caja.hidden = !caja.hidden;
+    b.setAttribute("aria-expanded", String(!caja.hidden));
+  });
 }
 
 /* Los dos corredores sin el fondo verde: se recortan de ch-fondo.jpg una
