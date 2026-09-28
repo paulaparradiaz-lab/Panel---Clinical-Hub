@@ -8,7 +8,11 @@
 const SUPABASE_URL  = "https://pjpidtavlmqhogikizkm.supabase.co";
 const SUPABASE_ANON = "sb_publishable_rnTlbtk9slMW9Oq2bKrdhg_EtOYRKjU";
 
-export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+/* Passkeys: en Supabase todavía son experimentales y hay que activarlas
+   aquí además del interruptor de Authentication › Passkeys. */
+export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { experimental: { passkey: true } }
+});
 
 export const $ = s => document.querySelector(s);
 
@@ -65,9 +69,28 @@ export function traducirError(msg){
   if (m.includes("invalid login credentials")) return "Correo o contraseña incorrectos.";
   if (m.includes("email not confirmed")) return "Ese usuario no está confirmado todavía.";
   if (m.includes("different from the old")) return "La nueva contraseña debe ser distinta de la actual.";
+  if (m.includes("pwned") || m.includes("known to be weak") || m.includes("easy to guess"))
+    return "Esa contraseña apareció en filtraciones de otras páginas. Elige otra.";
   if (m.includes("password should be") || m.includes("weak")) return "Esa contraseña es muy corta o muy débil.";
+  if (m.includes("nonce")) return "El código del correo no es correcto o ya venció. Pide uno nuevo.";
+  if (m.includes("current password required") || m.includes("current_password_required"))
+    return "Escribe tu contraseña actual.";
+  if (m.includes("current password") || m.includes("current_password"))
+    return "La contraseña actual no es correcta.";
+  if (m.includes("error sending") || m.includes("smtp") || m.includes("535"))
+    return "No se pudo enviar el correo. Revisa la configuración de correo (SMTP) en Supabase.";
+  if (m.includes("webauthn_credential_not_found") || m.includes("credential not found"))
+    return "Este dispositivo no tiene una passkey del panel. Entra con tu contraseña y regístrala en tu menú, en «Tus passkeys».";
+  if (m.includes("webauthn_credential_exists") || m.includes("credential already"))
+    return "Este dispositivo ya tiene una passkey registrada.";
+  if (m.includes("passkey_disabled")) return "Las passkeys no están activadas en Supabase.";
+  if (m.includes("too_many_passkeys")) return "Ya tienes el máximo de passkeys. Borra una para agregar otra.";
+  if (m.includes("webauthn_challenge_expired")) return "Pasó demasiado tiempo. Inténtalo de nuevo.";
+  if (m.includes("webauthn_verification_failed")) return "No se pudo verificar la passkey. Inténtalo de nuevo.";
+  if (m.includes("notallowederror") || m.includes("not allowed") || m.includes("aborted") || m.includes("cancel"))
+    return "Se canceló la passkey o se venció el tiempo. Inténtalo de nuevo.";
   if (m.includes("reauthentication") || m.includes("reauthenticate"))
-    return "Por seguridad, cierra sesión, vuelve a entrar y cambia la contraseña enseguida.";
+    return "Para cambiar la contraseña, confirma con el código que te enviamos al correo.";
   if (m.includes("row-level security") || m.includes("row level security"))
     return "Tu sesión no tiene permiso para guardar esto. Verifica el código de tu app y vuelve a entrar.";
   if (m.includes("aal2")) return "Necesitas verificar tu código de la app antes de hacer esto.";

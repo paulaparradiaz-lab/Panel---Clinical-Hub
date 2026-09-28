@@ -161,6 +161,16 @@ textarea.campo{min-height:90px;resize:vertical}
 .secreto{font-size:12.5px;color:var(--faint);margin:0 0 16px;word-break:break-all}
 .secreto code{font-family:var(--mono);color:var(--ink);background:var(--surface2);padding:3px 8px;border-radius:var(--r-sm)}
 .acceso-pie{margin-top:18px}
+/* Enlaces del acceso y de la ventana de contraseña */
+.acceso-olvido{display:block;margin:14px auto 0}
+.acceso-passkey{margin-top:10px}
+.passkeys-lista{display:grid;gap:8px;margin:4px 0 14px}
+.passkey-fila{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface2)}
+.passkey-fila span{flex:1;min-width:0;display:grid;gap:2px}
+.passkey-fila b{font-weight:600;font-size:14px}
+.passkey-fila small{font-size:12px;color:var(--faint)}
+.reglas-clave{margin:-6px 0 12px;font-size:12.5px;color:var(--faint)}
+#reenviar-codigo{display:block;margin:-4px 0 12px auto}
 
 /* ============================================================
    ENTRADA PARTIDA — panel verde a la izquierda, tarjeta a la derecha.
@@ -1846,6 +1856,29 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
       <input class="campo" type="email" id="correo" placeholder="tu@correo.com" autocomplete="username" inputmode="email">
       <input class="campo" type="password" id="clave" placeholder="Contraseña" autocomplete="current-password">
       <button class="boton" id="entrar">Entrar</button>
+      <button class="boton secundario acceso-passkey" id="entrar-passkey" type="button">Entrar con passkey (huella o Face ID)</button>
+      <button class="enlace acceso-olvido" id="ir-olvido" type="button">¿Olvidaste tu contraseña?</button>
+    </div>
+
+    <!-- Olvidé mi contraseña: se pide un enlace al correo -->
+    <div id="paso-olvido" hidden>
+      <div class="mast"><h1>Recupera tu contraseña</h1></div>
+      <p class="guia">Escribe tu correo. Si tiene cuenta en el panel, te llega un enlace para poner una contraseña nueva.</p>
+      <input class="campo" type="email" id="correo-olvido" placeholder="tu@correo.com" autocomplete="username" inputmode="email">
+      <button class="boton" id="enviar-olvido">Enviar enlace</button>
+    </div>
+
+    <!-- Contraseña propia: la primera vez (la inicial la puso quien te invitó,
+         o llegaste por invitación sin contraseña) o al volver del enlace de
+         recuperación. Se muestra después del código de la app. -->
+    <div id="paso-nueva" hidden>
+      <div class="mast"><h1 id="titulo-nueva">Crea tu contraseña</h1></div>
+      <p class="guia" id="guia-nueva">Es tu primera vez en el panel: pon una contraseña que solo sepas tú.</p>
+      <p class="guia reglas-clave" id="reglas-nueva"></p>
+      <input class="campo" type="password" id="nueva-actual" placeholder="La contraseña que te dieron" autocomplete="current-password">
+      <input class="campo" type="password" id="nueva-1" placeholder="Nueva contraseña" autocomplete="new-password">
+      <input class="campo" type="password" id="nueva-2" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+      <button class="boton" id="guardar-nueva">Guardar y entrar</button>
     </div>
 
     <div id="paso-enrolar" hidden>
@@ -1897,6 +1930,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
             <strong id="menu-correo"></strong>
           </div>
           <button class="menu-item" role="menuitem" id="abrir-clave">Cambiar contraseña</button>
+          <button class="menu-item" role="menuitem" id="abrir-passkeys">Tus passkeys</button>
           <button class="menu-item" role="menuitem" id="cambiar-tema">
             <span>Tema</span><span class="etiqueta" id="tema-actual"></span>
           </button>
@@ -1917,7 +1951,13 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 <div class="velo" id="velo-clave" hidden>
   <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-clave">
     <div class="mast"><h1 id="titulo-clave">Cambiar contraseña</h1></div>
-    <p class="guia">Mínimo 8 caracteres. Tu código de la app sigue siendo el mismo.</p>
+    <p class="guia" id="guia-clave">Para confirmar que eres tú, escribe primero tu contraseña actual.</p>
+    <p class="guia reglas-clave" id="reglas-clave"></p>
+    <input class="campo" type="password" id="clave-actual" placeholder="Contraseña actual" autocomplete="current-password">
+    <div id="caja-codigo" hidden>
+      <input class="campo codigo" id="clave-codigo" placeholder="Código del correo" inputmode="numeric" maxlength="10" autocomplete="one-time-code">
+      <button class="enlace" id="reenviar-codigo" type="button">Reenviar código</button>
+    </div>
     <input class="campo" type="password" id="clave-nueva" placeholder="Nueva contraseña" autocomplete="new-password">
     <input class="campo" type="password" id="clave-repetir" placeholder="Repite la nueva contraseña" autocomplete="new-password">
     <div class="ventana-botones">

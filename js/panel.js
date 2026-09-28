@@ -4,7 +4,7 @@
    Cada pestaña vive en su propio archivo.
    ============================================================ */
 import { sb, $, estado, escapar, avisar, ocupado, traducirError,
-         cerrarVentana } from "./nucleo.js";
+         cerrarVentana, abrirVentana } from "./nucleo.js";
 import * as feedback from "./pestana-feedback.js";
 import * as mejoras from "./pestana-mejoras.js";
 import * as impacto from "./pestana-impacto.js";
@@ -23,9 +23,61 @@ let seccionActiva = "feedback";
 let factorId = null;
 
 /* ============================================================
+   Cierre por inactividad: tras 12 horas sin usar el panel, la sesión
+   se cierra en este navegador y hay que volver a entrar (contraseña y
+   código). Supabase no lo hace en el plan gratuito, así que lo hace el
+   panel. La última actividad se guarda en el navegador, compartida
+   entre pestañas; solo se cierra la sesión de este navegador.
+   ============================================================ */
+const INACTIVIDAD_MAX = 12 * 60 * 60 * 1000;          // 12 horas
+const CLAVE_ACTIVIDAD = "ch-ultima-actividad";
+let marcadoEn = 0;
+
+function marcarActividad(){
+  const ahora = Date.now();
+  if (ahora - marcadoEn < 60 * 1000) return;           // basta una vez por minuto
+  marcadoEn = ahora;
+  try { localStorage.setItem(CLAVE_ACTIVIDAD, String(ahora)); } catch(e) {}
+}
+
+function inactivaDemasiado(){
+  let ultima = 0;
+  try { ultima = Number(localStorage.getItem(CLAVE_ACTIVIDAD)) || 0; } catch(e) {}
+  return ultima > 0 && Date.now() - ultima > INACTIVIDAD_MAX;
+}
+
+async function cerrarPorInactividad(){
+  await sb.auth.signOut({ scope: "local" });
+  try { sessionStorage.setItem("ch-cierre-inactividad", "1"); } catch(e) {}
+  location.reload();
+}
+
+function vigilarInactividad(){
+  ["click", "keydown", "scroll", "touchstart"].forEach(ev =>
+    document.addEventListener(ev, marcarActividad, { passive: true, capture: true }));
+  setInterval(() => { if (inactivaDemasiado()) cerrarPorInactividad(); }, 60 * 1000);
+}
+
+/* ============================================================
    1. ACCESO: contraseña + código TOTP (nivel aal2)
    ============================================================ */
-const PASOS = ["paso-login", "paso-enrolar", "paso-codigo"];
+const PASOS = ["paso-login", "paso-enrolar", "paso-codigo", "paso-olvido", "paso-nueva"];
+
+/* Reglas de la contraseña: las mismas que exige Supabase (Authentication ›
+   Providers › Email). Si allá cambian, se ajustan aquí. */
+const CLAVE_MINIMA = 8;
+const REGLAS_CLAVE = "Mínimo " + CLAVE_MINIMA + " caracteres.";
+
+function claveInvalida(nueva, repetir){
+  if (nueva.length < CLAVE_MINIMA) return "Usa al menos " + CLAVE_MINIMA + " caracteres.";
+  if (nueva !== repetir) return "Las dos contraseñas no coinciden.";
+  return "";
+}
+
+/* Si se llega desde el enlace de «¿Olvidaste tu contraseña?», después del
+   código de la app se pide la contraseña nueva en vez de abrir el panel. */
+let modoRecuperacion = /type=recovery/.test(location.hash);
+sb.auth.onAuthStateChange(evento => { if (evento === "PASSWORD_RECOVERY") modoRecuperacion = true; });
 
 function mostrarPaso(id){
   PASOS.forEach(p => { $("#" + p).hidden = (p !== id); });
@@ -38,10 +90,24 @@ function mostrarPaso(id){
 
 async function decidir(){
   const { data: s } = await sb.auth.getSession();
-  if (!s.session) return mostrarPaso("paso-login");
+  if (!s.session){
+    let porInactividad = false;
+    try { porInactividad = sessionStorage.getItem("ch-cierre-inactividad") === "1";
+          sessionStorage.removeItem("ch-cierre-inactividad"); } catch(e) {}
+    if (porInactividad) avisar("Por seguridad, tu sesión se cerró tras 12 horas sin usar el panel. Vuelve a entrar.", "ok");
+    return mostrarPaso("paso-login");
+  }
+  if (inactivaDemasiado()) return cerrarPorInactividad();
   const { data: nivel, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
   if (error){ avisar(traducirError(error.message), "mal"); return mostrarPaso("paso-login"); }
-  if (nivel.currentLevel === "aal2") return abrirPanel(s.session);
+  if (nivel.currentLevel === "aal2"){
+    /* Contraseña propia: la primera vez (la inicial la puso quien creó la
+       cuenta, o llegó por invitación sin contraseña) y al recuperarla */
+    const { data: u } = await sb.auth.getUser();
+    const usuario = (u && u.user) || s.session.user;
+    if (modoRecuperacion || !(usuario.user_metadata || {}).clave_propia) return pedirClaveNueva();
+    return abrirPanel(s.session);
+  }
   if (nivel.nextLevel === "aal2") return pedirCodigo();
   return enrolar();
 }
@@ -54,6 +120,7 @@ async function entrar(){
   if (error){ avisar(traducirError(error.message), "mal"); return; }
   avisar("");
   $("#clave").value = "";
+  marcadoEn = 0; marcarActividad();                 // la sesión nueva arranca con el reloj en cero
   await decidir();
 }
 
@@ -92,6 +159,54 @@ async function verificarCodigo(selector){
   await decidir();
 }
 
+function pedirClaveNueva(){
+  $("#titulo-nueva").textContent = modoRecuperacion ? "Pon tu contraseña nueva" : "Crea tu contraseña";
+  $("#guia-nueva").textContent = modoRecuperacion
+    ? "Llegaste desde el enlace de recuperación. Escribe la contraseña con la que vas a entrar de ahora en adelante."
+    : "Es tu primera vez en el panel: pon una contraseña que solo sepas tú.";
+  $("#reglas-nueva").textContent = REGLAS_CLAVE;
+  /* La primera vez se pide la contraseña que le dieron (Supabase exige la
+     actual para cambiarla); al recuperar no, porque justo la olvidó. */
+  $("#nueva-actual").hidden = modoRecuperacion;
+  $("#nueva-actual").value = "";
+  $("#nueva-1").value = "";
+  $("#nueva-2").value = "";
+  mostrarPaso("paso-nueva");
+}
+
+async function guardarClaveNueva(){
+  const nueva = $("#nueva-1").value;
+  const actual = $("#nueva-actual").value;
+  if (!modoRecuperacion && !actual){ avisar("Escribe la contraseña que te dieron.", "mal"); return; }
+  const error1 = claveInvalida(nueva, $("#nueva-2").value);
+  if (error1){ avisar(error1, "mal"); return; }
+  const cambios = { password: nueva, data: { clave_propia: true } };
+  if (!modoRecuperacion) cambios.current_password = actual;
+  const { error } = await sb.auth.updateUser(cambios);
+  if (error){ avisar(traducirError(error.message), "mal"); return; }
+  modoRecuperacion = false;
+  avisar("");
+  await decidir();
+}
+
+async function enviarOlvido(){
+  const correo = $("#correo-olvido").value.trim();
+  if (!correo.includes("@")){ avisar("Escribe tu correo.", "mal"); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname });
+  if (error){ avisar(traducirError(error.message), "mal"); return; }
+  avisar("Listo. Si ese correo tiene cuenta, te llegará un enlace para poner una contraseña nueva.", "ok");
+}
+
+/* Passkey: reemplaza la contraseña. Si Supabase no la cuenta como segundo
+   factor, decidir() pide igual el código de la app. */
+async function entrarConPasskey(){
+  const { error } = await sb.auth.signInWithPasskey();
+  if (error){ avisar(traducirError((error.code || "") + " " + (error.message || "") + " " + (error.name || "")), "mal"); return; }
+  avisar("");
+  marcadoEn = 0; marcarActividad();
+  await decidir();
+}
+
 async function salir(){
   await sb.auth.signOut();
   location.reload();
@@ -106,6 +221,16 @@ $("#verificar").addEventListener("click", () =>
   ocupado($("#verificar"), "Verificando…", () => verificarCodigo("#codigo")));
 $("#codigo").addEventListener("keydown", e => { if (e.key === "Enter") $("#verificar").click(); });
 $("#salir").addEventListener("click", salir);
+$("#entrar-passkey").addEventListener("click", () => ocupado($("#entrar-passkey"), "Esperando la passkey…", entrarConPasskey));
+$("#ir-olvido").addEventListener("click", () => {
+  $("#correo-olvido").value = $("#correo").value.trim();
+  avisar("");
+  mostrarPaso("paso-olvido");
+});
+$("#enviar-olvido").addEventListener("click", () => ocupado($("#enviar-olvido"), "Enviando…", enviarOlvido));
+$("#correo-olvido").addEventListener("keydown", e => { if (e.key === "Enter") $("#enviar-olvido").click(); });
+$("#guardar-nueva").addEventListener("click", () => ocupado($("#guardar-nueva"), "Guardando…", guardarClaveNueva));
+$("#nueva-2").addEventListener("keydown", e => { if (e.key === "Enter") $("#guardar-nueva").click(); });
 $("#volver").addEventListener("click", salir);
 
 /* ============================================================
@@ -115,6 +240,9 @@ async function abrirPanel(sesion){
   if (!$("#panel").hidden) return;
   $("#acceso").hidden = true;
   $("#panel").hidden = false;
+
+  marcadoEn = 0; marcarActividad();
+  vigilarInactividad();
 
   const correo = sesion.user.email || "";
   estado.usuario = { id: sesion.user.id, correo: correo };
@@ -276,14 +404,28 @@ $("#cambiar-tema").addEventListener("click", () => {
   pintarTemaActual();
 });
 
+/* Cambiar contraseña: se confirma que eres tú con la contraseña actual
+   (Supabase la exige). Si además Supabase pide el código del correo
+   («Secure password change» con la sesión vieja), se envía y se pide. */
+async function enviarCodigoClave(){
+  const { error } = await sb.auth.reauthenticate();
+  if (error){ avisar(traducirError(error.message), "mal", "#aviso-clave"); return; }
+  avisar("Te enviamos un código a " + (estado.usuario ? estado.usuario.correo : "tu correo") + ".", "ok", "#aviso-clave");
+}
+
 $("#abrir-clave").addEventListener("click", () => {
   abrirMenu(false);
   avisar("", "", "#aviso-clave");
+  $("#reglas-clave").textContent = REGLAS_CLAVE;
+  $("#caja-codigo").hidden = true;
+  $("#clave-actual").value = "";
+  $("#clave-codigo").value = "";
   $("#clave-nueva").value = "";
   $("#clave-repetir").value = "";
   $("#velo-clave").hidden = false;
-  setTimeout(() => $("#clave-nueva").focus(), 50);
+  setTimeout(() => $("#clave-actual").focus(), 50);
 });
+$("#reenviar-codigo").addEventListener("click", () => ocupado($("#reenviar-codigo"), "Enviando…", enviarCodigoClave));
 
 function cerrarVentanaClave(){
   $("#velo-clave").hidden = true;
@@ -295,17 +437,86 @@ $("#velo-clave").addEventListener("click", e => { if (e.target.id === "velo-clav
 $("#clave-repetir").addEventListener("keydown", e => { if (e.key === "Enter") $("#guardar-clave").click(); });
 
 $("#guardar-clave").addEventListener("click", () => ocupado($("#guardar-clave"), "Guardando…", async () => {
+  const actual  = $("#clave-actual").value;
+  const codigo  = $("#clave-codigo").value.replace(/\s/g, "");
   const nueva   = $("#clave-nueva").value;
-  const repetir = $("#clave-repetir").value;
-  if (nueva.length < 8){ avisar("Usa al menos 8 caracteres.", "mal", "#aviso-clave"); return; }
-  if (nueva !== repetir){ avisar("Las dos contraseñas no coinciden.", "mal", "#aviso-clave"); return; }
-  const { error } = await sb.auth.updateUser({ password: nueva });
+  if (!actual){ avisar("Escribe tu contraseña actual.", "mal", "#aviso-clave"); return; }
+  if (!$("#caja-codigo").hidden && !codigo){ avisar("Escribe el código que te llegó al correo.", "mal", "#aviso-clave"); return; }
+  const error1 = claveInvalida(nueva, $("#clave-repetir").value);
+  if (error1){ avisar(error1, "mal", "#aviso-clave"); return; }
+  const cambios = { password: nueva, current_password: actual, data: { clave_propia: true } };
+  if (codigo) cambios.nonce = codigo;
+  const { error } = await sb.auth.updateUser(cambios);
+  if (error && /reauthenticat/i.test(error.message || "") && $("#caja-codigo").hidden){
+    /* Supabase pide además el código del correo: se envía y se muestra */
+    $("#caja-codigo").hidden = false;
+    await enviarCodigoClave();
+    setTimeout(() => $("#clave-codigo").focus(), 50);
+    return;
+  }
   if (error){ avisar(traducirError(error.message), "mal", "#aviso-clave"); return; }
   avisar("Contraseña actualizada. La próxima vez entras con la nueva.", "ok", "#aviso-clave");
+  $("#clave-actual").value = "";
+  $("#clave-codigo").value = "";
   $("#clave-nueva").value = "";
   $("#clave-repetir").value = "";
   setTimeout(cerrarVentanaClave, 1800);
 }));
+
+/* Tus passkeys: las del usuario (una por dispositivo o llavero), con
+   Agregar para este dispositivo y Borrar. Se guardan en el dispositivo;
+   Supabase solo guarda la parte pública. */
+function errorTexto(error){
+  return traducirError((error.code || "") + " " + (error.message || "") + " " + (error.name || ""));
+}
+
+async function pintarPasskeys(){
+  const caja = document.getElementById("lista-passkeys");
+  if (!caja) return;
+  const { data, error } = await sb.auth.passkey.list();
+  if (error){ caja.innerHTML = '<p class="vacio">' + escapar(errorTexto(error)) + '</p>'; return; }
+  const lista = data || [];
+  const cuando = t => t ? new Date(t).toLocaleDateString("es-CO", { day:"numeric", month:"short", year:"numeric" }) : "";
+  caja.innerHTML = lista.length ? lista.map(p =>
+    '<div class="passkey-fila"><span><b>' + escapar(p.friendly_name || "Passkey") + '</b>' +
+    '<small>Creada el ' + escapar(cuando(p.created_at)) +
+    (p.last_used_at ? ' · usada el ' + escapar(cuando(p.last_used_at)) : ' · sin usar todavía') + '</small></span>' +
+    '<button type="button" class="boton-chico secundario" data-borrar-passkey="' + escapar(p.id) + '">Borrar</button></div>').join("")
+    : '<p class="vacio">Todavía no tienes passkeys. Agrega la de este dispositivo.</p>';
+}
+
+$("#abrir-passkeys").addEventListener("click", () => {
+  abrirMenu(false);
+  abrirVentana({
+    titulo: "Tus passkeys",
+    guia: "Entra con tu huella, Face ID o el PIN de tu dispositivo, sin escribir la contraseña.",
+    cuerpo:
+      '<p class="mini explica">Una passkey es una llave que queda guardada en tu celular, tu computador o tu gestor de ' +
+      'contraseñas (el llavero de iCloud, Google o 1Password), y se sincroniza entre tus dispositivos. Supabase solo ' +
+      'guarda la parte pública: nadie puede copiarla ni adivinarla. Agrega una en cada dispositivo o llavero que uses; ' +
+      'si pierdes uno, borra su passkey aquí.</p>' +
+      '<div class="passkeys-lista" id="lista-passkeys"><p class="vacio">Cargando…</p></div>',
+    aceptar: "Agregar passkey de este dispositivo",
+    alAceptar: async () => {
+      const { error } = await sb.auth.registerPasskey();
+      if (error){ avisar(errorTexto(error), "mal", "#aviso-forma"); return false; }
+      avisar("Listo: la próxima vez puedes entrar con «Entrar con passkey».", "ok", "#aviso-forma");
+      await pintarPasskeys();
+      return false;
+    }
+  });
+  pintarPasskeys();
+  document.getElementById("lista-passkeys").addEventListener("click", async e => {
+    const b = e.target.closest("[data-borrar-passkey]");
+    if (!b) return;
+    if (b.dataset.confirmar !== "1"){ b.dataset.confirmar = "1"; b.textContent = "¿Seguro? Borrar"; return; }
+    b.disabled = true;
+    const { error } = await sb.auth.passkey.delete({ passkeyId: b.dataset.borrarPasskey });
+    if (error){ b.disabled = false; avisar(errorTexto(error), "mal", "#aviso-forma"); return; }
+    avisar("Passkey borrada.", "ok", "#aviso-forma");
+    await pintarPasskeys();
+  });
+});
 
 /* Arranque */
 decidir();
