@@ -267,14 +267,38 @@ textarea.campo{min-height:90px;resize:vertical}
   .vt-tarjeta-atraso b{font-size:14px}
   .vt-tarjeta-atraso .mini{display:block}
   .vt-tarjeta-atraso .boton-chico{text-decoration:none}
-  .vt-tarjeta-egreso{display:grid;gap:6px;padding:12px 14px;border-radius:14px;background:var(--surface2)}
-  .vt-eg-cab{display:flex;justify-content:space-between;gap:10px}
 }
 /* Atrasados: solo el ícono de WhatsApp (sin fondo), centrado con la primera línea del médico */
 .vt-whatsapp{display:inline-grid;place-items:center;width:28px;height:28px;margin:-3px 0;color:#25d366;transition:transform .2s,color .2s}
 .vt-whatsapp:hover{transform:translateY(-1px) scale(1.08);color:#1da851}
 .vt-whatsapp svg{width:24px;height:24px;fill:currentColor}
 /* Egresos */
+/* Egresos en celular: tarjeta tipo recibo */
+.vt-tc{display:grid;gap:6px;padding:14px;border-radius:16px;background:var(--surface2)}
+.vt-tc,.vt-tc > *{min-width:0}
+.vt-tc-fila{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.vt-tc-concepto{font-weight:600;line-height:1.35}
+.vt-tc-monto{white-space:nowrap}
+.vt-tc-abajo{align-items:center;border-top:1.5px dashed rgba(24,24,27,.15);padding-top:8px;margin-top:2px}
+.vt-tc-chips{display:flex;flex-wrap:wrap;gap:5px}
+.vt-chip{padding:3px 9px;border-radius:999px;background:var(--surface,#fff);font-size:12px;color:var(--muted,#6b6b76)}
+.vt-tc-iconos{display:inline-flex;align-items:center;gap:2px;flex:none}
+.vt-ico{display:inline-grid;place-items:center;width:34px;height:34px;border:0;border-radius:10px;background:none;color:var(--ink,#18181b);cursor:pointer;transition:background .2s}
+.vt-ico:hover{background:rgba(24,24,27,.06)}
+.vt-ico svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vt-ico-borrar{color:#b3432e}
+.vt-ico[data-confirmar="1"]{width:auto;padding:0 12px;background:#fbe3dd;color:#b3432e;font-size:13px;font-weight:700}
+/* Egresos en PC: tabla con pastillas e íconos */
+.vt-pc td{vertical-align:middle}
+.vt-pc .vt-der{text-align:right}
+.vt-pc .vt-gris{color:var(--muted,#6b6b76);white-space:nowrap}
+.vt-pc td:last-child{width:1%;white-space:nowrap}
+.vt-pc .vt-eg-enlaces{justify-items:end}
+.vt-pc .vt-chip{background:var(--surface2)}
+.vt-quien{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.vt-quien.paula{background:#e9f4d6;color:#2a4927}
+.vt-quien.hamilton{background:#dfe9fb;color:#2a4f8f}
+.vt-quien.mitad{background:linear-gradient(90deg,#e9f4d6 50%,#dfe9fb 50%);color:#18181b}
 /* Botón de soportes: documento con el número en una burbujita */
 .vt-sop{position:relative;display:inline-grid;place-items:center;width:38px;height:34px;padding:0;border:0;background:none;color:var(--ink,#18181b);cursor:pointer;border-radius:10px;transition:background .2s}
 .vt-sop:hover{background:var(--surface2,#f1f1ef)}
@@ -282,7 +306,6 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-sop-n{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#2a4927;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 
 .vt-egresos-barra{display:flex;justify-content:flex-end;margin-top:12px}
-.vt-eg-acciones{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .vt-archivo-boton{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-top:4px}
 .vt-archivo-boton svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .vt-archivos{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:6px}
@@ -293,7 +316,7 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-archivo-quitar:hover{color:var(--ink);background:rgba(24,24,27,.06)}
 .vt-archivo-boton{margin-bottom:10px}
 .vt-eg-enlaces{display:grid;gap:4px;margin-top:8px;justify-items:end;text-align:right}
-.vt-tarjeta-egreso .vt-eg-enlaces{justify-items:start;text-align:left}
+.vt-tc .vt-eg-enlaces{justify-items:start;text-align:left}
 .vt-eg-enlaces a{font-size:14px;overflow-wrap:anywhere}
 /* Rentabilidad estimada */
 .vt-rent-aviso{margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:#fff6e0;font-size:13px;line-height:1.45}

@@ -17,8 +17,8 @@
 import { sb, escapar, fecha, abrirVentana, avisar, leer, traducirError } from "./nucleo.js";
 import { cabecera, armarAyudas } from "./ventas-comun.js";
 
-/* Pesos colombianos, sin centavos: $ 150.000 */
-const cop = n => n == null ? "—" : "$ " + Math.round(Number(n)).toLocaleString("es-CO");
+/* Pesos colombianos, sin centavos: $ 150.000 (espacio que no se parte: el «$» nunca queda solo en una línea) */
+const cop = n => n == null ? "—" : "$\u00a0" + Math.round(Number(n)).toLocaleString("es-CO");
 /* TRM oficial (Superfinanciera, publicada en datos.gov.co) vigente en una fecha */
 async function trmDelDia(dia){
   const donde = "vigenciadesde <= '" + dia + "T00:00:00' AND vigenciahasta >= '" + dia + "T00:00:00'";
@@ -119,24 +119,44 @@ function pintar(){
   if (!egresos.length){
     lista.innerHTML = '<p class="vacio">Todavía no hay gastos registrados. Usa «Registrar gasto».</p>';
   } else {
-    const acciones = e => '<span class="vt-eg-acciones">' + botonSoportes(e) +
-      '<button class="boton-chico secundario" type="button" data-editar="' + e.id + '">Editar</button>' +
-      '<button class="boton-chico secundario" type="button" data-borrar="' + e.id + '">Borrar</button></span>' +
-      '<div class="vt-eg-enlaces" data-enlaces="' + e.id + '" hidden></div>';
     lista.innerHTML =
-      /* En celular, una tarjeta por gasto; en computador, la tabla */
-      '<div class="vt-tarjetas-cel">' + egresos.map(e => '<div class="vt-tarjeta-egreso">' +
-        '<div class="vt-eg-cab"><b>' + escapar(e.concepto) + '</b><b>' + escapar(cop(e.monto_cop)) + '</b></div>' +
-        '<span class="mini">' + escapar(fecha(e.fecha + "T12:00:00-05:00")) + ' · ' + escapar(e.categoria) + ' · pagó ' + escapar(e.pagado_por === MITAD ? "mitad y mitad" : e.pagado_por) + '</span>' +
-        acciones(e) + '</div>').join("") + '</div>' +
-      '<table class="tabla vt-solo-compu"><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Pagó</th><th>Monto</th><th></th></tr></thead><tbody>' +
-      egresos.map(e => '<tr><td>' + escapar(fecha(e.fecha + "T12:00:00-05:00")) + '</td><td>' + escapar(e.concepto) + '</td><td>' +
-        escapar(e.categoria) + '</td><td>' + escapar(e.pagado_por) + '</td><td>' + escapar(cop(e.monto_cop)) + '</td><td>' + acciones(e) + '</td></tr>').join("") +
+      /* En celular, una tarjeta por gasto (recibo); en computador, la tabla */
+      '<div class="vt-tarjetas-cel">' + egresos.map(tarjeta).join("") + '</div>' +
+      '<table class="tabla vt-solo-compu vt-pc"><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Pagó</th><th class="vt-der">Monto</th><th></th></tr></thead><tbody>' +
+      egresos.map(e => '<tr><td class="vt-gris">' + escapar(fecha(e.fecha + "T12:00:00-05:00")) + '</td><td>' + escapar(e.concepto) + '</td>' +
+        '<td><span class="vt-chip">' + escapar(e.categoria) + '</span></td><td>' + pastillaQuien(e) + '</td>' +
+        '<td class="vt-der"><b>' + escapar(cop(e.monto_cop)) + '</b></td><td class="vt-der">' + iconosFila(e) + '</td></tr>').join("") +
       '</tbody></table>';
   }
   pintarMeses();
 }
 
+/* Tarjeta de un gasto en celular, tipo recibo: concepto y monto arriba;
+   debajo de una línea punteada, la fecha y quién pagó en pastillas, y los
+   íconos (soportes, editar, borrar) */
+const ICONO_LAPIZ = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const ICONO_BASURA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+function tarjeta(e){
+  const quien = e.pagado_por === MITAD ? "mitad y mitad" : e.pagado_por;
+  return '<div class="vt-tc"><div class="vt-tc-fila"><b class="vt-tc-concepto">' + escapar(e.concepto) + '</b><b class="vt-tc-monto">' + escapar(cop(e.monto_cop)) + '</b></div>' +
+    '<div class="vt-tc-fila vt-tc-abajo"><span class="vt-tc-chips"><span class="vt-chip">' + escapar(fecha(e.fecha + "T12:00:00-05:00")) + '</span>' +
+      '<span class="vt-chip">' + escapar(quien) + '</span></span>' +
+      iconosFila(e) + '</div></div>';
+}
+
+/* En PC, la tabla: fecha en gris, categoría y quién pagó en pastillas
+   (Paula lima, Hámilton azul, mitad y mitad las dos), monto a la derecha
+   y los mismos íconos que en celular */
+function iconosFila(e){
+  return '<span class="vt-tc-iconos">' + botonSoportes(e) +
+    '<button class="vt-ico" type="button" data-editar="' + e.id + '" title="Editar" aria-label="Editar gasto">' + ICONO_LAPIZ + '</button>' +
+    '<button class="vt-ico vt-ico-borrar" type="button" data-borrar="' + e.id + '" title="Borrar" aria-label="Borrar gasto">' + ICONO_BASURA + '</button></span>' +
+    '<div class="vt-eg-enlaces" data-enlaces="' + e.id + '" hidden></div>';
+}
+function pastillaQuien(e){
+  const cls = e.pagado_por === MITAD ? "mitad" : e.pagado_por === "Paula" ? "paula" : "hamilton";
+  return '<span class="vt-quien ' + cls + '">' + escapar(e.pagado_por) + '</span>';
+}
 /* Botón de soportes: ícono de documento con el número en una burbujita */
 const ICONO_DOC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
 function botonSoportes(e){
@@ -216,7 +236,7 @@ async function alTocar(e){
       return;
     }
     /* Varios: se despliega la lista de archivos debajo del gasto (se abre y se cierra) */
-    const cajaEnlaces = ver.closest(".vt-tarjeta-egreso, td").querySelector("[data-enlaces]");
+    const cajaEnlaces = ver.closest(".vt-tc, td").querySelector("[data-enlaces]");
     if (!cajaEnlaces.hidden){ cajaEnlaces.hidden = true; return; }
     const { data, error } = await sb.storage.from(ESPACIO).createSignedUrls(g.soportes, 300);
     if (error){ avisar("No se pudieron abrir los soportes. " + traducirError(error.message), "mal", "#aviso-egresos"); return; }
