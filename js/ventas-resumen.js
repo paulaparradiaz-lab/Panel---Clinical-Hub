@@ -117,8 +117,21 @@ function pintar(){
   }
   /* Los dos ejes con el cero a la misma altura: las devoluciones bajan desde
      la misma línea donde suben las ventas */
-  const maxVentas = Math.max(1, ...dias.map(d => d.ventas)) * 1.1;
-  const maxFact = Math.max(1, ...dias.map(d => d.fact)) * 1.1;
+  /* Y además con las mismas divisiones (4 a 6 por encima del cero, en
+     números redondos): cada línea guía cae en un número de la izquierda y
+     otro de la derecha. Se elige la cantidad que mejor llena la altura. */
+  const paso = (tope, n, entero) => {
+    const crudo = Math.max(tope * 1.05, entero ? 1 : 0.01) / n;   // un poco de aire arriba
+    const base = Math.pow(10, Math.floor(Math.log10(crudo)));
+    return [1, 2, 2.5, 5, 10].map(x => x * base).find(x => x >= crudo && (!entero || Number.isInteger(x))) || Math.ceil(crudo);
+  };
+  const topeVentas = Math.max(...dias.map(d => d.ventas)), topeFact = Math.max(...dias.map(d => d.fact));
+  const { n: divisiones, pv: pasoVentas, pf: pasoFact } = [4, 5, 6]
+    .map(n => ({ n, pv: paso(topeVentas, n, true), pf: paso(topeFact, n, true) }))   // dólares enteros
+    .map(o => ({ ...o, lleno: Math.max(topeVentas, 1) / (o.pv * o.n) + Math.max(topeFact, .01) / (o.pf * o.n) }))
+    .sort((x, y) => y.lleno - x.lleno)[0];
+  const maxVentas = pasoVentas * divisiones;
+  const maxFact = pasoFact * divisiones;
   const maxSale = Math.max(0, ...dias.map(d => d.devuelto)) * 1.1;
   const parte = maxSale / maxFact;
   grafica("vr-grafica", {
@@ -144,11 +157,12 @@ function pintar(){
           : " " + num(c.raw) + (c.raw === 1 ? " venta" : " ventas") } }
       },
       scales: {
+        /* Fechas derechas y espaciadas (en PC eran 30 inclinadas) */
+        x: { ticks: { maxRotation: 0, autoSkip: true, autoSkipPadding: 14 } },
         y: { min: -maxVentas * parte, max: maxVentas, title: { display: true, text: "Ventas" },
-             ticks: { precision: 0, callback: v => v < 0 || !Number.isInteger(v) ? "" : v } },
+             ticks: { stepSize: pasoVentas, precision: 0, callback: v => v < 0 ? "" : v } },
         y2: { min: -maxSale, max: maxFact, position: "right", grid: { display: false }, title: { display: true, text: "US$" },
-              /* solo números redondos: los bordes calculados (260,8…) no se escriben */
-              ticks: { callback: v => v < 0 || Math.abs(v - Math.round(v / 10) * 10) > .01 ? "" : Math.round(v).toLocaleString("es-CO") } }
+              ticks: { stepSize: pasoFact, callback: v => v < 0 ? "" : Math.round(v).toLocaleString("es-CO") } }
       }
     }
   });
