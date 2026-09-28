@@ -1,35 +1,35 @@
 /* ============================================================
-   CLINICAL HUB · PESTAÑA MEJORAS (Tablero | Impacto)
+   CLINICAL HUB · PESTAÑA SOLUCIONES (Tablero | Impacto)
    Lo que vamos a cambiar y si funcionó, en un solo lugar, con dos
    subpestañas del mismo peso (igual que Feedback: Inbox | Métricas):
 
-   TABLERO   Las mejoras con su estado, indicador y personas
-             (pestana-mejoras.js).
+   TABLERO   Las soluciones con su estado, indicador y personas
+             (pestana-soluciones.js).
    IMPACTO   Qué parte de las críticas es de cada indicador y cómo
-             cambia después de cada mejora (pestana-impacto.js).
+             cambia después de cada solución (pestana-impacto.js).
 
    Esta pestaña solo pone el título, el botón Actualizar y las
    subpestañas; cada subpestaña se pinta dentro de #sub-vista.
    ============================================================ */
 import { $, estado } from "./nucleo.js";
-import * as tablero from "./pestana-mejoras.js";
+import * as tablero from "./pestana-soluciones.js";
 import * as impacto from "./pestana-impacto.js";
 
 const SUBS = {
   tablero: { modulo: tablero, etiqueta: "Lo que vamos a cambiar",
-    texto: "Cambia el estado, desvincula temas o mejoras globales y asigna quién la hace." },
-  impacto: { modulo: impacto, etiqueta: "Lo que cambió después de cada mejora",
-    texto: "Qué parte de las críticas que llegan es de cada indicador, y cómo cambia después de cada mejora." }
+    texto: "Cambia el estado, desvincula temas o soluciones globales y asigna quién la hace." },
+  impacto: { modulo: impacto, etiqueta: "Lo que cambió después de cada solución",
+    texto: "Qué parte de las críticas que llegan es de cada indicador, y cómo cambia después de cada solución." }
 };
 let sub = "tablero";
 
 export async function render(){
-  /* Si se llegó desde otra pestaña para resaltar una mejora, va al tablero */
+  /* Si se llegó desde otra pestaña para resaltar una solución, va al tablero */
   if (estado.foco) sub = "tablero";
   $("#vista").innerHTML = `
 <div class="cabecera cabecera-compacta">
   <div>
-    <div class="mast"><span class="etiqueta" id="mi-etiqueta"></span><h1>Mejoras</h1></div>
+    <div class="mast"><span class="etiqueta" id="mi-etiqueta"></span><h1>Soluciones</h1></div>
     <p id="mi-texto"></p>
   </div>
   <button class="boton-recargar" id="btn-recargar" data-tip="Actualizar" aria-label="Actualizar">
@@ -37,7 +37,7 @@ export async function render(){
   </button>
 </div>
 
-<div class="subpestanas con-goma" id="subpestanas" role="tablist" aria-label="Secciones de mejoras">
+<div class="subpestanas con-goma" id="subpestanas" role="tablist" aria-label="Secciones de soluciones">
   <span class="goma" aria-hidden="true"></span>
   <button class="subpestana" role="tab" data-sub="tablero" aria-selected="false" aria-controls="sub-vista">Tablero</button>
   <button class="subpestana" role="tab" data-sub="impacto" aria-selected="false" aria-controls="sub-vista">Impacto</button>

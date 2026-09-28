@@ -1,6 +1,6 @@
 /* ============================================================
-   CLINICAL HUB · PESTAÑA DINERO (Ingresos | Egresos)
-   Dos subpestañas del mismo peso, como Feedback y Mejoras:
+   CLINICAL HUB · PESTAÑA DINERO (Ingresos | Egresos | Rentabilidad)
+   Dos subpestañas del mismo peso, como Feedback y Soluciones:
 
    INGRESOS  Lo que llega de Hotmart: ventas por día (calendario y
              devoluciones), países, formas de pago (ventas-resumen.js);
@@ -8,6 +8,8 @@
              (ventas-suscripciones.js). Cálculos en ventas-calculos.js.
    EGRESOS   Los gastos que ustedes anotan a mano, con su soporte
              (ventas-egresos.js; tabla egresos, sql/egresos.sql).
+   RENTABILIDAD  Estimada: ingresos − egresos por mes, en US$
+             (ventas-rentabilidad.js).
 
    Lee hotmart_eventos (lo llena n8n desde Hotmart; historial cargado
    el 28-sep-2026). Ingresos en US$ netos; egresos en pesos (con su TRM).
@@ -17,6 +19,7 @@ import { modelo } from "./ventas-calculos.js";
 import * as resumen from "./ventas-resumen.js";
 import * as suscripciones from "./ventas-suscripciones.js";
 import * as egresos from "./ventas-egresos.js";
+import * as rentabilidad from "./ventas-rentabilidad.js";
 
 let datos = null;   // { eventos, modelo, gastos } de Hotmart, compartido
 let sub = "ingresos";
@@ -39,6 +42,7 @@ export async function render(){
   <span class="goma" aria-hidden="true"></span>
   <button class="subpestana" role="tab" data-sub="ingresos" aria-selected="false" aria-controls="sub-vista">Ingresos</button>
   <button class="subpestana" role="tab" data-sub="egresos" aria-selected="false" aria-controls="sub-vista">Egresos</button>
+  <button class="subpestana" role="tab" data-sub="rentabilidad" aria-selected="false" aria-controls="sub-vista">Rentabilidad</button>
 </div>
 
 <div id="sub-vista" role="tabpanel"><p class="vacio">Cargando…</p></div>`;
@@ -59,6 +63,7 @@ export async function render(){
     b.classList.add("girando");
     try {
       if (sub === "egresos") await egresos.recargar();
+      else if (sub === "rentabilidad") { await cargar(); await rentabilidad.render($("#sub-vista"), datos); }
       else { await cargar(); await pintar(); }
     } finally { b.classList.remove("girando"); }
   });
@@ -79,6 +84,7 @@ async function abrir(id){
     b.setAttribute("aria-selected", String(b.dataset.sub === sub)));
   moverGoma();
   if (sub === "egresos") await egresos.render($("#sub-vista"), datos);
+  else if (sub === "rentabilidad") await rentabilidad.render($("#sub-vista"), datos);
   else await pintar();
 }
 

@@ -7,7 +7,7 @@
                un comentario). Guarda en
                feedback_prueba_clasificacion_por_ia por medio de ia.js.
    Comentarios La lista de comentarios de un grupo (la fila de Ruido,
-               un tipo de mejora global), cada uno con Reclasificar y
+               un tipo de solución global), cada uno con Reclasificar y
                Devolver al Inbox.
    ============================================================ */
 import { $, escapar, fecha, num, abrirVentana, avisar, cerrarVentana, traducirError } from "./nucleo.js";
@@ -42,7 +42,7 @@ export function textoDe(x){
    1. Ventana de clasificar
    Desde el Inbox arranca en blanco y sin sugerencias de la IA, para no
    sesgar a quien clasifica; al reclasificar abre con lo que ya tiene. Primero solo pregunta qué es (tema
-   pedido, mejora global o las dos); al marcar una opción se
+   pedido, solución global o las dos); al marcar una opción se
    despliega debajo su parte. Estética del resto del panel: el
    control de las subpestañas y la bandeja del ranking. Lo que elijas reemplaza lo que tuviera
    cada comentario. Lo marcado vive en «marcadas» y no en el DOM,
@@ -95,9 +95,9 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       '<div class="bandeja-opciones" id="c-temas" style="max-height:300px"></div>' +
       '<div id="c-temas-nota"></div>' +
     '</div>' +
-    '<div id="c-bloque-mejoras">' +
-      '<span class="etiqueta">¿Qué tipo de mejora?</span>' +
-      '<div class="bandeja-opciones" id="c-mejoras"></div>' +
+    '<div id="c-bloque-soluciones">' +
+      '<span class="etiqueta">¿Qué tipo de solución?</span>' +
+      '<div class="bandeja-opciones" id="c-soluciones"></div>' +
     '</div>' +
     (una ? '' : '<p class="mini">Se aplica a las ' + lista.length +
       ' elegidas y reemplaza lo que tuvieran.</p>');
@@ -111,9 +111,9 @@ export function ventanaClasificar(lista, alTerminar, opciones){
     alAceptar: async () => {
       const temas = tipos.has("tema_pedido") ? Array.from(marcadas.temas) : [];
       const mejoras = tipos.has("mejora_tecnica") ? Array.from(marcadas.mejoras) : [];
-      if (!tipos.size){ avisar("Elige si es tema pedido, mejora global o las dos.", "mal", "#aviso-forma"); return false; }
+      if (!tipos.size){ avisar("Elige si es tema pedido, solución global o las dos.", "mal", "#aviso-forma"); return false; }
       if (tipos.has("tema_pedido") && !temas.length){ avisar("Elige al menos un tema.", "mal", "#aviso-forma"); return false; }
-      if (tipos.has("mejora_tecnica") && !mejoras.length){ avisar("Elige al menos un tipo de mejora.", "mal", "#aviso-forma"); return false; }
+      if (tipos.has("mejora_tecnica") && !mejoras.length){ avisar("Elige al menos un tipo de solución.", "mal", "#aviso-forma"); return false; }
       await clasificar(lista, temas, mejoras);
       cerrarVentana();
       if (alTerminar) await alTerminar(lista.length);
@@ -144,7 +144,7 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       b.setAttribute("aria-selected", String(on));
     });
     $("#c-bloque-temas").hidden = !tipos.has("tema_pedido");
-    $("#c-bloque-mejoras").hidden = !tipos.has("mejora_tecnica");
+    $("#c-bloque-soluciones").hidden = !tipos.has("mejora_tecnica");
     moverGoma();
   }
 
@@ -186,8 +186,8 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       (b && !resto.length ? '<p class="mini">Ningún tema del catálogo coincide con “' + escapar(buscaTema.trim()) + '”.</p>' : '');
   }
 
-  function pintarMejoras(){
-    $("#c-mejoras").innerHTML = catalogo.mejoras.map(c =>
+  function pintarSoluciones(){
+    $("#c-soluciones").innerHTML = catalogo.mejoras.map(c =>
       fila("mejora", c.slug, c.nombre, (c.sinonimos || "").split("|").slice(0, 3).join(" · "),
         marcadas.mejoras.has(c.slug))).join("");
   }
@@ -207,7 +207,7 @@ export function ventanaClasificar(lista, alTerminar, opciones){
   }
   requestAnimationFrame(moverGoma);
   pintarTemas();
-  pintarMejoras();
+  pintarSoluciones();
 
   /* Se escucha en .ventana, que nace con cada apertura: #velo-forma
      vive siempre y ahí se irían sumando los oyentes de ventanas viejas. */
@@ -229,7 +229,7 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       if (marcadas.mejoras.has(t)) marcadas.mejoras.delete(t); else marcadas.mejoras.add(t);
       b.setAttribute("aria-pressed", String(marcadas.mejoras.has(t)));
       b.classList.remove("recien");
-      saltar('#c-mejoras button[data-mejora="' + t + '"]');
+      saltar('#c-soluciones button[data-mejora="' + t + '"]');
     }
   });
   $("#c-busca-tema").addEventListener("input", e => { buscaTema = e.target.value || ""; pintarTemas(); });

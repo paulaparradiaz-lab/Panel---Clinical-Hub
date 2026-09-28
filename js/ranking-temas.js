@@ -1,7 +1,7 @@
 /* ============================================================
    CLINICAL HUB · RANKING DE TEMAS PEDIDOS (dentro de Métricas)
    Réplica del ranking de la Temas pedidos vieja, sobre los datos
-   de la IA. Histórico completo; un único filtro: con / sin mejora.
+   de la IA. Histórico completo; un único filtro: con / sin solución.
 
    Cada fila es un tema del catálogo (categorias_para_ia) con al menos
    un comentario ya clasificado (auto o revisado):
@@ -13,25 +13,25 @@
                      al Inbox.
      "N formas de decirlo"  abre los comentarios reales; desde ahí se
                      reclasifica o se saca uno del tema.
-     Mejora          se crea o se enlaza una mejora (mejoras_ia) al
+     Solución          se crea o se enlaza una solución (mejoras_ia) al
                      tema completo; se ve y se desvincula sin borrarla.
-                     La mejora también lleva su indicador (una mejora
+                     La solución también lleva su indicador (una solución
                      global, de entrada "Cantidad de temas"), que es lo
                      que mide Impacto.
      Nueva etiqueta  crea un tema nuevo en el catálogo.
    Ruido no va aquí: vive en el Ranking de críticas (en la base es un
-   tipo de mejora global).
+   tipo de solución global).
    ============================================================ */
 import { $, escapar, fecha, num, pct, abrirVentana, avisar, cerrarVentana, leer,
   traducirError } from "./nucleo.js";
 import { catalogo, nombreDe, nombrePais, nombreOrigen, quitarTema, renombrarTema,
-  mejorasPorSlug } from "./ia.js";
+  solucionesPorSlug } from "./ia.js";
 import { ventanaClasificar } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
+import { ventanaCrearSolucion, ventanaNuevaEtiqueta, ventanaSolucionesDe } from "./solucion-ventanas.js";
 
 let filas = [];                 // v_ia_feedback ya clasificado
 let mejoras = [];               // mejoras_ia
-let mejorasDe = new Map();      // tema -> todas sus mejoras (sin descartadas)
+let solucionesDe = new Map();      // tema -> todas sus soluciones (sin descartadas)
 let datosMej = null;
 let grupos = [];
 let verTodos = false;
@@ -39,7 +39,7 @@ let qTemas = "";
 let recargar = async () => {};
 const f = { foco:"todas" };
 
-const FOCOS = [["todas","Todos"], ["sin_accion","Sin mejora"], ["con_accion","Con mejora"]];
+const FOCOS = [["todas","Todos"], ["sin_accion","Sin solución"], ["con_accion","Con solución"]];
 const TOPE = 10;
 
 /* Iconos del ranking: el lápiz renombra, la caneca desetiqueta */
@@ -56,7 +56,7 @@ const ETIQUETA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4a1
    1. Armazón y eventos
    Mismas clases e ids que el ranking viejo (#panel-ranking,
    #f-foco, #ranking, data-tema-accion…) para heredar su CSS. Armado
-   como el Ranking de críticas: título, filtro de mejora y la tabla.
+   como el Ranking de críticas: título, filtro de solución y la tabla.
    ============================================================ */
 export function armazon(){
   return `
@@ -71,12 +71,12 @@ export function armazon(){
     <div class="ayuda-plegable" id="ayuda-ranking" hidden>
       <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos comentarios los piden). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
       y el botón de abajo muestra todos. El filtro de arriba deja ver <b>Todos</b>, solo los que están
-      <b>Sin mejora</b> o solo los que ya tienen <b>Con mejora</b>.</p>
+      <b>Sin solución</b> o solo los que ya tienen <b>Con solución</b>.</p>
       <p class="mini"><b>El texto subrayado</b> abre los comentarios reales de ese tema; desde ahí puedes
       reclasificar cualquiera o sacarlo del tema. <b>El lápiz</b> cambia el nombre del tema (la IA sigue
       usando el mismo). <b>La caneca</b> le quita el tema a sus comentarios sin borrar nada: lo que queda
       sin clasificar vuelve al Inbox.</p>
-      <p class="mini"><b>La mejora</b> se enlaza al tema completo. <b>El ojo</b> abre la lista de sus mejoras: cada
+      <p class="mini"><b>La solución</b> se enlaza al tema completo. <b>El ojo</b> abre la lista de sus soluciones: cada
       una con <b>Ver</b> y <b>Desvincular</b>, que se la quita al tema sin borrarla. Al crearla eliges también su indicador (de entrada «Cantidad de temas»), que es lo que mide
       Impacto. <b>Las referencias</b> son las guías que el médico quiere que se citen. <b>Nueva etiqueta</b>
       crea un tema en el catálogo: aparece aquí cuando tenga su primer comentario.</p>
@@ -84,8 +84,8 @@ export function armazon(){
       médicos. Lo descartado como <b>Ruido</b> se revisa en el Ranking de críticas.</p>
     </div>
     <div class="filtros-fila">
-      <span class="rotulo">Mejora</span>
-      <div class="filtros" id="f-foco" role="group" aria-label="Estado de mejora"></div>
+      <span class="rotulo">Solución</span>
+      <div class="filtros" id="f-foco" role="group" aria-label="Estado de solución"></div>
       <p class="resumen-sub" id="resumen-ranking"></p>
     </div>
     <div class="fila-buscar">
@@ -138,11 +138,11 @@ function pintarChips(){
 /* ============================================================
    2. Datos
    ============================================================ */
-export function pintar(todas, datosMejoras){
+export function pintar(todas, datosSoluciones){
   filas = (todas || []).filter(x => x.estado !== "por_revisar");
-  mejoras = datosMejoras.mejoras;
-  datosMej = datosMejoras;
-  mejorasDe = mejorasPorSlug(datosMejoras);
+  mejoras = datosSoluciones.mejoras;
+  datosMej = datosSoluciones;
+  solucionesDe = solucionesPorSlug(datosSoluciones);
   grupos = agrupar();
   pintarRanking();
 }
@@ -180,8 +180,8 @@ function pintarRanking(){
      coinciden, no solo los 10 primeros. */
   const busca = qTemas.trim().toLowerCase();
   const lista = grupos.filter(o => {
-    if (f.foco === "sin_accion" && mejorasDe.has(o.slug)) return false;
-    if (f.foco === "con_accion" && !mejorasDe.has(o.slug)) return false;
+    if (f.foco === "sin_accion" && solucionesDe.has(o.slug)) return false;
+    if (f.foco === "con_accion" && !solucionesDe.has(o.slug)) return false;
     if (busca && buscableTema(o).indexOf(busca) === -1) return false;
     return true;
   });
@@ -202,11 +202,11 @@ function pintarRanking(){
 
   const cuerpo = visibles.map(o => {
     const clave = escapar(o.slug);
-    const cubierto = mejorasDe.has(o.slug);
-    const nMej = (mejorasDe.get(o.slug) || []).length;
-    const marca = nMej > 1 ? '<span class="etq lima">' + nMej + ' mejoras</span>'
-      : cubierto ? '<span class="etq lima">con mejora</span>'
-      : '<span class="etq alerta">sin mejora</span>';
+    const cubierto = solucionesDe.has(o.slug);
+    const nMej = (solucionesDe.get(o.slug) || []).length;
+    const marca = nMej > 1 ? '<span class="etq lima">' + nMej + ' soluciones</span>'
+      : cubierto ? '<span class="etq lima">con solución</span>'
+      : '<span class="etq alerta">sin solución</span>';
     const refs = Array.from(o.refs).join(" / ");
     const formas = o.formas.size;
     const textoFormas = formas > 1 ? formas + " formas de decirlo"
@@ -219,12 +219,12 @@ function pintarRanking(){
       '<button class="icono-btn peligro" data-tema-accion="borrar" data-clave="' + clave +
       '" title="Quitar este tema de sus comentarios" aria-label="Quitar este tema de sus comentarios">' + CANECA + '</button>';
     /* Igual que en el Ranking de críticas: solo el ojo, que abre la lista
-       de sus mejoras con Ver y Desvincular */
+       de sus soluciones con Ver y Desvincular */
     const botones = cubierto
       ? '<button class="boton-chico" data-tema-accion="vermejora" data-clave="' + clave +
-        '" title="Ver mejoras">Ver mejoras</button>'
+        '" title="Ver soluciones">Ver soluciones</button>'
       : '<button class="boton-chico" data-tema-accion="mejora" data-clave="' + clave +
-        '">Crear mejora</button>';
+        '">Crear solución</button>';
     return '<tr>' +
       '<td><span class="tema-nombre">' + escapar(corto(nombreDe(o.slug), 60)) + iconos + '</span><br>' + enlace + '</td>' +
       '<td class="tabular"><b>' + o.n + '</b></td>' +
@@ -241,7 +241,7 @@ function pintarRanking(){
 
   $("#ranking").innerHTML =
     '<table class="tabla"><thead><tr><th>Tema</th><th>Piden</th><th>Países</th>' +
-    '<th>Referencias que piden</th><th>Mejora</th><th>Acciones</th></tr></thead><tbody>' +
+    '<th>Referencias que piden</th><th>Solución</th><th>Acciones</th></tr></thead><tbody>' +
     cuerpo + '</tbody></table>' + alterna +
     /* Solo el conteo; la explicación vive en "¿Cómo funciona?" */
     (busca ? '<p class="mini">' + plural(lista.length, "tema coincide", "temas coinciden") + ' con “' +
@@ -252,11 +252,11 @@ function pintarRanking(){
 function pintarResumen(){
   const res = $("#resumen-ranking");
   if (!res) return;
-  const conMej = grupos.filter(o => mejorasDe.has(o.slug)).length;
+  const conMej = grupos.filter(o => solucionesDe.has(o.slug)).length;
   const conTema = filas.filter(x => (x.temas || []).length).length;
   res.innerHTML = "<b>" + num(grupos.length) + "</b> temas pedidos · <b>" +
     num(conTema) + "</b> comentarios clasificados · <b>" + (grupos.length ? pct(conMej, grupos.length) : 0) +
-    "%</b> con mejora (" + num(conMej) + " de " + num(grupos.length) + ")";
+    "%</b> con solución (" + num(conMej) + " de " + num(grupos.length) + ")";
 }
 
 /* ============================================================
@@ -267,11 +267,11 @@ function accionDeTema(bt){
   const accion = bt.dataset.temaAccion;
   if (accion === "renombrar") ventanaRenombrar(slug);
   if (accion === "borrar") ventanaDesetiquetar(slug);
-  const lista = mejorasDe.get(slug) || [];
+  const lista = solucionesDe.get(slug) || [];
   if (accion === "mejora" || (accion === "vermejora" && !lista.length))
-    ventanaCrearMejora({ slug: slug, tema: true, n: comentariosDe(slug).length, mejoras: mejoras, alCambiar: trasCambio });
+    ventanaCrearSolucion({ slug: slug, tema: true, n: comentariosDe(slug).length, mejoras: mejoras, alCambiar: trasCambio });
   else if (accion === "vermejora")
-    ventanaMejorasDe({ slug: slug, lista: lista, datos: datosMej, que: "tema", alCambiar: trasCambio });
+    ventanaSolucionesDe({ slug: slug, lista: lista, datos: datosMej, que: "tema", alCambiar: trasCambio });
 }
 
 async function trasCambio(texto){

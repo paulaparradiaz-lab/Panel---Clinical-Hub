@@ -1,8 +1,8 @@
 /* ============================================================
    CLINICAL HUB · PESTAÑA IMPACTO (panel nuevo)
-   ¿Bajaron las críticas después de cada mejora? Una tarjeta por cada
-   indicador (mejora global: lo que dicen de toda la plataforma), con
-   las mejoras completadas puestas sobre su línea de tiempo.
+   ¿Bajaron las críticas después de cada solución? Una tarjeta por cada
+   indicador (solución global: lo que dicen de toda la plataforma), con
+   las soluciones completadas puestas sobre su línea de tiempo.
 
    TODO VA EN PORCENTAJE: de las críticas globales que llegaron en cada
    semana (encuesta del sitio y WhatsApp; mensajes con alguna crítica
@@ -15,16 +15,16 @@
                 mes, desde el 15 de agosto de 2026; en el color del indicador.
                 La línea punteada es la tendencia: el porcentaje de las
                 últimas 4 semanas (o 3 meses) juntas.
-   MEJORAS      Sobre la gráfica, solo las completadas: una raya con su
+   SOLUCIONES      Sobre la gráfica, solo las completadas: una raya con su
                 número el día en que se completó cada una. Debajo, la
-                lista de esas mejoras para saber qué es cada número.
+                lista de esas soluciones para saber qué es cada número.
 
-   La fecha que manda es completada_en de la mejora (se pone sola al
-   completarla y se puede escribir a mano para mejoras del pasado).
+   La fecha que manda es completada_en de la solución (se pone sola al
+   completarla y se puede escribir a mano para soluciones del pasado).
    Lee v_ia_feedback, mejoras_ia, mejora_ia_tema y mejora_ia_historial.
    ============================================================ */
 import { sb, $, escapar, fechaCorta, num, avisar, traducirError } from "./nucleo.js";
-import { catalogo, cargarCatalogo, cargarMejoras, nombreDe, RUIDO, colorIndicador } from "./ia.js";
+import { catalogo, cargarCatalogo, cargarSoluciones, nombreDe, RUIDO, colorIndicador } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
 
 const DIAS_PARA_IR_POR_MES = 182;     // pasados ~6 meses de historia, la gráfica va por mes
@@ -51,7 +51,7 @@ const ALTO = 210;
    ============================================================ */
 export function recargar(){ return cargar(); }
 
-/* Se pinta dentro de la subpestaña de Mejoras (pestana-mejoras-impacto.js),
+/* Se pinta dentro de la subpestaña de Soluciones (pestana-soluciones-impacto.js),
    que pone el título y el botón Actualizar. */
 export async function render(caja){
   caja.innerHTML = `<p class="aviso" id="aviso-panel" role="status"></p>
@@ -59,13 +59,13 @@ export async function render(caja){
 
 <section class="caja" style="margin-top:14px">
   <div class="fila-entre cabeza-seccion">
-    <div><h2 class="titulo-seccion">Críticas y mejoras por indicador</h2><p class="subtitulo-seccion" id="impacto-desde">Toda la historia</p></div>
+    <div><h2 class="titulo-seccion">Críticas y soluciones por indicador</h2><p class="subtitulo-seccion" id="impacto-desde">Toda la historia</p></div>
     <button class="enlace-ayuda" id="btn-ayuda-impacto" aria-expanded="false" aria-controls="ayuda-impacto">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
       ¿Cómo funciona?</button>
   </div>
   <div class="ayuda-plegable" id="ayuda-impacto" hidden>
-    <p class="mini">Cada tarjeta es un <b>indicador</b>: una mejora global, lo que dicen los médicos de toda la
+    <p class="mini">Cada tarjeta es un <b>indicador</b>: una solución global, lo que dicen los médicos de toda la
     plataforma. <b>La línea</b> es el <b>porcentaje de las críticas globales</b> de cada semana que son de ese
     indicador. Por ejemplo, si una semana llegaron 5 mensajes con críticas y 2 eran de la interfaz, el punto de
     Interfaz marca 40 %. Solo cuentan los mensajes <b>con alguna crítica global</b>: no cuentan los que solo piden un
@@ -85,11 +85,11 @@ export async function render(caja){
     <p class="mini"><b>La línea punteada</b> es la tendencia: el porcentaje de las últimas 4 semanas juntas. Suaviza los
     altibajos para ver si, con el tiempo, las críticas van bajando. Aparece desde la cuarta semana y cuando esas 4
     semanas suman al menos ${MINIMO} críticas; al final dice cuánto da hoy.</p>
-    <p class="mini"><b>Las mejoras completadas</b> se ven sobre la línea: una <b>raya con su número</b> el día en
+    <p class="mini"><b>Las soluciones completadas</b> se ven sobre la línea: una <b>raya con su número</b> el día en
     que se completó. Mira qué hace la línea después de cada raya: si baja y se queda abajo, las críticas de ese
-    indicador disminuyeron. <b>Debajo</b> está la lista de esas mejoras, para saber qué es cada número. La fecha
-    es la de «Completada el», que puedes escribir a mano si se hizo antes, por fuera del sistema. Las mejoras
-    pendientes o en curso no salen aquí: se ven en la pestaña Mejoras.</p>
+    indicador disminuyeron. <b>Debajo</b> está la lista de esas soluciones, para saber qué es cada número. La fecha
+    es la de «Completada el», que puedes escribir a mano si se hizo antes, por fuera del sistema. Las soluciones
+    pendientes o en curso no salen aquí: se ven en la pestaña Soluciones.</p>
     <p class="mini"><b>«Ver comentarios»</b> abre lo que escribieron los médicos sobre ese indicador por la encuesta y
     WhatsApp, ya clasificado, del más reciente al más antiguo.</p>
     <p class="mini"><b>Por qué los números no siempre cuadran con la línea:</b> el número de críticas de cada indicador
@@ -107,7 +107,7 @@ export async function render(caja){
   $("#impacto-indicadores").addEventListener("click", e => {
     const b = e.target.closest("[data-comentarios]");
     if (b) abrirComentarios(indicadores[Number(b.dataset.comentarios)]);
-    /* En el celular no hay mouse: tocar una semana o una mejora muestra su globito */
+    /* En el celular no hay mouse: tocar una semana o una solución muestra su globito */
     const z = e.target.closest("[data-globo]");
     if (z) mostrarGlobo(z);
   });
@@ -132,7 +132,7 @@ async function cargar(){
     [fb, hist, datos] = await Promise.all([
       sb.from("v_ia_feedback").select("*"),
       sb.from("mejora_ia_historial").select("mejora_id, estado, cambiado_en").order("cambiado_en"),
-      cargarMejoras(),
+      cargarSoluciones(),
       cargarCatalogo()
     ]);
     if (fb.error) throw fb.error;
@@ -156,8 +156,8 @@ async function cargar(){
   /* Sin fecha (la base no la entendió): no se puede ubicar en una semana */
   const todos = conCritica.filter(x => x.fecha).map(x => new Date(x.fecha).getTime()).filter(t => !isNaN(t));
 
-  /* Fechas de cada mejora: la última vez que entró a cada estado. La
-     de completada escrita en la mejora manda sobre el historial. */
+  /* Fechas de cada solución: la última vez que entró a cada estado. La
+     de completada escrita en la solución manda sobre el historial. */
   const fechas = new Map();
   (hist.data || []).forEach(h => {
     const o = fechas.get(h.mejora_id) || {};
@@ -195,7 +195,7 @@ async function cargar(){
     return { slug: c.slug, lista: lista, mejoras: mejoras, modo: modo,
       periodos: periodos(dias, todos, inicio, fin, modo) };
   })
-  /* Primero los que tienen mejoras; luego los más criticados */
+  /* Primero los que tienen soluciones; luego los más criticados */
   .sort((a, b) => (Math.min(b.mejoras.length, 1) - Math.min(a.mejoras.length, 1)) || (b.lista.length - a.lista.length));
   pintar();
 }
@@ -243,14 +243,14 @@ const pct = v => (v < 10 && v > 0 ? v.toFixed(1).replace(".", ",") : Math.round(
    3. Pintado
    ============================================================ */
 function pintar(){
-  const conMejoras = indicadores.filter(o => o.mejoras.length).length;
+  const conSoluciones = indicadores.filter(o => o.mejoras.length).length;
   const completadas = indicadores.reduce((s, o) => s + o.mejoras.length, 0);
-  $("#resumen-impacto").innerHTML = "<b>" + num(indicadores.length) + "</b> indicadores · <b>" + num(conMejoras) +
-    "</b> con mejoras completadas · <b>" + num(completadas) + "</b> mejoras completadas";
+  $("#resumen-impacto").innerHTML = "<b>" + num(indicadores.length) + "</b> indicadores · <b>" + num(conSoluciones) +
+    "</b> con soluciones completadas · <b>" + num(completadas) + "</b> soluciones completadas";
 
   if (!indicadores.length){
     $("#impacto-indicadores").innerHTML = '<p class="vacio">Todavía no hay indicadores. Créalos con «Nueva etiqueta» ' +
-      'en el ranking de mejoras globales de Feedback › Métricas.</p>';
+      'en el ranking de soluciones globales de Feedback › Métricas.</p>';
     return;
   }
   /* El ancho real de la gráfica: el de la lista menos el relleno de la tarjeta */
@@ -272,13 +272,13 @@ function tarjeta(o, i){
     '<div class="impacto-indicador-cab">' +
       '<span class="indicador-item">' + ICONO_INDICADOR + '<b>' + escapar(nombreDe(o.slug)) + '</b></span>' +
       '<span class="mini">' + plural(o.lista.length, "crítica", "críticas") + ' · ' +
-        plural(o.mejoras.length, "mejora completada", "mejoras completadas") + '</span>' +
+        plural(o.mejoras.length, "solución completada", "soluciones completadas") + '</span>' +
       '<button class="enlace-formas" data-comentarios="' + i + '">Ver comentarios</button>' +
     '</div>' +
     '<div class="impacto-lienzo">' + grafica(o) + '<div class="impacto-globo" role="tooltip" hidden></div></div>' + leyenda(o) +
     (o.mejoras.length
-      ? '<ul class="impacto-mejoras">' + o.mejoras.map(renglon).join("") + '</ul>'
-      : '<p class="mini impacto-sin">Todavía no hay mejoras completadas en este indicador.</p>') +
+      ? '<ul class="impacto-soluciones">' + o.mejoras.map(renglon).join("") + '</ul>'
+      : '<p class="mini impacto-sin">Todavía no hay soluciones completadas en este indicador.</p>') +
   '</article>';
 }
 
@@ -291,11 +291,11 @@ function leyenda(o){
     '<span><i class="ley-tendencia"></i>Tendencia: las últimas ' + k + ' juntas</span>' +
     (o.periodos.some(p => p.pct === null) ? '<span><i class="ley-pocos"></i>Pocos datos (menos de ' + MINIMO + ' críticas)</span>' : '') +
     '<span><i class="ley-curso"></i>' + (o.modo === "mes" ? "Mes" : "Semana") + ' en curso (puede cambiar)</span>' +
-    (o.mejoras.length ? '<span><i class="ley-hito">#</i>Mejora completada</span>' : '') +
+    (o.mejoras.length ? '<span><i class="ley-hito">#</i>Solución completada</span>' : '') +
   '</div>';
 }
 
-/* Cada mejora completada: su número, su nombre y cuándo se completó */
+/* Cada solución completada: su número, su nombre y cuándo se completó */
 function renglon(r){
   return '<li>' +
     '<span class="impacto-num">' + r.mejora.id + '</span>' +
@@ -304,7 +304,7 @@ function renglon(r){
   '</li>';
 }
 
-/* % de las críticas globales por periodo y, encima, las mejoras completadas
+/* % de las críticas globales por periodo y, encima, las soluciones completadas
    (una raya numerada el día en que se completó cada una). Los periodos
    con pocos datos cortan la línea y salen como un punto gris abajo. La
    línea punteada es la tendencia: las críticas del indicador y todas las críticas globales de los
@@ -316,7 +316,7 @@ function grafica(o){
   const tope = Math.max(10, Math.ceil(Math.max(0, ...conDato) / 10) * 10);
   const x = i => izq + i * (w - izq - der) / Math.max(1, N - 1);
   const y = v => h - abj - v / tope * (h - arr - abj);
-  /* Cada punto va en la mitad de su semana (o mes): una mejora se ubica
+  /* Cada punto va en la mitad de su semana (o mes): una solución se ubica
      entre los puntos según su fecha */
   const medio = p => (p.desde + p.hasta) / 2;
   const t0 = medio(P[0]), t1 = medio(P[N - 1]);
@@ -343,7 +343,7 @@ function grafica(o){
       ultima = px;
       const cx = px + (nivel ? 16 : 0);
       return '<g class="hito" data-globo="hito" data-cab="#' + r.mejora.id + ' ' + escapar(r.mejora.titulo) +
-          '" data-txt="Mejora completada el ' + fechaCorta(r.fechas.hecha) + '">' +
+          '" data-txt="Solución completada el ' + fechaCorta(r.fechas.hecha) + '">' +
         '<line x1="' + px + '" x2="' + px + '" y1="' + (arr - 6) + '" y2="' + (h - abj) + '"/>' +
         '<circle cx="' + cx + '" cy="12" r="10"/><text x="' + cx + '" y="16" text-anchor="middle">' +
           r.mejora.id + '</text></g>';
@@ -403,12 +403,12 @@ function grafica(o){
     : '';
 
   return '<svg class="impacto-grafica" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Porcentaje de las críticas que son de ' +
-      escapar(nombreDe(o.slug)) + ' y sus mejoras">' +
+      escapar(nombreDe(o.slug)) + ' y sus soluciones">' +
     ejes + areas + trazos + tendencia + puntos + rayas +
   '</svg>';
 }
 
-/* Globito de la gráfica: el dato de la semana (o la mejora) bajo el mouse.
+/* Globito de la gráfica: el dato de la semana (o la solución) bajo el mouse.
    Es propio y no el título del navegador, que tarda o ni siquiera sale. */
 function mostrarGlobo(z){
   const lienzo = z.closest(".impacto-lienzo");

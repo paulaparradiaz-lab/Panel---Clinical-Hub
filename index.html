@@ -284,6 +284,23 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-eg-enlaces{display:grid;gap:4px;margin-top:8px;justify-items:end;text-align:right}
 .vt-tarjeta-egreso .vt-eg-enlaces{justify-items:start;text-align:left}
 .vt-eg-enlaces a{font-size:14px;overflow-wrap:anywhere}
+/* Rentabilidad estimada */
+.vt-rent-aviso{margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:#fff6e0;font-size:13px;line-height:1.45}
+.vt-rent-mas{color:#2a4927}
+.vt-rent-menos{color:#b3432e}
+.vt-rent-ecuacion{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.vt-rent-ecuacion>div{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--surface2);flex:1 1 120px}
+.vt-rent-ecuacion b{font-size:20px;white-space:nowrap}
+.vt-rent-ecuacion .vt-rent-total{background:#e9f4d6}
+.vt-rent-op{font-size:22px;color:#8b8e96}
+.vt-rent-tabla td .mini{display:block}
+@media (max-width:760px){
+  .vt-rent-ecuacion{display:grid;grid-template-columns:1fr 1fr}
+  .vt-rent-ecuacion .vt-rent-op{display:none}
+  .vt-rent-ecuacion .vt-rent-total{grid-column:1 / -1}
+  .vt-rent-ecuacion b{font-size:18px}
+  .vt-tabla .vt-rent-tabla th,.vt-tabla .vt-rent-tabla td{font-size:13px;padding-left:5px;padding-right:5px}
+}
 /* Ventana de gastos: botones uno debajo del otro, sin aplastarse */
 .ventana.vt-ventana-egreso .ventana-botones{flex-direction:column-reverse;gap:10px}
 .ventana.vt-ventana-egreso .ventana-botones .boton{flex:none}
@@ -639,12 +656,12 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .fila.pinchable{cursor:pointer;padding:3px 6px;margin:0 -6px;border-radius:12px;transition:background .2s}
 .fila.pinchable:hover{background:var(--surface2)}
 .fila.pinchable:hover .fila-etq{color:var(--ink)}
-/* Métricas · ranking de mejoras: todas las barras arrancan en la misma
+/* Métricas · ranking de soluciones: todas las barras arrancan en la misma
    línea, aunque los nombres tengan largos distintos. */
-/* PESTAÑA MEJORAS: una tarjeta por mejora con su estado, lo que
-   tiene enlazado (temas y mejoras globales) y sus personas. */
+/* PESTAÑA SOLUCIONES: una tarjeta por solución con su estado, lo que
+   tiene enlazado (temas y soluciones globales) y sus personas. */
 /* PESTAÑA IMPACTO: una tarjeta por indicador con su gráfica de
-   críticas (en el color del indicador) y sus mejoras encima */
+   críticas (en el color del indicador) y sus soluciones encima */
 /* Una debajo de la otra, a todo el ancho: la línea de tiempo crece con la historia */
 .impacto-indicadores{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
 .impacto-indicador{
@@ -696,8 +713,8 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .impacto-grafica .hito line{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3}
 .impacto-grafica .hito circle{fill:var(--ink)}
 .impacto-grafica .hito text{fill:var(--surface);font-size:11px;font-weight:700}
-.impacto-mejoras{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.impacto-mejoras li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface)}
+.impacto-soluciones{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.impacto-soluciones li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface)}
 .impacto-num{
   display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;
   background:var(--ink);color:var(--surface);font-size:10.5px;font-weight:700;
@@ -711,20 +728,20 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
   .impacto-indicador{padding:14px 12px 12px}
 }
 
-.lista-mejoras{display:flex;flex-direction:column;gap:14px;margin-top:18px}
-/* Ventana con las mejoras de un tema o indicador que tiene varias */
-.lista-mejoras-fila{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.mejora-fila{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface2)}
-.mejora-fila-txt{display:flex;flex-direction:column;flex:1;min-width:0}
-.mejora-fila-txt b{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mejora-fila-txt small{font-size:11.5px;color:var(--faint)}
-.mejora-fila .boton-chico{padding:6px 14px;font-size:12.5px}
-.mejora-fila .boton-chico.secundario{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border2)}
-.mejora-fila .boton-chico.secundario:hover{background:var(--warn-bg);color:var(--warn);box-shadow:none}
-/* Filtros de Mejoras: dos desplegables «Rótulo: elegido ⌄» */
+.lista-soluciones{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+/* Ventana con las soluciones de un tema o indicador que tiene varias */
+.lista-soluciones-fila{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.solucion-fila{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface2)}
+.solucion-fila-txt{display:flex;flex-direction:column;flex:1;min-width:0}
+.solucion-fila-txt b{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.solucion-fila-txt small{font-size:11.5px;color:var(--faint)}
+.solucion-fila .boton-chico{padding:6px 14px;font-size:12.5px}
+.solucion-fila .boton-chico.secundario{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border2)}
+.solucion-fila .boton-chico.secundario:hover{background:var(--warn-bg);color:var(--warn);box-shadow:none}
+/* Filtros de Soluciones: dos desplegables «Rótulo: elegido ⌄» */
 .desplegables{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;position:relative;z-index:20}
 .desplegable{position:relative}
-/* Botón de crear, a la derecha de los filtros (Nueva mejora, Nueva etiqueta) */
+/* Botón de crear, a la derecha de los filtros (Nueva solución, Nueva etiqueta) */
 .boton-nueva{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:8px 16px 8px 12px;font-weight:600}
 .boton-nueva svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .desplegable-boton{
@@ -753,18 +770,18 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .desplegable-op small{margin-left:auto;padding-left:14px;color:var(--faint);font-variant-numeric:tabular-nums}
 .desplegable-ok{width:14px;flex:none;font-weight:700}
 .desplegable-raya{height:1px;background:var(--border);margin:5px 8px}
-.tarjeta-mejora{display:flex;flex-direction:column;gap:10px;transition:transform .35s var(--ease),box-shadow .3s,border-color .2s}
+.tarjeta-solucion{display:flex;flex-direction:column;gap:10px;transition:transform .35s var(--ease),box-shadow .3s,border-color .2s}
 /* Como las tarjetas del dashboard: se elevan al pasar el mouse */
-.tarjeta-mejora:hover{transform:translateY(-3px);box-shadow:var(--sombra);border-color:var(--border2)}
-/* Arriba: el indicador (la mejora global en la que impacta) a la
+.tarjeta-solucion:hover{transform:translateY(-3px);box-shadow:var(--sombra);border-color:var(--border2)}
+/* Arriba: el indicador (la solución global en la que impacta) a la
    izquierda y el responsable a la derecha */
-.indicador-mejora{
+.indicador-solucion{
   display:inline-flex;align-items:center;gap:6px 10px;flex-wrap:wrap;min-width:0;padding:4px 12px 4px 10px;
   border:1px solid var(--border);border-radius:999px;background:none;color:var(--ink);
   font-size:13px;text-align:left;transition:background .2s,border-color .2s,transform .3s var(--ease);
 }
-.indicador-mejora:hover{background:var(--surface2);border-color:var(--border2)}
-.indicador-mejora:active{transform:scale(.96)}
+.indicador-solucion:hover{background:var(--surface2);border-color:var(--border2)}
+.indicador-solucion:active{transform:scale(.96)}
 .indicador-rotulo{font-size:11.5px;font-weight:600;color:var(--faint)}
 /* Cada indicador: la flechita ↗ en un círculo de su color y el nombre en tinta */
 .indicador-item{display:inline-flex;align-items:center;gap:6px;min-width:0}
@@ -773,18 +790,18 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
   width:24px;height:24px;flex:none;padding:5px;box-sizing:border-box;border-radius:50%;
   background:var(--c,var(--border2));fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
 }
-.indicador-mejora.vacio{border-style:dashed;border-color:var(--border2);color:var(--faint)}
-.indicador-mejora.vacio .indicador-item svg{background:none;stroke:var(--faint);border:1px dashed var(--border2)}
+.indicador-solucion.vacio{border-style:dashed;border-color:var(--border2);color:var(--faint)}
+.indicador-solucion.vacio .indicador-item svg{background:none;stroke:var(--faint);border:1px dashed var(--border2)}
 .fila-opcion .indicador-item svg{width:28px;height:28px;padding:6px}
 /* Arriba: el tipo a la izquierda y el responsable a la derecha */
-.tarjeta-mejora-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tipo-mejora{
+.tarjeta-solucion-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tipo-solucion{
   display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:999px;
   font-size:12px;font-weight:600;background:var(--surface2);color:var(--faint);
 }
-.tipo-mejora svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tipo-mejora.tec{background:color-mix(in srgb,#2f6fed 14%,transparent);color:color-mix(in srgb,#2f6fed 80%,var(--ink))}
-.tipo-mejora.tema{background:var(--brand-bg);color:var(--brand-ink)}
+.tipo-solucion svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tipo-solucion.tec{background:color-mix(in srgb,#2f6fed 14%,transparent);color:color-mix(in srgb,#2f6fed 80%,var(--ink))}
+.tipo-solucion.tema{background:var(--brand-bg);color:var(--brand-ink)}
 .boton-responsable{
   margin-left:auto;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;
   padding:3px 10px 3px 3px;border:1px solid transparent;border-radius:999px;background:none;
@@ -799,29 +816,29 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .boton-responsable .inicial.vacia{background:var(--surface2);color:var(--faint);border:1px dashed var(--border2)}
 .boton-responsable .inicial svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .sin-responsable{color:var(--faint);font-weight:500}
-.tarjeta-mejora-titulo{display:flex;align-items:center;gap:6px}
-.tarjeta-mejora-titulo h3{margin:0;font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.025em}
-.tarjeta-mejora-detalle{margin:0;font-size:14px;color:var(--muted)}
-.tarjeta-mejora-tema{margin:0}
-.tarjeta-mejora-tema b{color:var(--muted);font-weight:600}
+.tarjeta-solucion-titulo{display:flex;align-items:center;gap:6px}
+.tarjeta-solucion-titulo h3{margin:0;font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.025em}
+.tarjeta-solucion-detalle{margin:0;font-size:14px;color:var(--muted)}
+.tarjeta-solucion-tema{margin:0}
+.tarjeta-solucion-tema b{color:var(--muted);font-weight:600}
 /* Pasos: Pendiente → En curso → Completada. Se tocan para cambiar */
-.pasos-mejora{display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--surface2);position:relative}
-.paso-mejora{
+.pasos-solucion{display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--surface2);position:relative}
+.paso-solucion{
   position:relative;z-index:1;
   display:flex;align-items:center;gap:7px;flex:none;padding:3px 14px 3px 3px;border:0;border-radius:999px;
   background:none;font-size:12.5px;font-weight:600;color:var(--faint);white-space:nowrap;
   transition:color .2s,background .2s,transform .3s var(--ease);
 }
-.paso-mejora:hover{background:var(--surface);color:var(--ink)}
-.paso-mejora:active{transform:scale(.95)}
+.paso-solucion:hover{background:var(--surface);color:var(--ink)}
+.paso-solucion:active{transform:scale(.95)}
 .paso-num{
   position:relative;z-index:0;
   display:grid;place-items:center;width:26px;height:26px;border-radius:50%;flex:none;
   background:var(--surface);border:1px solid var(--border);font-size:11.5px;
   transition:background .3s,box-shadow .3s;
 }
-.paso-mejora.hecho{color:var(--brand-ink)}
-.paso-mejora.hecho .paso-num{background:var(--brand);border-color:transparent}
+.paso-solucion.hecho{color:var(--brand-ink)}
+.paso-solucion.hecho .paso-num{background:var(--brand);border-color:transparent}
 /* El paso actual: selección invertida (verde oscuro, letra blanca) sobre
    la goma, y su bolita lima late con el aura de la gráfica de estrellas */
 .goma-paso{
@@ -829,43 +846,43 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
   background:var(--sel);box-shadow:0 8px 16px -10px rgba(0,0,0,.7);opacity:0;pointer-events:none;
   transition:left .55s var(--ease),width .55s var(--ease),opacity .2s;
 }
-.pasos-mejora.quieta .goma-paso{transition:none}
-.paso-mejora.actual,.paso-mejora.actual:hover{color:var(--on-sel);background:none}
-.paso-mejora.actual .paso-num{background:var(--brand);color:var(--brand-ink);border-color:transparent}
-.paso-mejora.actual .paso-num::before{
+.pasos-solucion.quieta .goma-paso{transition:none}
+.paso-solucion.actual,.paso-solucion.actual:hover{color:var(--on-sel);background:none}
+.paso-solucion.actual .paso-num{background:var(--brand);color:var(--brand-ink);border-color:transparent}
+.paso-solucion.actual .paso-num::before{
   content:"";position:absolute;inset:-4px;z-index:-1;border-radius:50%;background:var(--brand);
   animation:pulso 2s ease-out infinite;
 }
 .paso-linea{flex:1;min-width:8px;height:2px;border-radius:2px;background:var(--border)}
-.paso-mejora.hecho + .paso-linea:has(+ .paso-mejora.hecho){background:var(--brand)}
+.paso-solucion.hecho + .paso-linea:has(+ .paso-solucion.hecho){background:var(--brand)}
 .descartada-marca{
   position:absolute;inset:0;display:grid;place-items:center;border-radius:999px;
   background:color-mix(in srgb,var(--surface2) 70%,transparent);
   font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);pointer-events:none;
 }
 /* Abajo: lo enlazado, el número y Descartar */
-.tarjeta-mejora-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tarjeta-mejora-pie{row-gap:8px}
-.tarjeta-mejora-pie .chips-mejora{flex:1 1 100%;min-width:0}
-.tarjeta-mejora-pie .tarjeta-mejora-id{margin:0 auto 0 0;white-space:nowrap}
+.tarjeta-solucion-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tarjeta-solucion-pie{row-gap:8px}
+.tarjeta-solucion-pie .chips-solucion{flex:1 1 100%;min-width:0}
+.tarjeta-solucion-pie .tarjeta-solucion-id{margin:0 auto 0 0;white-space:nowrap}
 .enlace-descartar{
   border:0;background:none;padding:4px 2px;font-size:12.5px;font-weight:500;color:var(--faint);
   text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border2);
 }
 .enlace-descartar:hover{color:var(--warn)}
-.tarjeta-mejora[data-estado="descartada"] .enlace-descartar:hover{color:var(--brand-ink)}
-.tarjeta-mejora[data-estado="hecha"] h3,
-.tarjeta-mejora[data-estado="descartada"] h3{color:var(--muted)}
+.tarjeta-solucion[data-estado="descartada"] .enlace-descartar:hover{color:var(--brand-ink)}
+.tarjeta-solucion[data-estado="hecha"] h3,
+.tarjeta-solucion[data-estado="descartada"] h3{color:var(--muted)}
 /* Descartada: bloqueada y en gris; solo se puede tocar «Recuperar» */
-.tarjeta-mejora.bloqueada{background:var(--surface2);box-shadow:none}
-.tarjeta-mejora.bloqueada:hover{transform:none;box-shadow:none;border-color:var(--border)}
-.tarjeta-mejora.bloqueada > :not(.tarjeta-mejora-pie){opacity:.5;filter:grayscale(1)}
-.tarjeta-mejora.bloqueada button[disabled]{cursor:not-allowed}
-.tarjeta-mejora.bloqueada .paso-mejora:hover{background:none;color:var(--faint)}
-.tarjeta-mejora.bloqueada .descartada-marca{z-index:2;background:var(--surface2)}
-.candado-mejora{display:grid;place-items:center;width:28px;height:28px;color:var(--faint)}
-.candado-mejora svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.chips-mejora{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tarjeta-solucion.bloqueada{background:var(--surface2);box-shadow:none}
+.tarjeta-solucion.bloqueada:hover{transform:none;box-shadow:none;border-color:var(--border)}
+.tarjeta-solucion.bloqueada > :not(.tarjeta-solucion-pie){opacity:.5;filter:grayscale(1)}
+.tarjeta-solucion.bloqueada button[disabled]{cursor:not-allowed}
+.tarjeta-solucion.bloqueada .paso-solucion:hover{background:none;color:var(--faint)}
+.tarjeta-solucion.bloqueada .descartada-marca{z-index:2;background:var(--surface2)}
+.candado-solucion{display:grid;place-items:center;width:28px;height:28px;color:var(--faint)}
+.candado-solucion svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chips-solucion{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .chip-quitar{
   display:inline-flex;align-items:center;gap:6px;padding:4px 4px 4px 12px;border-radius:999px;white-space:nowrap;
   background:var(--surface2);border:1px solid var(--border);font-size:13px;color:var(--ink);
@@ -879,8 +896,8 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .chip-quitar button svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 @media (max-width:760px){
   /* En celular los pasos muestran solo el número del que no está activo */
-  .paso-mejora:not(.actual){padding-right:3px;font-size:0;gap:0}
-  .paso-mejora:not(.actual) .paso-num{font-size:11.5px}
+  .paso-solucion:not(.actual){padding-right:3px;font-size:0;gap:0}
+  .paso-solucion:not(.actual) .paso-num{font-size:11.5px}
   .boton-responsable{margin-left:0}
 }
 
@@ -925,7 +942,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 .vacio{color:var(--faint);font-size:14px;padding:14px 2px 4px}
 
 /* ============================================================
-   COMPONENTES DE ANÁLISIS Y MEJORAS
+   COMPONENTES DE ANÁLISIS Y SOLUCIONES
    ============================================================ */
 .mini{display:block;margin:4px 0 0;font-size:12.5px;color:var(--faint);line-height:1.45}
 .fila-entre{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
@@ -993,7 +1010,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
 :is(#comentarios,.lista-chat) .comentario-meta{margin-bottom:8px}
 /* Las pastillas vienen con fondo var(--surface2), el mismo de la banda:
    sobre gris se pierden. Aqui pasan a blanco para que recorten. La de
-   "con mejora" ya trae su propio verde y se queda como esta. */
+   "con solución" ya trae su propio verde y se queda como esta. */
 :is(#comentarios,.lista-chat) .comentario-meta .nota,
 :is(#comentarios,.lista-chat) .comentario .canal,
 :is(#comentarios,.lista-chat) .comentario .etq:not(.lima){background:var(--surface)}
@@ -1065,7 +1082,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
    en la bandeja gris del ranking: tarjetas blancas con un circulito que
    se pone lima con ✓ al elegir. */
 .subpestanas.que-es{margin:0}
-#c-bloque-temas,#c-bloque-mejoras{margin-top:18px}
+#c-bloque-temas,#c-bloque-soluciones{margin-top:18px}
 /* Animación de goma, con la misma curva elástica de la curva del menú:
    1) una pastilla lima (.goma, detrás de las opciones) se desliza a la
       opción marcada y se estira si se marcan las dos;
@@ -1086,7 +1103,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 22px 72px;animation:ch-aparece 
   60%{opacity:1;transform:scaleY(1.03) translateY(2px)}
   100%{opacity:1;transform:none}
 }
-#c-bloque-temas:not([hidden]),#c-bloque-mejoras:not([hidden]){animation:ch-despliega .55s cubic-bezier(.34,1.35,.64,1) both;transform-origin:top center}
+#c-bloque-temas:not([hidden]),#c-bloque-soluciones:not([hidden]){animation:ch-despliega .55s cubic-bezier(.34,1.35,.64,1) both;transform-origin:top center}
 @keyframes ch-salta{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
 .fila-opcion.recien .marca-opcion{animation:ch-salta .45s cubic-bezier(.34,1.35,.64,1)}
 .subpestanas.que-es .subpestana svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1245,7 +1262,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 .enlace-formas{display:inline-block;margin:4px 0 0;padding:0;background:none;border:none;font-size:12.5px;color:var(--faint);text-decoration:underline;text-underline-offset:3px;transition:color .2s}
 .enlace-formas:hover{color:var(--ink)}
 
-/* Mejora a la que se salta desde el ranking de temas */
+/* Solución a la que se salta desde el ranking de temas */
 .accion.resaltada{border-color:var(--sel);box-shadow:0 0 0 4px var(--brand-bg),var(--sombra);animation:ch-pop .5s var(--ease)}
 @media (prefers-reduced-motion: reduce){.lineas .aura,.chispas i{animation:none;opacity:.6}}
 
@@ -1260,7 +1277,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 }
 .pestana[data-seccion="resenas"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z'/%3E%3C/svg%3E")}
 .pestana[data-seccion="temas"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3Cpath d='M8 9h8M8 13h5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3Cpath d='M8 9h8M8 13h5'/%3E%3C/svg%3E")}
-.pestana[data-seccion="mejoras"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E")}
+.pestana[data-seccion="soluciones"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E")}
 /* Feedback (Inbox | Métricas, tablas de la IA): globito de conversación */
 .pestana[data-seccion="feedback"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3Cpath d='M8 9h8M8 13h5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3Cpath d='M8 9h8M8 13h5'/%3E%3C/svg%3E")}
 /* Pestañas nuevas (tablas de la IA): bandeja para Inbox, barras para Métricas */
@@ -1512,7 +1529,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
   box-shadow:var(--sombra-suave); padding:20px 20px 22px; margin-top:16px;
 }
-/* Temas pedidos armado como críticas: bajo el título, el filtro de mejora
+/* Temas pedidos armado como críticas: bajo el título, el filtro de solución
    (con el resumen a la derecha) y luego el buscador. */
 #panel-ranking .caja > .filtros-fila{margin-top:18px}
 #panel-ranking .caja > .filtros-fila .resumen-sub{margin:0 0 0 auto;font-size:12.5px}
@@ -1539,7 +1556,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 :is(#ranking,#ranking-criticas) .tema-nombre .icono-btn{margin-top:calc((1lh - 28px) / 2)}
 :is(#ranking,#ranking-criticas) .enlace-formas{margin-top:2px;text-align:left}
 :is(#ranking,#ranking-criticas) .etq{display:inline-flex;justify-content:center;min-width:92px}
-/* Estado de la mejora como en la vista previa C: tinte suave, sin borde. */
+/* Estado de la solución como en la vista previa C: tinte suave, sin borde. */
 :is(#ranking,#ranking-criticas) .etq.lima,:is(#ranking,#ranking-criticas) .etq.alerta{border-color:transparent;font-size:12px;font-weight:500;padding:4px 11px}
 :is(#ranking,#ranking-criticas) .etq.lima{background:var(--brand-bg);color:var(--brand-ink)}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico{width:100%;justify-content:center}
@@ -1578,10 +1595,10 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 /* Piden y Países: el número centrado justo bajo la mitad de su título. */
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(2),:is(#ranking,#ranking-criticas) .tabla td:nth-child(2),
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3){text-align:center}
-/* Acciones del ranking: solo Crear mejora parece botón, con el lima de
+/* Acciones del ranking: solo Crear solución parece botón, con el lima de
    la subpestaña activa (Ranking) y un bombillo con destello puesto desde
-   el CSS (la cadena queda solo para vincular y desvincular). Ver mejora (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
-   data-tema-accion, sin tocar el JS. El ranking de mejoras globales
+   el CSS (la cadena queda solo para vincular y desvincular). Ver solución (ojo) y Desvincular (cadena rota) pasan a iconos. Se distinguen por
+   data-tema-accion, sin tocar el JS. El ranking de soluciones globales
    (#ranking-criticas) usa la misma tabla y los mismos botones. */
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]{
   width:auto;padding:6px 12px 6px 10px;white-space:nowrap;background:var(--brand);color:var(--brand-ink);
@@ -1602,7 +1619,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 }
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"]:active{transform:translateY(1px) scale(.96)}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
-/* Ver mejora (ojo) y Desvincular (cadena rota): solo icono, redondos como
+/* Ver solución (ojo) y Desvincular (cadena rota): solo icono, redondos como
    el lápiz y la caneca. El texto sigue en el botón (font-size:0) para
    lectores de pantalla. */
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"],
@@ -1632,8 +1649,8 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   box-shadow:var(--sombra-suave);opacity:0;transform:translate(-50%,4px);
   transition:opacity .15s,transform .2s var(--ease);
 }
-:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::after{content:"Ver mejoras"}
-:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::after{content:"Desvincular mejora"}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]::after{content:"Ver soluciones"}
+:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]::after{content:"Desvincular solución"}
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:hover::after,:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="vermejora"]:focus-visible::after,
 :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:hover::after,:is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="desvincular"]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 
@@ -1722,7 +1739,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
    MENÚ ABAJO EN CELULAR (menos de 900 px)
    El riel verde de escritorio pasa a una barra fija abajo, con la
    misma curva deslizándose (de lado) hasta la opción activa. Solo
-   Reseñas, Temas, Mejoras e Hitos: las secciones "pronto" se ocultan.
+   Reseñas, Temas, Soluciones e Hitos: las secciones "pronto" se ocultan.
    El logo y el avatar se quedan arriba.
    ============================================================ */
 @media (max-width:899px){
@@ -1847,7 +1864,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 .globo-pais b{font-weight:600;color:var(--muted)}
 @media (max-width:760px){
   /* Celular: debajo del nombre, una sola línea con tres pastillas iguales
-     (países, estrellas y mejora) y el botón redondo a la derecha. Cada
+     (países, estrellas y solución) y el botón redondo a la derecha. Cada
      pastilla conserva su color; solo se igualan forma, alto y letra. */
   #ranking-criticas .tabla tbody tr{
     grid-template-columns:auto auto minmax(0,1fr) auto;grid-template-areas:"n n n n" "p e m a";
@@ -1872,13 +1889,13 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
     -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18'/%3E%3Cpath d='M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18'/%3E%3Cpath d='M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z'/%3E%3C/svg%3E") center/contain no-repeat;
   }
   #ranking-criticas .nota-critica::before{width:7px;height:7px}
-  /* El botón de mejora queda redondo, solo con su ícono */
+  /* El botón de solución queda redondo, solo con su ícono */
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]{
     font-size:0;width:32px;height:32px;padding:0;border-radius:50%;display:inline-grid;place-items:center;
   }
   :is(#ranking,#ranking-criticas) .tabla tbody td:nth-child(6) .boton-chico[data-tema-accion]::before{margin:0}
   /* Temas pedidos (sin países ni estrellas): el nombre arriba y debajo
-     la pastilla de mejora con el botón redondo a la derecha. */
+     la pastilla de solución con el botón redondo a la derecha. */
   #ranking .tabla tbody tr{
     grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n n" "m a";row-gap:10px;
   }
@@ -1886,12 +1903,12 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   #ranking .tabla tbody td:nth-child(5){grid-area:m;justify-self:start}
   #ranking .tabla tbody td:nth-child(6){grid-area:a;justify-self:end}
 }
-/* Métricas: filtros de mejora, «Nueva etiqueta» y buscador de temas,
+/* Métricas: filtros de solución, «Nueva etiqueta» y buscador de temas,
    todos de 40 px de alto (computador y celular) */
-:is(#f-foco-mejoras,#f-foco) .chip,
+:is(#f-foco-soluciones,#f-foco) .chip,
 #panel-ranking .buscador-lupa,
 :is(#btn-nueva-global,#btn-nuevo-tema){height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
-:is(#f-foco-mejoras,#f-foco) .chip{display:inline-flex;align-items:center}
+:is(#f-foco-soluciones,#f-foco) .chip{display:inline-flex;align-items:center}
 /* Métricas en computador: una sola escala de letra en los rankings.
    18 título · 14 nombre y países · 13 botones y filtros · 12 pastillas. */
 @media (min-width:761px){
@@ -1899,7 +1916,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   :is(#ranking,#ranking-criticas) .tabla td:nth-child(5) .etq,
   :is(#ranking,#ranking-criticas) .fila-ruido .etq{font-size:12px;font-weight:600}
   #ranking-criticas .paises-critica{font-size:14px;font-weight:600}
-  :is(#f-foco-mejoras,#f-foco) .chip,
+  :is(#f-foco-soluciones,#f-foco) .chip,
   :is(#btn-nueva-global,#btn-nuevo-tema),
   :is(#ranking,#ranking-criticas) .tabla .boton-chico[data-tema-accion="mejora"],
   :is(#ranking,#ranking-criticas) .fila-ruido .boton-chico{font-size:13px;font-weight:600}
@@ -1932,7 +1949,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 .ayuda-ventana p.mini:last-child{margin:0}
 @media (max-width:760px){
   /* En celular Ver y Desvincular son solo icono (ojo y cadena rota) */
-  #velo-forma .forma .mejora-fila .boton-chico{font-size:0}
+  #velo-forma .forma .solucion-fila .boton-chico{font-size:0}
 }
 /* ============================================================
    Métricas en celular: ajustes finos de alineación
@@ -1944,33 +1961,33 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   /* El filtro de temas se movió dentro de la caja (y en celular va oculto):
      se conserva el aire de 14 px que la caja tenía arriba. */
   #panel-ranking > .caja{margin-top:14px}
-  /* Filtro de mejora de críticas: las tres opciones llenan el ancho */
-  #f-foco-mejoras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
-  #f-foco-mejoras .chip{justify-content:center;white-space:nowrap;padding-left:6px;padding-right:6px}
+  /* Filtro de solución de críticas: las tres opciones llenan el ancho */
+  #f-foco-soluciones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  #f-foco-soluciones .chip{justify-content:center;white-space:nowrap;padding-left:6px;padding-right:6px}
   /* «Nueva etiqueta» de críticas quedaba pegado a la bandeja de tarjetas:
      la misma separación que en temas pedidos. */
   #ranking-criticas{margin-top:23px}
-  /* Ventana «Mejoras de …»: cabía más ancha que la pantalla. El título
+  /* Ventana «Soluciones de …»: cabía más ancha que la pantalla. El título
      largo se parte en líneas, y Ver y Desvincular pasan a botones
      redondos con icono (ojo y cadena rota), del mismo tamaño que los
      de los rankings (32 px, icono de 15 px); el texto sigue ahí para
      lectores de pantalla. */
-  .mejora-fila{align-items:center}
-  .mejora-fila-txt b{white-space:normal;overflow:visible;text-overflow:clip}
-  .mejora-fila .boton-chico{
+  .solucion-fila{align-items:center}
+  .solucion-fila-txt b{white-space:normal;overflow:visible;text-overflow:clip}
+  .solucion-fila .boton-chico{
     flex:none;position:relative;width:32px;height:32px;padding:0;border-radius:50%;font-size:0;
   }
-  .mejora-fila .boton-chico::before{
+  .solucion-fila .boton-chico::before{
     content:"";position:absolute;inset:0;margin:auto;width:15px;height:15px;background:currentColor;
     -webkit-mask:var(--icono) center/contain no-repeat;mask:var(--icono) center/contain no-repeat;
   }
-  .mejora-fila .boton-chico[data-ver]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
-  .mejora-fila .boton-chico[data-desv]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
-  /* Mejoras: Estado, Responsable y «Nueva mejora» del mismo alto (40 px) */
+  .solucion-fila .boton-chico[data-ver]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0'/%3E%3Cpath d='M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6'/%3E%3C/svg%3E")}
+  .solucion-fila .boton-chico[data-desv]{--icono:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 22v-2'/%3E%3Cpath d='M9 15l6 -6'/%3E%3Cpath d='M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464'/%3E%3Cpath d='M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463'/%3E%3Cpath d='M20 17h2'/%3E%3Cpath d='M2 7h2'/%3E%3Cpath d='M7 2v2'/%3E%3C/svg%3E")}
+  /* Soluciones: Estado, Responsable y «Nueva solución» del mismo alto (40 px) */
   .desplegables .desplegable-boton,
-  #btn-nueva-mejora{height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+  #btn-nueva-solucion{height:40px;padding-top:0;padding-bottom:0;box-sizing:border-box}
   /* Estado y Responsable se estiran hasta el borde derecho, alineados
-     con «Nueva mejora» y las tarjetas */
+     con «Nueva solución» y las tarjetas */
   .desplegables .desplegable{flex:1 1 auto}
   .desplegables .desplegable-boton{width:100%;justify-content:center}
   /* Botón redondo (ojo o bombillo): el icono en el centro exacto del
@@ -2123,7 +2140,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   </div>
 </div>
 
-<!-- Ventana genérica de formularios: etiquetas, mejoras y tareas -->
+<!-- Ventana genérica de formularios: etiquetas, soluciones y tareas -->
 <div class="velo" id="velo-forma" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -7,7 +7,7 @@
              clasificas tú (inbox.js). El globito rojo dice cuántas
              quedan, y se repite en el ícono de Feedback del menú.
    MÉTRICAS  El resultado: estrellas por mes, ranking de temas
-             pedidos y ranking de mejoras globales (metricas.js).
+             pedidos y ranking de soluciones globales (metricas.js).
 
    Esta pestaña solo pone el título, el botón Actualizar y las
    subpestañas; cada subpestaña se pinta dentro de #sub-vista.

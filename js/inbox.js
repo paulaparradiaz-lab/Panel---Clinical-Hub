@@ -5,11 +5,11 @@
    La IA clasifica sola todo el feedback que llega. Lo que tuvo
    claro queda en estado "auto" y va directo a Métricas; lo que no,
    queda "por_revisar" y aparece aquí, sin importar si es reseña,
-   tema pedido o mejora global. Histórico completo, sin filtros.
+   tema pedido o solución global. Histórico completo, sin filtros.
    Solo entra lo que trae texto: lo que llega con estrellas y nada
    más no tiene qué clasificar y suma directo en Métricas.
 
-   Clasificar es decir qué es (tema pedido, mejora global o las dos)
+   Clasificar es decir qué es (tema pedido, solución global o las dos)
    y en qué subcategoría cae. Al guardar, la fila pasa a "revisado",
    sale del inbox y empieza a sumar en Métricas. "Es ruido" es el
    atajo para lo que no dice nada aprovechable.
@@ -64,7 +64,7 @@ function armazon(){
   </div>
   <div class="ayuda-plegable" id="ayuda-inbox" hidden>
     <p class="mini">Aquí llega lo que la IA no tuvo claro. Cada tarjeta trae lo que escribió el médico, tal cual.
-    Dile qué es (tema pedido, mejora global o las dos) y en qué subcategoría cae. Al guardar desaparece del
+    Dile qué es (tema pedido, solución global o las dos) y en qué subcategoría cae. Al guardar desaparece del
     Inbox y empieza a sumar en Métricas y en Impacto. Si no dice nada aprovechable, márcalo como ruido: no se
     borra, queda en la fila de Ruido del ranking por si fue un error.</p>
     <p class="mini">Lo que llega <b>solo con estrellas</b>, sin texto, no pasa por aquí porque no hay nada que

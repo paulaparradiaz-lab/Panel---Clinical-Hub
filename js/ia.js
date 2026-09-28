@@ -8,7 +8,7 @@
                                          (fechas y estrellas de verdad,
                                          listas separadas, sin correo).
    categorias_para_ia                    catálogo de temas y de tipos de
-                                         mejora, con su nombre bonito.
+                                         solución, con su nombre bonito.
 
    El panel solo puede editar cuatro columnas de la primera tabla:
    tipos, tema_slug, mejora_slug y estado. Lo demás es del médico.
@@ -17,7 +17,7 @@ import { sb, sesionSegura } from "./nucleo.js";
 
 const TABLA = "feedback_prueba_clasificacion_por_ia";
 
-export const TIPOS = [["tema_pedido", "Tema pedido"], ["mejora_tecnica", "Mejora global"]];
+export const TIPOS = [["tema_pedido", "Tema pedido"], ["mejora_tecnica", "Solución global"]];
 export const RUIDO = "ruido";
 
 /* Catálogo: se lee una vez y se guarda aquí */
@@ -36,7 +36,7 @@ export async function cargarCatalogo(){
   catalogo.nombres = new Map((data || []).map(c => [c.slug, c.nombre]));
 }
 
-/* Color de cada indicador (mejora global). Sigue al indicador, nunca a
+/* Color de cada indicador (solución global). Sigue al indicador, nunca a
    su puesto: los de hoy tienen el suyo fijo y los que se creen después
    toman los siguientes en orden de creación. Es la paleta categórica
    validada para daltonismo; el nombre siempre va escrito al lado. */
@@ -101,7 +101,7 @@ export async function clasificar(filas, temas, mejoras){
 
 /* Desetiquetar: le quita un tema a varias filas. Si una fila tenía
    varios temas, conserva los demás. Si se queda sin tema y sin tipo de
-   mejora, no está clasificada en nada: vuelve al Inbox (por_revisar). */
+   solución, no está clasificada en nada: vuelve al Inbox (por_revisar). */
 export async function quitarTema(filas, slug){
   const cambios = filas.map(x => {
     const temas = (x.temas || []).filter(t => t !== slug);
@@ -117,9 +117,9 @@ export async function quitarTema(filas, slug){
   if (respuestas.some(r => !(r.data || []).length)) throw new Error("row-level security: no se guardó");
 }
 
-/* Lo mismo con un tipo de mejora global: se le quita a sus comentarios
-   y conservan lo demás. Sin tema ni mejora, vuelven al Inbox. */
-export async function quitarMejoraTecnica(filas, slug){
+/* Lo mismo con un tipo de solución global: se le quita a sus comentarios
+   y conservan lo demás. Sin tema ni solución, vuelven al Inbox. */
+export async function quitarSolucionTecnica(filas, slug){
   const cambios = filas.map(x => {
     const temas = x.temas || [];
     const mejoras = (x.mejoras || []).filter(m => m !== slug);
@@ -143,7 +143,7 @@ export async function devolverAlInbox(filas){
   if ((data || []).length !== ids.length) throw new Error("row-level security: no se guardó");
 }
 
-/* Renombrar un tema o un tipo de mejora global: cambia solo el nombre bonito. El código (slug)
+/* Renombrar un tema o un tipo de solución global: cambia solo el nombre bonito. El código (slug)
    sigue igual, así la IA sigue clasificando con él. El nombre viejo se
    guarda en los sinónimos para que la IA lo siga reconociendo. */
 export async function renombrarTema(slug, nuevo, tipo){
@@ -174,7 +174,7 @@ export async function renombrarTema(slug, nuevo, tipo){
 }
 
 /* Etiqueta nueva en el catálogo: un tema pedido (tipo "tema") o una
-   mejora global (tipo "mejora"). El código (slug) sale del nombre, sin
+   solución global (tipo "mejora"). El código (slug) sale del nombre, sin
    tildes ni espacios; si ya existe, se le pone un número al final. */
 export async function crearEtiqueta(tipo, nombre, sinonimos){
   const base = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
@@ -198,10 +198,10 @@ export async function crearEtiqueta(tipo, nombre, sinonimos){
 }
 
 /* ============================================================
-   3. Mejoras (mejoras_ia), su enlace con los temas y las mejoras
+   3. Soluciones (mejoras_ia), su enlace con los temas y las soluciones
    globales (mejora_ia_tema) y sus personas (mejora_ia_persona).
-   Una mejora no se borra: para descartarla se cambia su estado.
-   Desvincular solo quita el enlace con el tema o la mejora global.
+   Una solución no se borra: para descartarla se cambia su estado.
+   Desvincular solo quita el enlace con el tema o la solución global.
    ============================================================ */
 export const ESTADOS = [["pendiente", "Pendiente"], ["en_curso", "En curso"],
   ["hecha", "Completada"], ["descartada", "Descartada"]];
@@ -211,7 +211,7 @@ export function nombreEstado(e){
   return par ? par[1] : e;
 }
 
-export async function cargarMejoras(){
+export async function cargarSoluciones(){
   const [m, e, p] = await Promise.all([
     sb.from("mejoras_ia").select("*").order("creado_en", { ascending:false }),
     sb.from("mejora_ia_tema").select("*"),
@@ -223,10 +223,10 @@ export async function cargarMejoras(){
   return { mejoras: m.data || [], enlaces: e.data || [], personas: p.data || [] };
 }
 
-/* De cada tema o indicador, TODAS sus mejoras (sin las descartadas),
+/* De cada tema o indicador, TODAS sus soluciones (sin las descartadas),
    de la más antigua a la más nueva. Un indicador como «Cantidad de
-   temas» suele tener varias: cada guía publicada es una mejora. */
-export function mejorasPorSlug(datos){
+   temas» suele tener varias: cada guía publicada es una solución. */
+export function solucionesPorSlug(datos){
   const porId = new Map(datos.mejoras.map(m => [m.id, m]));
   const mapa = new Map();
   datos.enlaces.forEach(e => {
@@ -239,30 +239,30 @@ export function mejorasPorSlug(datos){
   return mapa;
 }
 
-/* Cuántos indicadores (mejoras globales) tiene una mejora: si es uno
+/* Cuántos indicadores (soluciones globales) tiene una solución: si es uno
    solo, no se puede desvincular desde un ranking (quedaría sin nada que
    medir en Impacto). */
-export function indicadoresDe(datos, mejoraId){
+export function indicadoresDe(datos, solucionId){
   const globales = new Set(catalogo.mejoras.map(c => c.slug).filter(x => x !== RUIDO));
-  return datos.enlaces.filter(e => e.mejora_id === mejoraId && globales.has(e.tema_slug)).map(e => e.tema_slug);
+  return datos.enlaces.filter(e => e.mejora_id === solucionId && globales.has(e.tema_slug)).map(e => e.tema_slug);
 }
 
-/* extra: estado, y para una mejora del pasado su fecha de completada
+/* extra: estado, y para una solución del pasado su fecha de completada
    (completada_en) y de creación (creado_en), para que Impacto mida
    desde el día en que de verdad se hizo. */
-export async function crearMejora(titulo, detalle, extra){
+export async function crearSolucion(titulo, detalle, extra){
   const fila = Object.assign({ titulo: titulo, detalle: detalle || null }, extra || {});
   const { data, error } = await sb.from("mejoras_ia").insert(fila).select("id").single();
   if (error) throw error;
   return data.id;
 }
 
-/* Mejora nueva en un solo paso (función crear_mejora_completa en
+/* Solución nueva en un solo paso (función crear_mejora_completa en
    Supabase): la crea, la enlaza y le asigna personas en una sola
    transacción. «clave» nace al abrir la ventana: si Guardar llega dos
    veces (doble clic o reintento tras un corte), Supabase devuelve la
-   mejora ya creada en vez de hacer otra. */
-export async function crearMejoraCompleta({ clave, titulo, detalle, extra, enlaces, personas }){
+   solución ya creada en vez de hacer otra. */
+export async function crearSolucionCompleta({ clave, titulo, detalle, extra, enlaces, personas }){
   const e = extra || {};
   const { data, error } = await sb.rpc("crear_mejora_completa", {
     p_clave: clave, p_titulo: titulo, p_detalle: detalle || null,
@@ -273,26 +273,26 @@ export async function crearMejoraCompleta({ clave, titulo, detalle, extra, enlac
   return data;
 }
 
-export async function enlazarMejora(mejoraId, slug){
-  const { error } = await sb.from("mejora_ia_tema").insert({ mejora_id: mejoraId, tema_slug: slug });
-  /* 23505: ya estaba enlazada (una mejora que existía); no es un error */
+export async function enlazarSolucion(solucionId, slug){
+  const { error } = await sb.from("mejora_ia_tema").insert({ mejora_id: solucionId, tema_slug: slug });
+  /* 23505: ya estaba enlazada (una solución que existía); no es un error */
   if (error && error.code !== "23505") throw error;
 }
 
-export async function desvincularMejora(mejoraId, slug){
+export async function desvincularSolucion(solucionId, slug){
   const { data, error } = await sb.from("mejora_ia_tema").delete()
-    .eq("mejora_id", mejoraId).eq("tema_slug", slug).select("mejora_id");
+    .eq("mejora_id", solucionId).eq("tema_slug", slug).select("mejora_id");
   if (error) throw error;
-  if (!(data || []).length) await siguePuesto("mejora_ia_tema", { mejora_id: mejoraId, tema_slug: slug });
+  if (!(data || []).length) await siguePuesto("mejora_ia_tema", { mejora_id: solucionId, tema_slug: slug });
 }
 
-export async function editarMejora(mejoraId, cambios){
-  const { data, error } = await sb.from("mejoras_ia").update(cambios).eq("id", mejoraId).select("id");
+export async function editarSolucion(solucionId, cambios){
+  const { data, error } = await sb.from("mejoras_ia").update(cambios).eq("id", solucionId).select("id");
   if (error) throw error;
   if (!(data || []).length) throw new Error("row-level security: no se guardó");
 }
 
-/* Personas de cada mejora (mejora_ia_persona): una o varias. La lista
+/* Personas de cada solución (mejora_ia_persona): una o varias. La lista
    sale de los usuarios del panel (función usuarios_panel), así cada
    usuario nuevo aparece solo. */
 export async function cargarUsuarios(){
@@ -301,17 +301,17 @@ export async function cargarUsuarios(){
   return data || [];
 }
 
-export async function asignarPersona(mejoraId, usuarioId){
-  const { error } = await sb.from("mejora_ia_persona").insert({ mejora_id: mejoraId, usuario_id: usuarioId });
+export async function asignarPersona(solucionId, usuarioId){
+  const { error } = await sb.from("mejora_ia_persona").insert({ mejora_id: solucionId, usuario_id: usuarioId });
   /* 23505: ya estaba asignada (un intento anterior sí se guardó); no es un error */
   if (error && error.code !== "23505") throw error;
 }
 
-export async function quitarPersona(mejoraId, usuarioId){
+export async function quitarPersona(solucionId, usuarioId){
   const { data, error } = await sb.from("mejora_ia_persona").delete()
-    .eq("mejora_id", mejoraId).eq("usuario_id", usuarioId).select("mejora_id");
+    .eq("mejora_id", solucionId).eq("usuario_id", usuarioId).select("mejora_id");
   if (error) throw error;
-  if (!(data || []).length) await siguePuesto("mejora_ia_persona", { mejora_id: mejoraId, usuario_id: usuarioId });
+  if (!(data || []).length) await siguePuesto("mejora_ia_persona", { mejora_id: solucionId, usuario_id: usuarioId });
 }
 
 /* Un borrado que no tocó filas: si la fila ya no existe (un intento

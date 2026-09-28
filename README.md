@@ -14,15 +14,15 @@ El panel sigue una cadena de cuatro pasos:
 1. **Entra el feedback** (web y WhatsApp) a la tabla `feedback`, alimentada desde n8n.
 2. **Alguien lo clasifica**: a cada reseña le pone una categoría; a cada búsqueda sin
 resultado le pone un tema.
-3. **Se agrupan los casos parecidos** en una mejora: una decisión concreta.
-4. **La mejora se parte en tareas** con responsable, prioridad y estado.
+3. **Se agrupan los casos parecidos** en una solución: una decisión concreta.
+4. **La solución se parte en tareas** con responsable, prioridad y estado.
 
 El feedback llega de dos maneras muy distintas, así que hay una pestaña para cada una:
 
 - **Reseñas** — las opiniones con estrellas: qué tan bien califican las guías.
 - **Temas pedidos** — las búsquedas que no encontraron nada: qué falta.
 
-La pestaña **Mejoras** es la "hoja de vida" de la plataforma: qué cambiamos, por qué
+La pestaña **Soluciones** es la "hoja de vida" de la plataforma: qué cambiamos, por qué
 feedback lo cambiamos, quién lo hizo y qué pasó con las notas después.
 
 Ojo con el origen: las filas cuyo `origen` empieza por `buscador-` no son opiniones
@@ -91,12 +91,12 @@ Sitio estático, sin build ni dependencias que compilar. Módulos ES nativos y
 | `js/nucleo.js` | Cliente de Supabase, estado compartido, catálogos, ventanas modales y utilidades (fechas, números, escapado). |
 | `js/panel.js` | Acceso con 2FA, barra superior y carga de cada pestaña como módulo. |
 | `js/resenas.js` | Pestaña Reseñas: subpestañas Inbox y Ranking, filtros, KPIs, gráficas y lista. |
-| `js/triage.js` | Acciones sobre reseñas: categorizar (una o en lote), descartar, marcar revisado y crear la mejora. |
+| `js/triage.js` | Acciones sobre reseñas: categorizar (una o en lote), descartar, marcar revisado y crear la solución. |
 | `js/categorias.js` | Crear, renombrar y borrar categorías de reseñas. |
 | `js/temas.js` | Pestaña Temas pedidos: subpestañas Inbox y Ranking de temas. |
 | `js/temas-clasificar.js` | Ventanas para asignar tema a una petición y para renombrar o borrar temas. |
-| `js/temas-triage.js` | Acciones por tema: crear la mejora y marcar revisado. |
-| `js/mejoras.js` | Pestaña Mejoras: hoja de vida, tareas e impacto. |
+| `js/temas-triage.js` | Acciones por tema: crear la solución y marcar revisado. |
+| `js/soluciones.js` | Pestaña Soluciones: hoja de vida, tareas e impacto. |
 | `CNAME` | Dominio propio de GitHub Pages. |
 
 Cada archivo de pestaña exporta una función `render()` que pinta dentro de `#vista`.
@@ -120,17 +120,17 @@ Proyecto: **Clinical hub - Backoffice**.
 | `feedback_etiquetas` | Qué categoría tiene cada reseña. |
 | `tema_canonico` | Los temas pedidos, ya con nombre. |
 | `tema_peticion` | Qué búsqueda quedó dentro de cada tema. |
-| `acciones` | Las mejoras decididas. |
-| `accion_feedback` | Qué feedback originó cada mejora. |
-| `tareas` | Las tareas de cada mejora, con responsable y estado. |
+| `acciones` | Las soluciones decididas. |
+| `accion_feedback` | Qué feedback originó cada solución. |
+| `tareas` | Las tareas de cada solución, con responsable y estado. |
 | `equipo` | Las personas que pueden ser responsables. |
 
 **Vistas que lee el panel**
 
-- `v_resenas` — las opiniones con estrellas, su triage, sus categorías y si ya tienen mejora.
+- `v_resenas` — las opiniones con estrellas, su triage, sus categorías y si ya tienen solución.
 - `v_temas_pedidos` — las búsquedas sin resultado con su tema y su conteo.
-- `v_hoja_de_vida` — las mejoras con su contexto.
-- `v_tareas_detalle` — las tareas con su responsable y su mejora.
+- `v_hoja_de_vida` — las soluciones con su contexto.
+- `v_tareas_detalle` — las tareas con su responsable y su solución.
 
 **Seguridad**
 

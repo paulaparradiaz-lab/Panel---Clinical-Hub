@@ -6,15 +6,15 @@
 import { sb, $, estado, escapar, avisar, ocupado, traducirError,
          cerrarVentana, abrirVentana, sesionSegura } from "./nucleo.js";
 import * as feedback from "./pestana-feedback.js";
-import * as mejoras from "./pestana-mejoras-impacto.js";
+import * as mejoras from "./pestana-soluciones-impacto.js";
 import * as hitos from "./pestana-hitos.js";
 import * as ventas from "./pestana-ventas.js";
 
 /* Aquí crece el panel: añade una sección con su render y listo.
-   Feedback y Mejoras (Tablero | Impacto) leen solo las tablas de la IA (ver ia.js). */
+   Feedback y Soluciones (Tablero | Impacto) leen solo las tablas de la IA (ver ia.js). */
 const SECCIONES = [
   { id:"feedback", nombre:"Feedback", render: feedback.render },
-  { id:"mejoras",  nombre:"Mejoras",  render: mejoras.render },
+  { id:"soluciones",  nombre:"Soluciones",  render: mejoras.render },
   { id:"ventas",   nombre:"Dinero",   render: ventas.render },
   { id:"hitos",    nombre:"Hitos",    render: hitos.render }
 ];
@@ -388,7 +388,7 @@ $("#pestanas").addEventListener("click", e => {
 });
 
 /* Salto de una pestana a otra desde dentro del panel. Lo usa el ranking
-   de Temas pedidos para llevarte a la mejora de ese tema: manda la
+   de Temas pedidos para llevarte a la solución de ese tema: manda la
    seccion a abrir y, si hace falta, el id de lo que hay que resaltar. */
 document.addEventListener("ch-ir", e => {
   const d = (e && e.detail) || {};

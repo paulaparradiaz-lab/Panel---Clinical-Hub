@@ -5,11 +5,11 @@
    ESTRELLAS   Promedio de estrellas por mes, en chupetes con la nota,
                la ★ y cuántas reseñas, sobre un área sombreada del
                color de cada nivel.
-   CRÍTICAS    Ranking de críticas: los tipos de mejora global en la
+   CRÍTICAS    Ranking de críticas: los tipos de solución global en la
                misma tabla que temas (veces, países, estrellas con su
-               color y globito), cada uno con sus mejoras: crear, ver y
-               desvincular, con el filtro con / sin mejora.
-   TEMAS       El ranking de temas pedidos, al final, con sus mejoras y
+               color y globito), cada uno con sus soluciones: crear, ver y
+               desvincular, con el filtro con / sin solución.
+   TEMAS       El ranking de temas pedidos, al final, con sus soluciones y
                acciones (vive en ranking-temas.js).
 
    Los rankings cuentan solo lo ya clasificado (auto o revisado): lo
@@ -22,10 +22,10 @@
    ============================================================ */
 import { sb, $, COLORES, escapar, num, pct, avisar, traducirError, abrirVentana, cerrarVentana,
   leer } from "./nucleo.js";
-import { RUIDO, cargarCatalogo, cargarMejoras, mejorasPorSlug, nombreDe, renombrarTema, tieneTexto, nombrePais,
-  quitarMejoraTecnica } from "./ia.js";
+import { RUIDO, cargarCatalogo, cargarSoluciones, solucionesPorSlug, nombreDe, renombrarTema, tieneTexto, nombrePais,
+  quitarSolucionTecnica } from "./ia.js";
 import { ventanaComentarios, plural } from "./ia-ventanas.js";
-import { ventanaCrearMejora, ventanaNuevaEtiqueta, ventanaMejorasDe } from "./mejora-ventanas.js";
+import { ventanaCrearSolucion, ventanaNuevaEtiqueta, ventanaSolucionesDe } from "./solucion-ventanas.js";
 import * as rankingTemas from "./ranking-temas.js";
 
 /* ============================================================
@@ -39,12 +39,12 @@ export async function render(caja){
     ayuda.hidden = !ayuda.hidden;
     $("#btn-ayuda-estrellas").setAttribute("aria-expanded", String(!ayuda.hidden));
   });
-  $("#btn-ayuda-mejoras").addEventListener("click", () => {
-    const ayuda = $("#ayuda-mejoras");
+  $("#btn-ayuda-soluciones").addEventListener("click", () => {
+    const ayuda = $("#ayuda-soluciones");
     ayuda.hidden = !ayuda.hidden;
-    $("#btn-ayuda-mejoras").setAttribute("aria-expanded", String(!ayuda.hidden));
+    $("#btn-ayuda-soluciones").setAttribute("aria-expanded", String(!ayuda.hidden));
   });
-  pintarChipsMejoras();
+  pintarChipsSoluciones();
   $("#btn-nueva-global").addEventListener("click", () => ventanaNuevaEtiqueta({ tipo: "mejora",
     alCambiar: async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); } }));
   $("#ranking-criticas").addEventListener("click", e => {
@@ -60,7 +60,7 @@ export async function render(caja){
     const tr = bt && bt.closest("tr");
     if (!bt || !tr) return;
     const i = Array.from(tr.parentNode.children).indexOf(tr);
-    accionMejora(bt.dataset.temaAccion, ordenCriticas[i], clasificadasCriticas);
+    accionSolucion(bt.dataset.temaAccion, ordenCriticas[i], clasificadasCriticas);
   });
   $("#ranking-criticas").addEventListener("mouseover", e => {
     const nota = e.target.closest("[data-globo-critica]");
@@ -71,12 +71,12 @@ export async function render(caja){
   $("#ranking-criticas").addEventListener("mouseout", e => {
     if (e.target.closest("[data-globo-critica], [data-globo-paises]")) ocultarGloboCritica();
   });
-  $("#f-foco-mejoras").addEventListener("click", e => {
+  $("#f-foco-soluciones").addEventListener("click", e => {
     const b = e.target.closest("button[data-v]");
     if (!b) return;
-    focoMejoras = b.dataset.v;
-    pintarChipsMejoras();
-    if (ultimo) pintarMejoras(ultimo.lista, ultimo.filas);
+    focoSoluciones = b.dataset.v;
+    pintarChipsSoluciones();
+    if (ultimo) pintarSoluciones(ultimo.lista, ultimo.filas);
   });
   await cargar();
 }
@@ -119,11 +119,11 @@ function armazon(){
 <section class="caja" style="margin-top:16px">
   <div class="fila-entre cabeza-seccion">
     <div><h2 class="titulo-seccion">Ranking de críticas</h2><p class="subtitulo-seccion">Lo que dicen de la plataforma</p></div>
-    <button class="enlace-ayuda" id="btn-ayuda-mejoras" aria-expanded="false" aria-controls="ayuda-mejoras">
+    <button class="enlace-ayuda" id="btn-ayuda-soluciones" aria-expanded="false" aria-controls="ayuda-soluciones">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
       ¿Cómo funciona?</button>
   </div>
-  <div class="ayuda-plegable" id="ayuda-mejoras" hidden>
+  <div class="ayuda-plegable" id="ayuda-soluciones" hidden>
     <p class="mini">Cada fila es una <b>crítica</b>: un tipo de lo que los médicos dicen de la plataforma (no de un
     tema clínico), ya clasificado por la IA o por ti. Es la misma tabla del ranking de temas: <b>el texto subrayado</b>
     dice cuántas formas distintas hay de decirlo (o cuántos comentarios, si todos dicen lo mismo), <b>Países</b> desde
@@ -139,13 +139,13 @@ function armazon(){
     <p class="mini"><b>Pasa el mouse</b> (o toca) las estrellas para ver cuántas notas hubo de cada una: con pocas
     notas el promedio puede engañar. <b>El texto subrayado</b> abre los comentarios reales; desde ahí puedes
     reclasificar cualquiera o devolverlo al Inbox.</p>
-    <p class="mini"><b>La mejora</b> se enlaza a la crítica completa, que es su indicador en Impacto: <b>Crear
-    mejora</b> hace una nueva (con esta crítica ya marcada como su indicador, su estado y, si ya se hizo, la fecha
-    en que se completó) o la enlaza a una que ya existe; <b>el ojo</b> abre la lista de sus mejoras, cada una con <b>Ver</b>
+    <p class="mini"><b>La solución</b> se enlaza a la crítica completa, que es su indicador en Impacto: <b>Crear
+    solución</b> hace una nueva (con esta crítica ya marcada como su indicador, su estado y, si ya se hizo, la fecha
+    en que se completó) o la enlaza a una que ya existe; <b>el ojo</b> abre la lista de sus soluciones, cada una con <b>Ver</b>
     (para editarla) y <b>Desvincular</b> (se la quita sin borrarla). Si una crítica tiene varias (por ejemplo,
     «Cantidad de temas», donde cada guía publicada es una), la marca dice cuántas. No se puede
-    desvincular el único indicador de una mejora: quedaría sin nada que medir en Impacto; se cambia en la pestaña
-    Mejoras. El filtro deja ver <b>Todos</b>, solo los <b>Sin mejora</b> o solo los <b>Con mejora</b>.</p>
+    desvincular el único indicador de una solución: quedaría sin nada que medir en Impacto; se cambia en la pestaña
+    Soluciones. El filtro deja ver <b>Todos</b>, solo los <b>Sin solución</b> o solo los <b>Con solución</b>.</p>
     <p class="mini"><b>El lápiz</b> cambia el nombre (la IA sigue usando el mismo) y <b>la caneca</b> le quita
     esa crítica a sus comentarios sin borrar nada: lo que queda sin clasificar vuelve al Inbox. <b>Nueva
     etiqueta</b> crea una crítica nueva: aparece aquí cuando tenga su primer comentario.</p>
@@ -154,8 +154,8 @@ function armazon(){
     solo sale con el filtro Todos.</p>
   </div>
   <div class="filtros-fila">
-    <span class="rotulo">Mejora</span>
-    <div class="filtros" id="f-foco-mejoras" role="group" aria-label="Estado de mejora"></div>
+    <span class="rotulo">Solución</span>
+    <div class="filtros" id="f-foco-soluciones" role="group" aria-label="Estado de solución"></div>
     <button class="boton-chico boton-nueva" id="btn-nueva-global">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva etiqueta</button>
   </div>
@@ -170,12 +170,12 @@ ${rankingTemas.armazon()}
    2. Datos
    ============================================================ */
 async function cargar(){
-  let fb, mj, datosMejoras;
+  let fb, mj, datosSoluciones;
   try {
-    [fb, mj, datosMejoras] = await Promise.all([
+    [fb, mj, datosSoluciones] = await Promise.all([
       sb.from("v_ia_feedback").select("*"),
       sb.from("v_ia_mejoras").select("*").order("veces", { ascending:false }),
-      cargarMejoras(),
+      cargarSoluciones(),
       cargarCatalogo()
     ]);
     const error = fb.error || mj.error;
@@ -190,11 +190,11 @@ async function cargar(){
   if (!$("#tendencia")) return;
   pintarResumen(fb.data || []);
   pintarEstrellas(fb.data || []);
-  rankingTemas.pintar(fb.data || [], datosMejoras);
-  mejorasIA = datosMejoras.mejoras;
-  datosMej = datosMejoras;
-  mejorasDe = mejorasPorSlug(datosMejoras);
-  pintarMejoras(mj.data || [], fb.data || []);
+  rankingTemas.pintar(fb.data || [], datosSoluciones);
+  solucionesIA = datosSoluciones.mejoras;
+  datosMej = datosSoluciones;
+  solucionesDe = solucionesPorSlug(datosSoluciones);
+  pintarSoluciones(mj.data || [], fb.data || []);
 }
 
 function pintarResumen(filas){
@@ -348,27 +348,27 @@ function conectarGlobo(puntos){
 }
 
 /* ============================================================
-   5. Ranking de mejoras globales
+   5. Ranking de soluciones globales
    Barras como las de Tipo de problema. Ruido va en gris al final:
-   se cuenta, pero no es una mejora que haya que hacer.
+   se cuenta, pero no es una solución que haya que hacer.
    ============================================================ */
-let focoMejoras = "todas";
-let mejorasIA = [];              // mejoras_ia
+let focoSoluciones = "todas";
+let solucionesIA = [];              // mejoras_ia
 let ordenCriticas = [];         // filas pintadas del ranking de críticas
 let clasificadasCriticas = [];   // comentarios que cuenta (para abrir cada crítica)
 let notasCriticas = new Map();   // crítica -> notas por estrella (globito)
 let paisesCriticas = new Map();  // crítica -> { país: comentarios } (globito)
-let mejorasDe = new Map();       // indicador -> todas sus mejoras (sin descartadas)
-let datosMej = null;             // mejoras y enlaces, para no dejar una mejora sin indicador
+let solucionesDe = new Map();       // indicador -> todas sus soluciones (sin descartadas)
+let datosMej = null;             // soluciones y enlaces, para no dejar una solución sin indicador
 let ultimo = null;               // lo último pintado, para volver a filtrar
 
-function pintarChipsMejoras(){
-  $("#f-foco-mejoras").innerHTML = [["todas","Todos"], ["sin_accion","Sin mejora"], ["con_accion","Con mejora"]]
-    .map(par => '<button class="chip" data-v="' + par[0] + '" aria-pressed="' + (par[0] === focoMejoras) + '">' +
+function pintarChipsSoluciones(){
+  $("#f-foco-soluciones").innerHTML = [["todas","Todos"], ["sin_accion","Sin solución"], ["con_accion","Con solución"]]
+    .map(par => '<button class="chip" data-v="' + par[0] + '" aria-pressed="' + (par[0] === focoSoluciones) + '">' +
       escapar(par[1]) + '</button>').join("");
 }
 
-function pintarMejoras(todasVista, filas){
+function pintarSoluciones(todasVista, filas){
   ultimo = { lista: todasVista, filas: filas };
   /* Ruido: solo lo que trae texto. Lo que llega solo con estrellas no es
      ruido, es una calificación; la vista lo cuenta, aquí se recalcula. */
@@ -402,10 +402,10 @@ function pintarMejoras(todasVista, filas){
     if (x.pais){ const o = paisesCriticas.get(m); o[x.pais] = (o[x.pais] || 0) + 1; }
   }));
 
-  /* El filtro deja fuera Ruido: no es una mejora por hacer */
-  const criticas = todas.filter(m => m.slug !== RUIDO && (focoMejoras === "todas" ||
-    (focoMejoras === "con_accion") === mejorasDe.has(m.slug)));
-  const ruido = focoMejoras === "todas" ? todas.find(m => m.slug === RUIDO) : null;
+  /* El filtro deja fuera Ruido: no es una solución por hacer */
+  const criticas = todas.filter(m => m.slug !== RUIDO && (focoSoluciones === "todas" ||
+    (focoSoluciones === "con_accion") === solucionesDe.has(m.slug)));
+  const ruido = focoSoluciones === "todas" ? todas.find(m => m.slug === RUIDO) : null;
   ordenCriticas = criticas.concat(ruido ? [ruido] : []);
   if (!ordenCriticas.length){
     $("#ranking-criticas").innerHTML = '<p class="vacio">Ninguna crítica cumple ese filtro. Prueba con Todos.</p>';
@@ -435,27 +435,27 @@ function pintarMejoras(todasVista, filas){
       '<td><span class="mini">Descartados: no decían nada aprovechable</span></td>' +
       '<td><span class="etq">descartado</span></td>' +
       '<td><button class="boton-chico" data-ver-critica="' + i + '">Revisar</button></td></tr>';
-    const n = (mejorasDe.get(m.slug) || []).length;
+    const n = (solucionesDe.get(m.slug) || []).length;
     return '<tr>' +
       '<td><span class="tema-nombre">' + escapar(m.nombre) + ICONOS + '</span><br>' + enlace + '</td>' +
       '<td class="tabular"><b>' + num(m.veces) + '</b></td>' +
       '<td class="tabular">' + paises + '</td>' +
       '<td>' + estrellas(m, i) + '</td>' +
-      '<td>' + (n > 1 ? '<span class="etq lima">' + n + ' mejoras</span>'
-        : n ? '<span class="etq lima">con mejora</span>' : '<span class="etq alerta">sin mejora</span>') + '</td>' +
-      '<td>' + accionesMejora(m, i) + '</td></tr>';
+      '<td>' + (n > 1 ? '<span class="etq lima">' + n + ' soluciones</span>'
+        : n ? '<span class="etq lima">con solución</span>' : '<span class="etq alerta">sin solución</span>') + '</td>' +
+      '<td>' + accionesSolucion(m, i) + '</td></tr>';
   }).join("");
 
   $("#ranking-criticas").innerHTML =
     '<table class="tabla"><thead><tr><th>Crítica</th><th>Veces</th><th>Países</th><th>Estrellas</th>' +
-    '<th>Mejora</th><th>Acciones</th></tr></thead><tbody>' + cuerpo + '</tbody></table>' +
-    '<div class="globo-mes" id="globo-mejora" role="tooltip" hidden></div>';
+    '<th>Solución</th><th>Acciones</th></tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    '<div class="globo-mes" id="globo-solucion" role="tooltip" hidden></div>';
 }
 
 /* Globito de las estrellas: cuántas notas hubo de cada una */
 function mostrarGloboCritica(bt){
   const m = ordenCriticas[Number(bt.dataset.globoCritica)];
-  const globo = $("#globo-mejora"), caja = $("#ranking-criticas");
+  const globo = $("#globo-solucion"), caja = $("#ranking-criticas");
   if (!m || !globo) return;
   const notas = notasCriticas.get(m.slug) || { 1:0, 2:0, 3:0, 4:0, 5:0 };
   const prom = m.promedio_estrellas != null ? Number(m.promedio_estrellas) : null;
@@ -480,7 +480,7 @@ function mostrarGloboCritica(bt){
 /* Globito de los países: cuáles son y cuántos comentarios de cada uno */
 function mostrarGloboPaises(bt){
   const m = ordenCriticas[Number(bt.dataset.globoPaises)];
-  const globo = $("#globo-mejora"), caja = $("#ranking-criticas");
+  const globo = $("#globo-solucion"), caja = $("#ranking-criticas");
   if (!m || !globo) return;
   const lista = Object.entries(paisesCriticas.get(m.slug) || {}).sort((a, b) => b[1] - a[1]);
   globo.innerHTML =
@@ -496,7 +496,7 @@ function mostrarGloboPaises(bt){
 }
 
 function ocultarGloboCritica(){
-  const globo = $("#globo-mejora");
+  const globo = $("#globo-solucion");
   if (globo) globo.hidden = true;
 }
 
@@ -515,29 +515,29 @@ function abrirCritica(m){
   });
 }
 
-/* Marca y botones de la mejora de cada tipo, como en el ranking de
-   temas. Ruido no lleva: no es una mejora por hacer. */
-function accionesMejora(m){
-  const n = (mejorasDe.get(m.slug) || []).length;
+/* Marca y botones de la solución de cada tipo, como en el ranking de
+   temas. Ruido no lleva: no es una solución por hacer. */
+function accionesSolucion(m){
+  const n = (solucionesDe.get(m.slug) || []).length;
   /* data-tema-accion: los mismos botones del ranking de temas (icono de
      cadena y ojo, con su globito), que salen del CSS. El ojo siempre abre
-     la lista de sus mejoras, con Ver y Desvincular para cada una. */
-  return n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver mejoras</button>'
-    : '<button class="boton-chico" data-tema-accion="mejora">Crear mejora</button>';
+     la lista de sus soluciones, con Ver y Desvincular para cada una. */
+  return n ? '<button class="boton-chico" data-tema-accion="vermejora">Ver soluciones</button>'
+    : '<button class="boton-chico" data-tema-accion="mejora">Crear solución</button>';
 }
 
-function accionMejora(accion, m, clasificadas){
+function accionSolucion(accion, m, clasificadas){
   const alCambiar = async texto => { avisar(texto, "ok", "#aviso-panel"); await cargar(); };
   if (accion === "renombrar"){ ventanaRenombrarTipo(m, alCambiar); return; }
   if (accion === "borrar"){
     ventanaQuitarTipo(m, clasificadas.filter(x => (x.mejoras || []).indexOf(m.slug) > -1), alCambiar);
     return;
   }
-  const lista = mejorasDe.get(m.slug) || [];
+  const lista = solucionesDe.get(m.slug) || [];
   if (accion === "mejora" || !lista.length)
-    ventanaCrearMejora({ slug: m.slug, n: m.veces, mejoras: mejorasIA, alCambiar: alCambiar });
+    ventanaCrearSolucion({ slug: m.slug, n: m.veces, mejoras: solucionesIA, alCambiar: alCambiar });
   else if (accion === "vermejora")
-    ventanaMejorasDe({ slug: m.slug, lista: lista, datos: datosMej, que: "mejora global", alCambiar: alCambiar });
+    ventanaSolucionesDe({ slug: m.slug, lista: lista, datos: datosMej, que: "solución global", alCambiar: alCambiar });
 }
 
 /* ✏️ y 🗑️ de cada tipo, como en el ranking de temas */
@@ -553,7 +553,7 @@ const ICONOS =
 function ventanaRenombrarTipo(m, alCambiar){
   const actual = nombreDe(m.slug);
   abrirVentana({
-    titulo: "Renombrar mejora global",
+    titulo: "Renombrar solución global",
     guia: actual,
     cuerpo:
       '<input class="campo" id="r-nombre" value="' + escapar(actual) + '">' +
@@ -567,7 +567,7 @@ function ventanaRenombrarTipo(m, alCambiar){
       if (nuevo === actual) return;
       await renombrarTema(m.slug, nuevo, "mejora");
       cerrarVentana();
-      await alCambiar("Mejora global renombrada: “" + nuevo + "”.");
+      await alCambiar("Solución global renombrada: “" + nuevo + "”.");
       return false;
     }
   });
@@ -577,7 +577,7 @@ function ventanaRenombrarTipo(m, alCambiar){
 function ventanaQuitarTipo(m, lista, alCambiar){
   const vuelven = lista.filter(x => (x.mejoras || []).length === 1 && !(x.temas || []).length).length;
   abrirVentana({
-    titulo: "Quitar mejora global",
+    titulo: "Quitar solución global",
     guia: nombreDe(m.slug) + " · " + plural(lista.length, "comentario", "comentarios"),
     cuerpo:
       '<p>¿Quitar “' + escapar(nombreDe(m.slug)) + '” de sus ' + plural(lista.length, "comentario", "comentarios") + '?</p>' +
@@ -588,7 +588,7 @@ function ventanaQuitarTipo(m, lista, alCambiar){
         ' sin clasificar y vuelve' + (vuelven === 1 ? '' : 'n') + ' al Inbox</b> para que lo reclasifiques.</p>' : ''),
     aceptar: "Quitar",
     alAceptar: async () => {
-      await quitarMejoraTecnica(lista, m.slug);
+      await quitarSolucionTecnica(lista, m.slug);
       cerrarVentana();
       await alCambiar("“" + nombreDe(m.slug) + "” quitado de " + plural(lista.length, "comentario", "comentarios") +
         (vuelven ? " · " + vuelven + " volvieron al Inbox" : "") + ".");

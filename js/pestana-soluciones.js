@@ -1,13 +1,13 @@
 /* ============================================================
-   CLINICAL HUB · PESTAÑA MEJORAS (panel nuevo)
-   Todas las mejoras en un solo lugar. Se crean desde los rankings de
+   CLINICAL HUB · PESTAÑA SOLUCIONES (panel nuevo)
+   Todas las soluciones en un solo lugar. Se crean desde los rankings de
    Feedback › Métricas; aquí solo se manejan:
 
    ESTADO       Pendiente, En curso, Completada o Descartada (un toque).
-   INDICADOR    La mejora global en la que impacta (Cantidad de temas,
+   INDICADOR    La solución global en la que impacta (Cantidad de temas,
                 Interfaz/estética…): se ve arriba y se cambia tocándolo.
                 Es lo que mide Impacto.
-   PERSONAS     Una o varias por mejora, elegidas de los usuarios del
+   PERSONAS     Una o varias por solución, elegidas de los usuarios del
                 panel (función usuarios_panel): cada usuario nuevo
                 aparece solo.
 
@@ -16,11 +16,11 @@
    ============================================================ */
 import { sb, $, estado, escapar, fecha, num, abrirVentana, avisar, cerrarVentana,
   traducirError } from "./nucleo.js";
-import { catalogo, cargarCatalogo, cargarMejoras, nombreDe, nombreEstado, editarMejora, RUIDO, colorIndicador,
-  enlazarMejora, desvincularMejora,
+import { catalogo, cargarCatalogo, cargarSoluciones, nombreDe, nombreEstado, editarSolucion, RUIDO, colorIndicador,
+  enlazarSolucion, desvincularSolucion,
   cargarUsuarios, asignarPersona, quitarPersona } from "./ia.js";
 import { plural } from "./ia-ventanas.js";
-import { ventanaVerMejora, ventanaNuevaMejora } from "./mejora-ventanas.js";
+import { ventanaVerSolucion, ventanaNuevaSolucion } from "./solucion-ventanas.js";
 
 let mejoras = [];
 let enlaces = [];
@@ -44,24 +44,24 @@ const FLECHA = '<svg class="desplegable-flecha" viewBox="0 0 24 24" aria-hidden=
    ============================================================ */
 export function recargar(){ return cargar(); }
 
-/* Se pinta dentro de la subpestaña de Mejoras (pestana-mejoras-impacto.js),
+/* Se pinta dentro de la subpestaña de Soluciones (pestana-soluciones-impacto.js),
    que pone el título y el botón Actualizar. */
 export async function render(caja){
   caja.innerHTML = `<p class="aviso" id="aviso-panel" role="status"></p>
-<p class="resumen-sub" id="resumen-mejoras"></p>
+<p class="resumen-sub" id="resumen-soluciones"></p>
 
-<div class="desplegables" id="filtros-mejoras">
+<div class="desplegables" id="filtros-soluciones">
   <div class="desplegable" id="f-estado"></div>
   <div class="desplegable" id="f-persona"></div>
-  <button class="boton-chico boton-nueva" id="btn-nueva-mejora">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva mejora</button>
+  <button class="boton-chico boton-nueva" id="btn-nueva-solucion">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva solución</button>
 </div>
 
-<div id="lista-mejoras" class="lista-mejoras"><p class="vacio">Cargando…</p></div>`;
+<div id="lista-soluciones" class="lista-soluciones"><p class="vacio">Cargando…</p></div>`;
 
   /* Tocar la pastilla abre su menú (y cierra el otro); elegir una
      opción filtra y cierra. Fuera del menú o con Escape se cierra. */
-  $("#filtros-mejoras").addEventListener("click", e => {
+  $("#filtros-soluciones").addEventListener("click", e => {
     const caja = e.target.closest(".desplegable");
     if (!caja) return;
     const op = e.target.closest("button[data-v]");
@@ -79,12 +79,12 @@ export async function render(caja){
   });
   if (!escuchando){
     escuchando = true;
-    document.addEventListener("click", e => { if (!e.target.closest("#filtros-mejoras")) cerrarDesplegables(); });
+    document.addEventListener("click", e => { if (!e.target.closest("#filtros-soluciones")) cerrarDesplegables(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") cerrarDesplegables(); });
     window.addEventListener("resize", colocarGomas);
   }
-  $("#lista-mejoras").addEventListener("click", alTocar);
-  $("#btn-nueva-mejora").addEventListener("click", () => ventanaNuevaMejora({ alCambiar: trasCambio }));
+  $("#lista-soluciones").addEventListener("click", alTocar);
+  $("#btn-nueva-solucion").addEventListener("click", () => ventanaNuevaSolucion({ alCambiar: trasCambio }));
 
   await cargar();
 }
@@ -96,19 +96,19 @@ async function cargar(){
   let fb, datos;
   try {
     [datos, usuarios, fb] = await Promise.all([
-      cargarMejoras(),
+      cargarSoluciones(),
       cargarUsuarios(),
       sb.from("v_ia_feedback").select("temas, mejoras, estado"),
       cargarCatalogo()
     ]);
     if (fb.error) throw fb.error;
   } catch (err){
-    if (!$("#lista-mejoras")) return;
-    $("#lista-mejoras").innerHTML = '<p class="vacio">No se pudieron leer las mejoras. ' +
+    if (!$("#lista-soluciones")) return;
+    $("#lista-soluciones").innerHTML = '<p class="vacio">No se pudieron leer las soluciones. ' +
       escapar(traducirError(err && err.message)) + '</p>';
     return;
   }
-  if (!$("#lista-mejoras")) return;
+  if (!$("#lista-soluciones")) return;
   mejoras = datos.mejoras;
   enlaces = datos.enlaces;
   personas = datos.personas;
@@ -127,18 +127,18 @@ function nombreUsuario(id){
   return u ? u.nombre : "Usuario sin acceso";
 }
 
-function esMejoraTecnica(slug){
+function esSolucionTecnica(slug){
   return catalogo.mejoras.some(c => c.slug === slug);
 }
 
-/* Los indicadores de una mejora: las mejoras globales a las que está
+/* Los indicadores de una solución: las soluciones globales a las que está
    enlazada (si quedara algún tema viejo enlazado, no cuenta). */
 function temasDe(m){
-  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(t => !esMejoraTecnica(t));
+  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(t => !esSolucionTecnica(t));
 }
 
 function indicadoresDe(m){
-  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(esMejoraTecnica);
+  return enlaces.filter(e => e.mejora_id === m.id).map(e => e.tema_slug).filter(esSolucionTecnica);
 }
 
 /* ============================================================
@@ -166,25 +166,25 @@ function pintar(){
   pintarDesplegable($("#f-persona"), "Responsable", opPersona, f.persona, usuarios.length ? [3] : []);
 
   const cuentaDe = e => mejoras.filter(m => m.estado === e).length;
-  $("#resumen-mejoras").innerHTML = "<b>" + num(mejoras.length) + "</b> mejoras · <b>" +
+  $("#resumen-soluciones").innerHTML = "<b>" + num(mejoras.length) + "</b> soluciones · <b>" +
     num(cuentaDe("pendiente")) + "</b> pendientes · <b>" + num(cuentaDe("en_curso")) + "</b> en curso · <b>" +
     num(cuentaDe("hecha")) + "</b> completadas";
 
   if (!mejoras.length){
-    $("#lista-mejoras").innerHTML = '<p class="vacio">Todavía no hay mejoras. Crea una con «Nueva mejora», ' +
-      'o desde Feedback › Métricas con «Crear mejora» en los rankings.</p>';
+    $("#lista-soluciones").innerHTML = '<p class="vacio">Todavía no hay soluciones. Crea una con «Nueva solución», ' +
+      'o desde Feedback › Métricas con «Crear solución» en los rankings.</p>';
     return;
   }
   /* Primero lo que está por hacer, luego lo completado y al final lo
-     descartado: al completar una mejora no se esconde, baja. */
+     descartado: al completar una solución no se esconde, baja. */
   const ORDEN = { en_curso:0, pendiente:1, hecha:2, descartada:3 };
   const lista = mejoras.filter(m => porEstado(m) && porPersona(m))
     .sort((a, b) => (ORDEN[a.estado] - ORDEN[b.estado]) || (b.id - a.id));
   if (!lista.length){
-    $("#lista-mejoras").innerHTML = '<p class="vacio">Ninguna mejora cumple ese filtro. Prueba con Todas.</p>';
+    $("#lista-soluciones").innerHTML = '<p class="vacio">Ninguna solución cumple ese filtro. Prueba con Todas.</p>';
     return;
   }
-  $("#lista-mejoras").innerHTML = lista.map(tarjeta).join("");
+  $("#lista-soluciones").innerHTML = lista.map(tarjeta).join("");
   colocarGomas();
 }
 
@@ -196,7 +196,7 @@ function pintar(){
    ============================================================ */
 function moverGomaPaso(caja){
   const goma = caja.querySelector(".goma-paso");
-  const actual = caja.querySelector(".paso-mejora.actual");
+  const actual = caja.querySelector(".paso-solucion.actual");
   if (!goma) return;
   if (!actual){ goma.style.opacity = "0"; return; }
   goma.style.left = actual.offsetLeft + "px";
@@ -207,7 +207,7 @@ function moverGomaPaso(caja){
 /* Al pintar (o al cambiar el tamaño) la goma aparece ya en su sitio,
    sin viajar desde el borde. */
 function colocarGomas(){
-  document.querySelectorAll("#lista-mejoras .pasos-mejora").forEach(caja => {
+  document.querySelectorAll("#lista-soluciones .pasos-solucion").forEach(caja => {
     caja.classList.add("quieta");
     moverGomaPaso(caja);
     void caja.offsetWidth;
@@ -219,7 +219,7 @@ function colocarGomas(){
    de una vez; si no se guarda, se vuelve a marcar el de antes. */
 function marcarPaso(caja, estadoNuevo){
   const i = PASOS.indexOf(estadoNuevo);
-  caja.querySelectorAll(".paso-mejora").forEach((p, j) => {
+  caja.querySelectorAll(".paso-solucion").forEach((p, j) => {
     p.classList.toggle("hecho", i > -1 && j <= i);
     p.classList.toggle("actual", j === i);
     p.setAttribute("aria-pressed", String(j === i));
@@ -228,7 +228,7 @@ function marcarPaso(caja, estadoNuevo){
   moverGomaPaso(caja);
 }
 
-/* La tarjeta: arriba el indicador (la mejora global en la que impacta)
+/* La tarjeta: arriba el indicador (la solución global en la que impacta)
    y el responsable; en medio el título y los pasos Pendiente → En curso
    → Completada, que se tocan para cambiar el estado; abajo el número,
    la fecha y Descartar / Recuperar. */
@@ -248,10 +248,10 @@ function tarjeta(m){
   const bloqueada = paso === -1;
   const off = bloqueada ? ' disabled tabindex="-1"' : '';
 
-  /* El indicador: la mejora global en la que impacta, con la flechita
+  /* El indicador: la solución global en la que impacta, con la flechita
      en un círculo de su color. Todo el botón abre la ventana para
      elegirlo o cambiarlo. */
-  const indicador = '<button type="button" class="indicador-mejora' + (indicadores.length ? '' : ' vacio') +
+  const indicador = '<button type="button" class="indicador-solucion' + (indicadores.length ? '' : ' vacio') +
       '" data-indicador="' + id + '" title="' + (indicadores.length ? "Cambiar indicador" : "Elegir indicador") + '"' + off + '>' +
     '<span class="indicador-rotulo">Impacta en</span>' +
     (indicadores.length
@@ -267,31 +267,31 @@ function tarjeta(m){
     : '<span class="inicial vacia" aria-hidden="true">' + MAS + '</span><span class="sin-responsable">Asignar responsable</span>';
 
   const pasos = PASOS.map((e, i) =>
-    '<button type="button" class="paso-mejora' + (paso > -1 && i <= paso ? ' hecho' : '') + (i === paso ? ' actual' : '') +
+    '<button type="button" class="paso-solucion' + (paso > -1 && i <= paso ? ' hecho' : '') + (i === paso ? ' actual' : '') +
       '" data-estado="' + e + '" data-id="' + id + '" aria-pressed="' + (i === paso) + '"' + off + '>' +
       '<span class="paso-num" aria-hidden="true">' + (paso > -1 && i < paso ? '✓' : i + 1) + '</span>' +
       escapar(nombreEstado(e)) + '</button>').join('<i class="paso-linea" aria-hidden="true"></i>');
 
-  return '<article class="caja tarjeta-mejora' + (bloqueada ? ' bloqueada' : '') + '" data-estado="' + escapar(m.estado) + '">' +
-    '<div class="tarjeta-mejora-top">' + indicador +
+  return '<article class="caja tarjeta-solucion' + (bloqueada ? ' bloqueada' : '') + '" data-estado="' + escapar(m.estado) + '">' +
+    '<div class="tarjeta-solucion-top">' + indicador +
       '<button type="button" class="boton-responsable" data-asignar="' + id + '" title="Asignar responsable"' + off + '>' +
         responsable + '</button>' +
     '</div>' +
-    '<div class="tarjeta-mejora-titulo"><h3>' + escapar(m.titulo) + '</h3>' +
+    '<div class="tarjeta-solucion-titulo"><h3>' + escapar(m.titulo) + '</h3>' +
       (bloqueada
-        ? '<span class="candado-mejora" title="Descartada: está bloqueada">' + CANDADO + '</span>'
-        : '<button class="icono-btn" data-editar="' + id + '" title="Editar" aria-label="Editar mejora">' + LAPIZ + '</button>') +
+        ? '<span class="candado-solucion" title="Descartada: está bloqueada">' + CANDADO + '</span>'
+        : '<button class="icono-btn" data-editar="' + id + '" title="Editar" aria-label="Editar solución">' + LAPIZ + '</button>') +
     '</div>' +
-    (m.detalle ? '<p class="tarjeta-mejora-detalle">' + escapar(m.detalle) + '</p>' : '') +
-    '<div class="pasos-mejora" role="group" aria-label="Estado de la mejora">' +
+    (m.detalle ? '<p class="tarjeta-solucion-detalle">' + escapar(m.detalle) + '</p>' : '') +
+    '<div class="pasos-solucion" role="group" aria-label="Estado de la solución">' +
       '<span class="goma-paso" aria-hidden="true"></span>' + pasos +
       (paso === -1 ? '<span class="descartada-marca">Descartada</span>' : '') + '</div>' +
-    (temasDe(m).length ? '<p class="mini tarjeta-mejora-tema">Atiende ' + (temasDe(m).length === 1 ? 'el tema' : 'los temas') +
+    (temasDe(m).length ? '<p class="mini tarjeta-solucion-tema">Atiende ' + (temasDe(m).length === 1 ? 'el tema' : 'los temas') +
       ': <b>' + temasDe(m).map(t => escapar(nombreDe(t))).join(", ") + '</b></p>' : '') +
-    '<div class="tarjeta-mejora-pie">' +
-      '<span class="mini tarjeta-mejora-id">#' + id + ' · ' + fecha(m.creado_en) + '</span>' +
+    '<div class="tarjeta-solucion-pie">' +
+      '<span class="mini tarjeta-solucion-id">#' + id + ' · ' + fecha(m.creado_en) + '</span>' +
       (paso === -1
-        ? '<button class="boton-chico recuperar-mejora" data-id="' + id + '">Recuperar</button>'
+        ? '<button class="boton-chico recuperar-solucion" data-id="' + id + '">Recuperar</button>'
         : '<button class="enlace-descartar" data-estado="descartada" data-id="' + id + '">Descartar</button>') +
     '</div>' +
   '</article>';
@@ -317,7 +317,7 @@ function pintarDesplegable(caja, rotulo, lista, elegido, corte){
 }
 
 function cerrarDesplegables(){
-  document.querySelectorAll("#filtros-mejoras .desplegable.abierto").forEach(c => {
+  document.querySelectorAll("#filtros-soluciones .desplegable.abierto").forEach(c => {
     c.classList.remove("abierto");
     c.querySelector(".desplegable-boton").setAttribute("aria-expanded", "false");
   });
@@ -331,34 +331,34 @@ async function trasCambio(texto){
   await cargar();
 }
 
-function mejoraPorId(id){
+function solucionPorId(id){
   return mejoras.find(m => String(m.id) === String(id));
 }
 
 async function alTocar(e){
   const b = e.target.closest("button");
   if (!b) return;
-  const m = mejoraPorId(b.dataset.id || b.dataset.editar || b.dataset.asignar || b.dataset.indicador);
+  const m = solucionPorId(b.dataset.id || b.dataset.editar || b.dataset.asignar || b.dataset.indicador);
   if (!m) return;
 
   /* Una descartada está bloqueada: solo responde «Recuperar» */
-  if (m.estado === "descartada" && !b.classList.contains("recuperar-mejora")) return;
-  if (b.dataset.editar){ ventanaVerMejora({ mejora: m, alCambiar: trasCambio }); return; }
+  if (m.estado === "descartada" && !b.classList.contains("recuperar-solucion")) return;
+  if (b.dataset.editar){ ventanaVerSolucion({ mejora: m, alCambiar: trasCambio }); return; }
   if (b.dataset.indicador){ ventanaIndicador(m); return; }
   if (b.dataset.asignar){ ventanaAsignar(m); return; }
-  if (b.classList.contains("recuperar-mejora")){ await recuperar(m, b); return; }
+  if (b.classList.contains("recuperar-solucion")){ await recuperar(m, b); return; }
   /* El estado se guarda de una: se deshace igual de fácil. En los
      pasos, la goma viaja primero y la lista se repinta cuando termina. */
   if (b.dataset.estado){
     if (b.dataset.estado === m.estado) return;
-    const caja = b.classList.contains("paso-mejora") ? b.closest(".pasos-mejora") : null;
+    const caja = b.classList.contains("paso-solucion") ? b.closest(".pasos-solucion") : null;
     const antes = m.estado;
     if (caja) marcarPaso(caja, b.dataset.estado);
     b.disabled = true;
     try {
-      await editarMejora(m.id, { estado: b.dataset.estado });
+      await editarSolucion(m.id, { estado: b.dataset.estado });
       if (caja) await new Promise(r => setTimeout(r, 650));
-      await trasCambio("Mejora #" + m.id + ": " + nombreEstado(b.dataset.estado).toLowerCase() + ".");
+      await trasCambio("Solución #" + m.id + ": " + nombreEstado(b.dataset.estado).toLowerCase() + ".");
     } catch (err){
       b.disabled = false;
       if (caja) marcarPaso(caja, antes);
@@ -379,9 +379,9 @@ async function recuperar(m, b){
       .eq("mejora_id", m.id).order("cambiado_en", { ascending:false }).order("id", { ascending:false });
     if (error) throw error;
     const previo = ((data || []).find(h => h.estado !== "descartada") || {}).estado || "pendiente";
-    await editarMejora(m.id, { estado: previo });
-    if (previo === "hecha" && m.completada_en) await editarMejora(m.id, { completada_en: m.completada_en });
-    await trasCambio("Mejora #" + m.id + " recuperada: vuelve a " + nombreEstado(previo).toLowerCase() + ".");
+    await editarSolucion(m.id, { estado: previo });
+    if (previo === "hecha" && m.completada_en) await editarSolucion(m.id, { completada_en: m.completada_en });
+    await trasCambio("Solución #" + m.id + " recuperada: vuelve a " + nombreEstado(previo).toLowerCase() + ".");
   } catch (err){
     b.disabled = false;
     avisar(traducirError(err && err.message), "mal", "#aviso-panel");
@@ -393,7 +393,7 @@ function ventanaAsignar(m){
   const antes = personasDe(m);
   const elegidas = new Set(antes);
   abrirVentana({
-    titulo: "Personas de la mejora",
+    titulo: "Personas de la solución",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
       '<p class="mini explica">Marca una o varias. La lista son los usuarios del panel: cada usuario nuevo aparece aquí solo.</p>' +
@@ -412,7 +412,7 @@ function ventanaAsignar(m){
       for (const u of salen) await quitarPersona(m.id, u);
       cerrarVentana();
       if (suman.length || salen.length)
-        await trasCambio("Mejora #" + m.id + ": " + (elegidas.size
+        await trasCambio("Solución #" + m.id + ": " + (elegidas.size
           ? plural(elegidas.size, "persona asignada", "personas asignadas") : "sin personas") + ".");
       return false;
     }
@@ -427,17 +427,17 @@ function ventanaAsignar(m){
   });
 }
 
-/* Indicador: las mejoras globales, se marcan una o varias. Al guardar
+/* Indicador: las soluciones globales, se marcan una o varias. Al guardar
    se enlazan las nuevas y se desvinculan las que se desmarcaron. */
 function ventanaIndicador(m){
   const antes = indicadoresDe(m);
   const elegidos = new Set(antes);
   const globales = catalogo.mejoras.filter(c => c.slug !== RUIDO);
   abrirVentana({
-    titulo: "Indicador de la mejora",
+    titulo: "Indicador de la solución",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
-      '<p class="mini explica">¿En qué mejora global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
+      '<p class="mini explica">¿En qué solución global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
       'de ese indicador después de completarla. Puedes marcar más de uno.</p>' +
       '<div class="bandeja-opciones" id="i-globales" style="max-height:50vh">' +
       globales.map(c =>
@@ -446,14 +446,14 @@ function ventanaIndicador(m){
         '<span><b>' + escapar(c.nombre) + '</b><span class="mini">' + plural(cuenta.get(c.slug) || 0, "comentario", "comentarios") +
         '</span></span></span><span class="marca-opcion" aria-hidden="true"></span></button>').join("") +
       '</div>' +
-      '<p class="mini explica">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de mejoras globales.</p>',
+      '<p class="mini explica">¿No está? Créalo con «Nueva etiqueta» en Feedback › Métricas, en el ranking de soluciones globales.</p>',
     aceptar: "Guardar",
     alAceptar: async () => {
       if (!elegidos.size){ avisar("Elige al menos un indicador.", "mal", "#aviso-forma"); return false; }
-      for (const s of elegidos) if (antes.indexOf(s) === -1) await enlazarMejora(m.id, s);
-      for (const s of antes) if (!elegidos.has(s)) await desvincularMejora(m.id, s);
+      for (const s of elegidos) if (antes.indexOf(s) === -1) await enlazarSolucion(m.id, s);
+      for (const s of antes) if (!elegidos.has(s)) await desvincularSolucion(m.id, s);
       cerrarVentana();
-      await trasCambio("Mejora #" + m.id + ": impacta en " + Array.from(elegidos).map(nombreDe).join(" y ") + ".");
+      await trasCambio("Solución #" + m.id + ": impacta en " + Array.from(elegidos).map(nombreDe).join(" y ") + ".");
       return false;
     }
   });
