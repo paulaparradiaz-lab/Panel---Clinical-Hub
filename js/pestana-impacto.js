@@ -59,7 +59,7 @@ export async function render(caja){
 
 <section class="caja" style="margin-top:14px">
   <div class="fila-entre cabeza-seccion">
-    <div><h2 class="titulo-seccion">Críticas y soluciones por indicador</h2><p class="subtitulo-seccion" id="impacto-desde">Toda la historia</p></div>
+    <div><h2 class="titulo-seccion">Críticas y soluciones</h2><p class="subtitulo-seccion" id="impacto-desde">Toda la historia</p></div>
     <button class="enlace-ayuda" id="btn-ayuda-impacto" aria-expanded="false" aria-controls="ayuda-impacto">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
       ¿Cómo funciona?</button>

@@ -166,9 +166,10 @@ function pintar(){
   pintarDesplegable($("#f-persona"), "Responsable", opPersona, f.persona, usuarios.length ? [3] : []);
 
   const cuentaDe = e => mejoras.filter(m => m.estado === e).length;
-  $("#resumen-soluciones").innerHTML = "<b>" + num(mejoras.length) + "</b> soluciones · <b>" +
-    num(cuentaDe("pendiente")) + "</b> pendientes · <b>" + num(cuentaDe("en_curso")) + "</b> en curso · <b>" +
-    num(cuentaDe("hecha")) + "</b> completadas";
+  /* &nbsp;: el número nunca queda solo al final de una línea */
+  $("#resumen-soluciones").innerHTML = "<b>" + num(mejoras.length) + "</b>&nbsp;soluciones · <b>" +
+    num(cuentaDe("pendiente")) + "</b>&nbsp;pendientes · <b>" + num(cuentaDe("en_curso")) + "</b>&nbsp;en&nbsp;curso · <b>" +
+    num(cuentaDe("hecha")) + "</b>&nbsp;completadas";
 
   if (!mejoras.length){
     $("#lista-soluciones").innerHTML = '<p class="vacio">Todavía no hay soluciones. Crea una con «Nueva solución», ' +
@@ -434,7 +435,7 @@ function ventanaIndicador(m){
   const elegidos = new Set(antes);
   const globales = catalogo.mejoras.filter(c => c.slug !== RUIDO);
   abrirVentana({
-    titulo: "Indicador de la solución",
+    titulo: "Indicador",
     guia: "#" + m.id + " · " + m.titulo,
     cuerpo:
       '<p class="mini explica">¿En qué crítica global impacta? Es lo que mide la pestaña Impacto: si bajan las críticas ' +
