@@ -168,6 +168,27 @@ textarea.campo{min-height:90px;resize:vertical}
 .acceso-separador::before,.acceso-separador::after{content:"";flex:1;height:1px;background:#d9dbe0}
 .acceso-passkey{display:flex;align-items:center;justify-content:center;gap:10px}
 .acceso-passkey svg{flex:none}
+/* Hitos: una línea de metro por medida; las estaciones son las metas y
+   los corredores (recortados de ch-fondo.jpg) van donde está el número hoy */
+.metro-caja{margin-top:18px}
+.metro-cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.metro-cab b{font-size:15px}
+.metro-mini{margin-left:auto;font-size:12px;color:var(--faint)}
+.metro-mini b{color:var(--ink);font-size:13px}
+.metro-linea{margin-top:18px}
+.metro-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--c);color:#fff;font-size:12px;font-weight:800}
+.metro-via{position:relative;height:150px;margin-top:6px}
+.metro-riel,.metro-hecho{position:absolute;left:0;bottom:34px;height:10px;border-radius:10px}
+.metro-riel{right:0;background:#e4e7e1}
+.metro-hecho{background:var(--c)}
+.metro-est{position:absolute;bottom:28px;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;background:#fff;border:5px solid #cfd3cb;z-index:1}
+.metro-est.on{border-color:var(--c)}
+.metro-est.sig{border-color:var(--c);box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 20%,transparent)}
+.metro-est span{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;white-space:nowrap;color:var(--faint)}
+.metro-est.on span,.metro-est.sig span{color:var(--ink)}
+.metro-corredores{position:absolute;bottom:40px;width:110px;height:auto;transform:translateX(-70%);z-index:2;pointer-events:none}
+.metro-linea.sin-datos .metro-num{background:#cfd3cb}
+.metro-linea.sin-datos .metro-via{height:80px}
 /* Ojito para ver la contraseña (lo agrega panel.js a cada campo de contraseña) */
 .campo-clave{position:relative;display:flex;flex-direction:column}
 .ver-clave{position:absolute;top:0;bottom:0;right:6px;margin:auto 0;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:#8b8e96;cursor:pointer;transition:color .2s}
