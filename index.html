@@ -275,6 +275,12 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-whatsapp:hover{transform:translateY(-1px) scale(1.08);color:#1da851}
 .vt-whatsapp svg{width:24px;height:24px;fill:currentColor}
 /* Egresos */
+/* Botón de soportes: documento con el número en una burbujita */
+.vt-sop{position:relative;display:inline-grid;place-items:center;width:38px;height:34px;padding:0;border:0;background:none;color:var(--ink,#18181b);cursor:pointer;border-radius:10px;transition:background .2s}
+.vt-sop:hover{background:var(--surface2,#f1f1ef)}
+.vt-sop svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vt-sop-n{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#2a4927;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
+
 .vt-egresos-barra{display:flex;justify-content:flex-end;margin-top:12px}
 .vt-eg-acciones{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .vt-archivo-boton{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-top:4px}

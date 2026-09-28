@@ -119,9 +119,7 @@ function pintar(){
   if (!egresos.length){
     lista.innerHTML = '<p class="vacio">Todavía no hay gastos registrados. Usa «Registrar gasto».</p>';
   } else {
-    const acciones = e => '<span class="vt-eg-acciones">' +
-      '<button class="boton-chico" type="button" data-ver="' + e.id + '">' +
-        (e.soportes.length > 1 ? 'Ver soportes (' + e.soportes.length + ')' : 'Ver soporte') + '</button>' +
+    const acciones = e => '<span class="vt-eg-acciones">' + botonSoportes(e) +
       '<button class="boton-chico secundario" type="button" data-editar="' + e.id + '">Editar</button>' +
       '<button class="boton-chico secundario" type="button" data-borrar="' + e.id + '">Borrar</button></span>' +
       '<div class="vt-eg-enlaces" data-enlaces="' + e.id + '" hidden></div>';
@@ -137,6 +135,14 @@ function pintar(){
       '</tbody></table>';
   }
   pintarMeses();
+}
+
+/* Botón de soportes: ícono de documento con el número en una burbujita */
+const ICONO_DOC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
+function botonSoportes(e){
+  const n = e.soportes.length, que = "Ver " + (n === 1 ? "el soporte" : "los " + n + " soportes");
+  return '<button class="vt-sop" type="button" data-ver="' + e.id + '" title="' + que + '" aria-label="' + que + '">' +
+    ICONO_DOC + '<span class="vt-sop-n">' + n + '</span></button>';
 }
 
 /* Cuánto le toca a una persona de un gasto: todo si lo pagó, la mitad si fue a mitades */
