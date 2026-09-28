@@ -197,6 +197,76 @@ textarea.campo{min-height:90px;resize:vertical}
 .metro-nivel-pie{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--faint)}
 .metro-nivel-pie b{color:var(--ink)}
 .metro-cab .enlace-ayuda,.metro-nivel-cab .enlace-ayuda{flex:none}
+/* Ventas (Resumen y Suscripciones) */
+.vt-grafica{position:relative;height:260px;margin-top:12px}
+.vt-dos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.vt-dos .caja{margin:0}
+.vt-tabla{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
+.vt-tabla .mini{display:block}
+.vt-barras{display:grid;gap:8px;margin-top:10px}
+.vt-barra-fila{display:grid;grid-template-columns:minmax(90px,140px) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.vt-barra{height:10px;border-radius:999px;background:var(--track);overflow:hidden}
+.vt-barra span{display:block;height:100%;border-radius:inherit;background:#7ab447}
+.vt-barra-num{color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vt-barra-fila[hidden]{display:none}
+.vt-mas{margin-top:12px}
+.vt-var{display:block;margin-top:6px;font-size:12px;font-weight:600;color:var(--faint)}
+.vt-var.sube{color:var(--ok)}
+.vt-var.baja{color:var(--warn)}
+.vt-etiqueta{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface2);color:var(--faint)}
+.vt-etiqueta.nueva{background:var(--brand-bg);color:var(--brand-ink)}
+.vt-sem{position:relative}
+.vt-luz{position:absolute;top:14px;right:14px;width:12px;height:12px;border-radius:50%;background:#cfd3cb}
+.vt-sem.verde .vt-luz{background:#3fae7a;box-shadow:0 0 0 4px rgba(63,174,122,.18)}
+.vt-sem.amarillo .vt-luz{background:#e0b33c;box-shadow:0 0 0 4px rgba(224,179,60,.2)}
+.vt-sem.rojo .vt-luz{background:#d9654d;box-shadow:0 0 0 4px rgba(217,101,77,.18)}
+.vt-sem.azul .vt-luz{background:#4a86d6;box-shadow:0 0 0 4px rgba(74,134,214,.18)}
+.dato .cifra.vt-sin{font-size:16px;font-weight:600;letter-spacing:0;color:var(--faint);line-height:1.3}
+.dato .cifra.vt-cifra-chica{font-size:26px}
+.vt-secundarias .dato{padding:14px}
+.vt-recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.vt-rec{display:grid;gap:4px;padding:12px 14px;border-radius:14px;background:var(--surface2);border-left:4px solid #cfd3cb;font-size:13.5px}
+.vt-rec.verde{border-left-color:#3fae7a}.vt-rec.amarillo{border-left-color:#e0b33c}
+.vt-rec.rojo{border-left-color:#d9654d}.vt-rec.azul{border-left-color:#4a86d6}
+.vt-rec.gris span{color:var(--faint)}
+.vt-cohortes td,.vt-cohortes th{text-align:center;white-space:nowrap}
+.vt-cohortes td:first-child,.vt-cohortes th:first-child{text-align:left}
+.vt-fechas{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--faint)}
+.vt-fechas label{display:grid;gap:4px}
+.vt-fechas .campo{height:40px}
+.vt-fechas-resumen{align-items:flex-end}
+.vt-fechas-resumen .filtros{margin-left:auto}
+.vt-corto,.vt-tabla .vt-corto,.vt-tarjetas-cel{display:none}
+@media (max-width:760px){
+  .vt-dos{grid-template-columns:1fr}
+  .vt-grafica{height:220px}
+  /* Fechas lado a lado y atajos en una sola fila que se desliza */
+  .vt-fechas-resumen{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .vt-fechas-resumen .campo{width:100%;min-width:0;padding:0 12px}
+  .vt-fechas-resumen .filtros{grid-column:1/-1;margin-left:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .vt-fechas-resumen .filtros::-webkit-scrollbar{display:none}
+  .vt-fechas-resumen .chip{flex:none}
+  /* País y forma de pago: nombre y número arriba, barra abajo */
+  .vt-barra-fila{grid-template-columns:1fr auto;grid-template-areas:"nombre num" "barra barra";row-gap:6px}
+  .vt-barra-nombre{grid-area:nombre}
+  .vt-barra-num{grid-area:num}
+  .vt-barra{grid-area:barra}
+  /* Cohortes: encabezados cortos y la cantidad bajo el mes */
+  .vt-largo,.vt-col-n{display:none}
+  .vt-corto,.vt-tabla .vt-corto{display:inline}
+  .vt-tabla .vt-cohortes td .vt-corto{display:block}
+  .vt-cohortes{table-layout:fixed}
+  .vt-cohortes th:first-child,.vt-cohortes td:first-child{width:30%}
+  .vt-cohortes th,.vt-cohortes td{padding:10px 4px;font-size:12.5px}
+  .vt-cohortes td .mini{font-size:11.5px}
+  /* Atrasados: tarjetas en vez de tabla */
+  .vt-tarjetas-cel{display:grid;gap:10px}
+  .vt-solo-compu{display:none}
+  .vt-tarjeta-atraso{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--surface2)}
+  .vt-tarjeta-atraso b{font-size:14px}
+  .vt-tarjeta-atraso .mini{display:block}
+  .vt-tarjeta-atraso .boton-chico{text-decoration:none}
+}
 /* Ojito para ver la contraseña (lo agrega panel.js a cada campo de contraseña) */
 .campo-clave{position:relative;display:flex;flex-direction:column}
 .ver-clave{position:absolute;top:0;bottom:0;right:6px;margin:auto 0;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:#8b8e96;cursor:pointer;transition:color .2s}
@@ -1597,6 +1667,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
    ============================================================ */
 .pestana[data-seccion="impacto"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17l6-6 4 4 8-8'/%3E%3Cpath d='M14 7h7v7'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17l6-6 4 4 8-8'/%3E%3Cpath d='M14 7h7v7'/%3E%3C/svg%3E")}
 .pestana[data-seccion="hitos"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z'/%3E%3Cpath d='M5 21v-7'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z'/%3E%3Cpath d='M5 21v-7'/%3E%3C/svg%3E")}
+.pestana[data-seccion="ventas"]::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M14.8 9a2 2 0 0 0-1.8-1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1'/%3E%3Cpath d='M12 7v10'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M14.8 9a2 2 0 0 0-1.8-1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1'/%3E%3Cpath d='M12 7v10'/%3E%3C/svg%3E")}
 /* La línea: un riel vertical; cada hito es un punto (check lima si
    está desbloqueado, candado gris si no) y una tarjeta al lado. */
 .hitos-caja{margin-top:18px}
@@ -2036,6 +2107,8 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 <div class="velo" id="velo-forma" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Gráficas de Ventas; versión fija -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script type="module" src="js/panel.js"></script>
 </body>
 </html>

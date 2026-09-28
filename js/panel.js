@@ -9,6 +9,7 @@ import * as feedback from "./pestana-feedback.js";
 import * as mejoras from "./pestana-mejoras.js";
 import * as impacto from "./pestana-impacto.js";
 import * as hitos from "./pestana-hitos.js";
+import * as ventas from "./pestana-ventas.js";
 
 /* Aquí crece el panel: añade una sección con su render y listo.
    Feedback, Mejoras e Impacto leen solo las tablas de la IA (ver ia.js). */
@@ -16,7 +17,7 @@ const SECCIONES = [
   { id:"feedback", nombre:"Feedback", render: feedback.render },
   { id:"mejoras",  nombre:"Mejoras",  render: mejoras.render },
   { id:"impacto",  nombre:"Impacto",  render: impacto.render },
-  { id:"ventas",   nombre:"Ventas" },
+  { id:"ventas",   nombre:"Ventas",   render: ventas.render },
   { id:"hitos",    nombre:"Hitos",    render: hitos.render }
 ];
 
