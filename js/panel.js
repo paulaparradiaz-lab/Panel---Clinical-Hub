@@ -15,7 +15,7 @@ import * as ventas from "./pestana-ventas.js";
 const SECCIONES = [
   { id:"feedback", nombre:"Feedback", render: feedback.render },
   { id:"mejoras",  nombre:"Mejoras",  render: mejoras.render },
-  { id:"ventas",   nombre:"Ventas",   render: ventas.render },
+  { id:"ventas",   nombre:"Dinero",   render: ventas.render },
   { id:"hitos",    nombre:"Hitos",    render: hitos.render }
 ];
 
