@@ -1,35 +1,54 @@
 /* ============================================================
-   CLINICAL HUB · PESTAÑA HITOS (metro)
+   CLINICAL HUB · PESTAÑA HITOS (metro por niveles)
    Cada medida es una línea de metro y cada meta una estación. Las
-   estaciones se desbloquean solas cuando el número llega a la meta, y
-   los dos corredores de Clinical Hub (recortados de la ilustración del
-   login) van sobre la línea justo donde está el número hoy.
+   estaciones son récord: se ganan la primera vez que el número llega a la
+   meta y no se pierden aunque después baje. Los dos corredores de Clinical
+   Hub (recortados de la ilustración del login) van sobre cada línea.
 
-   LÍNEAS   1 · Calificaciones de 5 ★: de v_ia_feedback (la fecha de cada
-                estación es el día en que llegó la calificación número N).
-            2 · Ventas y 3 · Facturación acumulada: todavía sin fuente de
-                datos; salen «sin conectar» hasta que exista (NEGOCIO).
+   NIVELES  Todas las líneas se pueden llenar, pero solo la meta del nivel
+            hace pasar al siguiente: Nivel 1 → 1.000 médicos activos. Las
+            metas del Nivel 2 se deciden al llegar (Paula).
+
+   LÍNEAS   Médicos activos (récord) · Médicos que han comprado ·
+            5 ★ · Facturación neta del producto (parte de Paula × 2).
+            Hotmart: vista v_hotmart_hitos (una fila por día, acumulada;
+            sql/hotmart_hitos.sql). 5 ★: v_ia_feedback.
    ============================================================ */
 import { sb, $, escapar, fecha, num } from "./nucleo.js";
 
-/* Ventas y facturación: sin tabla todavía. Cuando haya fuente, se leen
-   aquí y se devuelven como { actual, fechaDe(meta) } igual que las 5 ★. */
-const NEGOCIO = null;
-
-const usd = n => "US$ " + num(n);
+const usd = n => "US$ " + num(Math.round(n));
 const usdCorto = n => "US$ " + (n >= 1000 ? num(n / 1000) + " mil" : num(n));
 
+const NIVEL = { numero: 1, meta: 1000, linea: "activos", texto: "1.000 médicos activos" };
+
 const LINEAS = [
+  { clave:"activos", nombre:"Médicos activos", unidad:"médicos activos", color:"#2fa9a0",
+    metas:[100, 200, 300, 400, 500, 600, 700, 800, 900, 1000], valor:num, corto:num, record:true },
+  { clave:"medicos", nombre:"Médicos que han comprado", unidad:"médicos", color:"#5b7fd6",
+    metas:[50, 100, 250, 500, 1000, 1500], valor:num, corto:num },
   { clave:"cinco", nombre:"5 ★", unidad:"calificaciones de 5 ★", color:"#7ab447",
     metas:[10, 25, 50, 100, 250, 500], valor:num, corto:num },
-  { clave:"ventas", nombre:"Ventas", unidad:"ventas", color:"#2fa9a0",
-    metas:[10, 50, 100, 250, 500, 1000], valor:num, corto:num },
-  { clave:"facturacion", nombre:"Facturación", unidad:"facturados", color:"#e2a83c",
-    metas:[100, 500, 1000, 5000, 10000, 50000], valor:usd, corto:usdCorto }
+  { clave:"facturacion", nombre:"Facturación neta", unidad:"facturados", color:"#e2a83c",
+    metas:[500, 1000, 2500, 5000, 10000, 25000], valor:usd, corto:usdCorto }
 ];
 
-/* Posición de cada estación en la línea (en %) */
-const X = j => 6 + j * 17.6;
+/* Posición en la línea (en %): estaciones a la misma distancia, y el
+   número avanza entre la estación anterior y la siguiente. En la meta del
+   nivel las estaciones van cada 100, así la distancia es la real. */
+const INICIO = 4, ANCHO = 92;
+function posiciones(l){
+  const estacion = j => INICIO + j * ANCHO / (l.metas.length - 1);
+  return {
+    estacion,
+    valor: v => {
+      const hechas = l.metas.filter(n => v >= n).length;
+      if (hechas === 0) return INICIO * v / l.metas[0];
+      if (hechas === l.metas.length) return INICIO + ANCHO;
+      const ant = l.metas[hechas - 1], sig = l.metas[hechas];
+      return estacion(hechas - 1) + (estacion(hechas) - estacion(hechas - 1)) * (v - ant) / (sig - ant);
+    }
+  };
+}
 
 export async function render(){
   $("#vista").innerHTML = `
@@ -39,26 +58,53 @@ export async function render(){
     <p>Se desbloquean solos a medida que Clinical Hub crece.</p>
   </div>
 </div>
+<section class="caja metro-nivel" id="metro-nivel"></section>
 <section class="caja metro-caja">
   <div class="metro-cab"><h2 class="titulo-seccion">Las líneas de Clinical Hub</h2><span class="metro-mini" id="metro-total"></span></div>
   <div id="metro-lineas"><p class="vacio">Cargando…</p></div>
 </section>`;
 
-  const [cinco, imagen] = await Promise.all([
+  const [cinco, hotmart, imagen] = await Promise.all([
     sb.from("v_ia_feedback").select("fecha").eq("estrellas", 5).order("fecha", { ascending:true }),
+    sb.from("v_hotmart_hitos").select("dia,medicos,activos,activos_record,neta").order("dia", { ascending:true }),
     corredores().catch(() => null)
   ]);
-  if (cinco.error){
-    $("#metro-lineas").innerHTML = '<p class="vacio">No se pudieron leer los datos. ' + escapar(cinco.error.message) + '</p>';
+  const error = cinco.error || hotmart.error;
+  if (error){
+    $("#metro-lineas").innerHTML = '<p class="vacio">No se pudieron leer los datos. ' + escapar(error.message) + '</p>';
     return;
   }
   const fechas = (cinco.data || []).map(x => x.fecha);
+  const dias = hotmart.data || [];
+  const hoy = dias[dias.length - 1] || {};
+  const serie = campo => ({
+    actual: Number(hoy[campo] || 0),
+    fechaDe: n => { const d = dias.find(x => Number(x[campo]) >= n); return d ? d.dia : null; }
+  });
   const datos = {
+    activos: { ...serie("activos_record"), hoy: Number(hoy.activos || 0) },
+    medicos: serie("medicos"),
     cinco: { actual: fechas.length, fechaDe: n => fechas[n - 1] || null },
-    ventas: NEGOCIO && NEGOCIO.ventas,
-    facturacion: NEGOCIO && NEGOCIO.facturacion
+    facturacion: serie("neta")
   };
+  pintarNivel(datos[NIVEL.linea]);
   pintar(datos, imagen);
+}
+
+/* Arriba: en qué nivel van y cuánto falta para el siguiente */
+function pintarNivel(d){
+  const avance = Math.min(100, d.actual / NIVEL.meta * 100);
+  const logrado = d.actual >= NIVEL.meta;
+  $("#metro-nivel").innerHTML =
+    '<div class="metro-nivel-cab"><span class="metro-nivel-num">Nivel ' + NIVEL.numero + '</span>' +
+      '<span class="metro-mini">' + (logrado
+        ? '<b>¡Meta cumplida!</b> Toca definir las metas del Nivel ' + (NIVEL.numero + 1)
+        : 'Meta para el Nivel ' + (NIVEL.numero + 1) + ': <b>' + escapar(NIVEL.texto) + '</b>') + '</span></div>' +
+    '<div class="metro-nivel-barra" role="progressbar" aria-valuemin="0" aria-valuemax="' + NIVEL.meta +
+      '" aria-valuenow="' + d.actual + '" aria-label="Avance hacia el Nivel ' + (NIVEL.numero + 1) + '"><span style="width:' + avance + '%"></span></div>' +
+    '<div class="metro-nivel-pie"><span>Récord <b>' + num(d.actual) + '</b> de ' + num(NIVEL.meta) +
+      (d.hoy != null ? ' · hoy ' + num(d.hoy) : '') + '</span>' +
+      (logrado ? '' : '<span>faltan <b>' + num(NIVEL.meta - d.actual) + '</b></span>') + '</div>';
 }
 
 function pintar(datos, imagen){
@@ -66,39 +112,33 @@ function pintar(datos, imagen){
   $("#metro-lineas").innerHTML = LINEAS.map((l, i) => {
     const d = datos[l.clave];
     total += l.metas.length;
-    if (!d) return lineaSinDatos(l, i);
     const hechas = l.metas.filter(n => d.actual >= n).length;
     logradas += hechas;
     const sig = l.metas[hechas];
-    const ant = l.metas[hechas - 1] || 0;
-    const avance = sig ? (d.actual - ant) / (sig - ant) : 0;
-    const pos = hechas === 0 ? 2 : X(hechas - 1) + (sig ? (X(hechas) - X(hechas - 1)) * avance : 0);
+    const P = posiciones(l);
+    const pos = P.valor(d.actual);
+    const esMeta = l.clave === NIVEL.linea;
+    const valor = l.record
+      ? 'Récord <b>' + escapar(l.valor(d.actual)) + '</b>' + (d.hoy != null ? ' (hoy ' + escapar(l.valor(d.hoy)) + ')' : '')
+      : 'Van <b>' + escapar(l.valor(d.actual)) + '</b>';
     const estado = sig
-      ? 'Van <b>' + escapar(l.valor(d.actual)) + '</b> · próxima estación <b>' + escapar(l.corto(sig)) +
-        '</b> (faltan ' + escapar(l.valor(sig - d.actual)) + ')'
-      : 'Van <b>' + escapar(l.valor(d.actual)) + '</b> · ¡todas las estaciones!';
-    return '<div class="metro-linea" style="--c:' + l.color + '">' +
-      '<div class="metro-cab"><span class="metro-num">' + (i + 1) + '</span><b>Línea ' + escapar(l.nombre) + '</b>' +
+      ? valor + ' · próxima estación <b>' + escapar(l.corto(sig)) + '</b> (faltan ' + escapar(l.valor(sig - d.actual)) + ')'
+      : valor + ' · <b>línea completa ✓</b>' + (esMeta ? '' : ' · esperando ' + escapar(NIVEL.texto) + ' para el Nivel ' + (NIVEL.numero + 1));
+    return '<div class="metro-linea' + (sig ? '' : ' completa') + '" style="--c:' + l.color + '">' +
+      '<div class="metro-cab"><span class="metro-num">' + (i + 1) + '</span><b>' + escapar(l.nombre) + '</b>' +
+        (esMeta ? '<span class="metro-etiqueta-meta">meta del nivel</span>' : '') +
         '<span class="metro-mini">' + estado + '</span></div>' +
       '<div class="metro-via"><div class="metro-riel"></div><div class="metro-hecho" style="width:' + pos + '%"></div>' +
         l.metas.map((n, j) => {
           const cuando = j < hechas ? d.fechaDe(n) : null;
-          return '<div class="metro-est' + (j < hechas ? ' on' : j === hechas ? ' sig' : '') + '" style="left:' + X(j) + '%"' +
-            (cuando ? ' title="Llegó el ' + escapar(fecha(cuando)) + '"' : '') + '><span>' + escapar(l.corto(n)) + '</span></div>';
+          return '<div class="metro-est' + (j < hechas ? ' on' : j === hechas ? ' sig' : '') +
+            '" style="left:' + P.estacion(j) + '%"' +
+            (cuando ? ' title="Se llegó el ' + escapar(fecha(cuando)) + '"' : '') + '><span>' + escapar(l.corto(n)) + '</span></div>';
         }).join("") +
         (imagen ? '<img class="metro-corredores" src="' + imagen + '" alt="" style="left:' + Math.max(pos, 12) + '%">' : '') +
       '</div></div>';
   }).join("");
   $("#metro-total").textContent = logradas + " de " + total + " estaciones";
-}
-
-function lineaSinDatos(l, i){
-  return '<div class="metro-linea sin-datos" style="--c:' + l.color + '">' +
-    '<div class="metro-cab"><span class="metro-num">' + (i + 1) + '</span><b>Línea ' + escapar(l.nombre) + '</b>' +
-      '<span class="metro-mini">Sin conectar: todavía no llegan datos de ' + escapar(l.nombre.toLowerCase()) + '</span></div>' +
-    '<div class="metro-via"><div class="metro-riel"></div>' +
-      l.metas.map((n, j) => '<div class="metro-est" style="left:' + X(j) + '%"><span>' + escapar(l.corto(n)) + '</span></div>').join("") +
-    '</div></div>';
 }
 
 /* Los dos corredores sin el fondo verde: se recortan de ch-fondo.jpg una
