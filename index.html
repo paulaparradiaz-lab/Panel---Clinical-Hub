@@ -168,6 +168,11 @@ textarea.campo{min-height:90px;resize:vertical}
 .acceso-separador::before,.acceso-separador::after{content:"";flex:1;height:1px;background:#d9dbe0}
 .acceso-passkey{display:flex;align-items:center;justify-content:center;gap:10px}
 .acceso-passkey svg{flex:none}
+/* Ojito para ver la contraseña (lo agrega panel.js a cada campo de contraseña) */
+.campo-clave{position:relative;display:flex;flex-direction:column}
+.ver-clave{position:absolute;top:0;bottom:0;right:6px;margin:auto 0;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:#8b8e96;cursor:pointer;transition:color .2s}
+.ver-clave:hover{color:var(--ink)}
+.ver-clave svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* Ventajas de la passkey (sugerencia de la primera vez) */
 .acceso-ventajas{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:12px;font-size:14px;color:var(--muted)}
 .acceso-ventajas li{display:flex;gap:10px}

@@ -571,5 +571,32 @@ $("#abrir-passkeys").addEventListener("click", async () => {
   });
 });
 
+/* Ojito en cada campo de contraseña (acceso y Cambiar contraseña): muestra
+   u oculta lo escrito. El margen del campo pasa a la envoltura para que el
+   ojito quede centrado en el campo. */
+const OJO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>';
+const OJO_TACHADO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828"/><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87"/><path d="M3 3l18 18"/></svg>';
+document.querySelectorAll('input[type="password"]').forEach(campo => {
+  const caja = document.createElement("div");
+  caja.className = "campo-clave";
+  caja.style.marginBottom = getComputedStyle(campo).marginBottom;
+  campo.before(caja);
+  caja.appendChild(campo);
+  campo.style.marginBottom = "0";
+  campo.style.paddingRight = "52px";
+  const ojo = document.createElement("button");
+  ojo.type = "button";
+  ojo.className = "ver-clave";
+  ojo.setAttribute("aria-label", "Mostrar contraseña");
+  ojo.innerHTML = OJO;
+  ojo.addEventListener("click", () => {
+    const ver = campo.type === "password";
+    campo.type = ver ? "text" : "password";
+    ojo.innerHTML = ver ? OJO_TACHADO : OJO;
+    ojo.setAttribute("aria-label", ver ? "Ocultar contraseña" : "Mostrar contraseña");
+  });
+  caja.appendChild(ojo);
+});
+
 /* Arranque */
 decidir();
