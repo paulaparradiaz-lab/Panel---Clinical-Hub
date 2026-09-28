@@ -86,8 +86,11 @@ function pintar(filas){
       '<p class="vt-rent-aviso"><b>Es una estimación.</b> Los ingresos están en dólares y los egresos en pesos: ' +
         'cada gasto se pasa a dólares con la TRM de su día, pero el valor real varía según el momento en que se cambia la plata, ' +
         'el momento puntual del gasto y las tasas de los bancos.</p>' +
+      /* Los tres cuadros son del mismo mes: el título lo dice una vez */
+      '<p class="vt-rent-periodo"><b>' + escapar(MESES_LARGO[hoy.mes].charAt(0).toUpperCase() + MESES_LARGO[hoy.mes].slice(1) + " " + hoy.anio) + '</b>' +
+        (hoy.cerrado ? '' : ' · en curso') + '</p>' +
       '<div class="vt-rent-ecuacion">' +
-        '<div><span class="mini">Ingresos de ' + escapar(nombre(hoy)) + '</span><b>' + usd(hoy.ingresos) + '</b></div><span class="vt-rent-op">−</span>' +
+        '<div><span class="mini">Ingresos</span><b>' + usd(hoy.ingresos) + '</b></div><span class="vt-rent-op">−</span>' +
         '<div><span class="mini">Egresos</span><b>' + usd(hoy.gasto) + '</b></div><span class="vt-rent-op">=</span>' +
         '<div class="vt-rent-total"><span class="mini">Utilidad estimada</span><b>' + signo(hoy.utilidad) + '</b>' +
           '<span class="mini">Margen ' + porcentaje(hoy.margen, 0) + '</span></div></div>' +

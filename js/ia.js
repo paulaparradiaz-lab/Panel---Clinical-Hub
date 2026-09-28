@@ -173,6 +173,10 @@ export async function renombrarTema(slug, nuevo, tipo){
   catalogo.temas = [];   // el catálogo se vuelve a leer con el nombre nuevo
 }
 
+/* «Otras formas de decirlo»: se pueden separar con comas o con barras |.
+   Se guardan siempre con barras, que es como las lee la IA. */
+export const separarFormas = texto => String(texto || "").split(/[|,]/).map(t => t.trim()).filter(Boolean).join(" | ");
+
 /* Etiqueta nueva en el catálogo: un tema pedido (tipo "tema") o una
    crítica global (tipo "mejora"). El código (slug) sale del nombre, sin
    tildes ni espacios; si ya existe, se le pone un número al final. */

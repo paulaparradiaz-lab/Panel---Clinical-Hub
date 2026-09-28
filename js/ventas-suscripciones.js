@@ -9,7 +9,7 @@
    ============================================================ */
 import { escapar, fecha, num } from "./nucleo.js";
 import { nombrePais } from "./ia.js";
-import { meses, cohortes, mrrDiario, activa, PASOS_COHORTE } from "./ventas-calculos.js";
+import { cohortes, mrrDiario, activa, PASOS_COHORTE, finDelDia, inicioMes } from "./ventas-calculos.js";
 import { porcentaje, grafica, cabecera, armarAyudas } from "./ventas-comun.js";
 
 const DIA = 864e5;
@@ -18,18 +18,91 @@ const ZONA = -5 * 3600e3;
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
 const nombreMes = (anio, mes) => MESES[mes] + " " + anio;
 
+/* MRR: un punto por día del rango */
+function pintarMrr(m, a, b){
+  const puntos = mrrDiario(m.subs, a, b);
+  grafica("vs-mrr", {
+    type: "line",
+    data: {
+      labels: puntos.map(p => { const d = new Date(p.t + ZONA); return d.getUTCDate() + " " + MESES[d.getUTCMonth()]; }),
+      datasets: [{ label: "MRR (US$)", data: puntos.map(p => Math.round(p.mrr * 100) / 100),
+        borderColor: "#2a4927", backgroundColor: "rgba(193,225,135,.35)", fill: true, pointRadius: 0, tension: .25 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } }, y: { beginAtZero: true } } }
+  });
+}
+
+/* Nuevos (+) contra bajas (−): por día hasta 45 días, por semana hasta
+   6 meses y por mes si el rango es más largo */
+function pintarMovimientos(m, a, b, ahora){
+  const dias = (b - a) / DIA;
+  const modo = dias <= 45 ? "día" : dias <= 186 ? "semana" : "mes";
+  const grupos = [];
+  const d0 = new Date(a + ZONA);
+  let ini = modo === "mes" ? inicioMes(d0.getUTCFullYear(), d0.getUTCMonth())
+    : modo === "semana" ? finDelDia(a) - DIA + 1 - ((d0.getUTCDay() + 6) % 7) * DIA   // lunes de esa semana
+    : finDelDia(a) - DIA + 1;
+  while (ini <= b){
+    const d = new Date(ini + ZONA);
+    const sig = modo === "mes" ? inicioMes(d.getUTCMonth() === 11 ? d.getUTCFullYear() + 1 : d.getUTCFullYear(), (d.getUTCMonth() + 1) % 12)
+      : ini + (modo === "semana" ? 7 : 1) * DIA;
+    const desde = Math.max(ini, a), hasta = Math.min(sig - 1, b);
+    grupos.push({
+      etiqueta: modo === "mes" ? nombreMes(d.getUTCFullYear(), d.getUTCMonth()) : d.getUTCDate() + " " + MESES[d.getUTCMonth()],
+      abierto: sig - 1 > ahora,
+      nuevos: m.subs.filter(x => x.alta >= desde && x.alta <= hasta).length,
+      bajas: m.subs.filter(x => x.baja != null && x.baja >= desde && x.baja <= hasta).length
+    });
+    ini = sig;
+  }
+  document.getElementById("vs-mov-sub").textContent = "Por " + modo + (grupos.some(g => g.abierto) ? " · * todavía no cierra" : "");
+  grafica("vs-movimientos", {
+    type: "bar",
+    data: {
+      labels: grupos.map(g => g.etiqueta + (g.abierto ? " *" : "")),
+      datasets: [
+        { label: "Nuevos", data: grupos.map(g => g.nuevos), backgroundColor: "#7ab447", borderRadius: 6 },
+        { label: "Bajas", data: grupos.map(g => -g.bajas), backgroundColor: "#d9654d", borderRadius: 6 }
+      ]
+    },
+    options: { scales: { x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true } }, y: { stacked: true, ticks: { precision: 0 } } } }
+  });
+}
+
+/* Selector de fechas de las dos gráficas (como el de Ventas por día):
+   calendario desde / hasta y atajos. Cada gráfica guarda su rango. */
+const ATAJOS = [["30", "30 días"], ["3m", "3 meses"], ["6m", "6 meses"], ["12m", "12 meses"], ["todo", "Todo"]];
+const elegido = { mrr: { atajo: "todo", rango: null }, mov: { atajo: "todo", rango: null } };   // de entrada, desde la primera venta
+const aDia = t => new Date(t + ZONA).toISOString().slice(0, 10);
+const deDia = (s, fin) => Date.parse(s + "T00:00:00Z") - ZONA + (fin ? DIA - 1 : 0);
+function rangoDe(atajo, ahora, primero){
+  const hoyIni = finDelDia(ahora) - DIA + 1;
+  if (atajo === "30") return [hoyIni - 29 * DIA, ahora];
+  if (atajo === "todo") return [Math.min(primero, hoyIni), ahora];
+  const d = new Date(ahora + ZONA), n = Number(atajo.replace("m", ""));
+  return [Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - n, d.getUTCDate()) - ZONA + DIA, ahora];
+}
+function selectorFechas(clave){
+  return '<div class="vt-fechas vt-fechas-resumen vt-fechas-chica" data-selector="' + clave + '">' +
+    '<label>Desde <input class="campo" type="date" data-desde></label><label>Hasta <input class="campo" type="date" data-hasta></label>' +
+    '<div class="filtros">' + ATAJOS.map(([k, t]) => '<button class="chip" data-atajo="' + k + '">' + t + '</button>').join("") + '</div></div>';
+}
+
 export async function render(caja, datos){
   caja.innerHTML = `
 <div class="vt-dos">
-  <section class="caja">${cabecera("ayuda-mrr", "MRR de los últimos 12 meses", "Ingreso mensual recurrente, en US$ netos", [
+  <section class="caja">${cabecera("ayuda-mrr", "MRR", "Ingreso mensual recurrente, en US$ netos", [
     "El <b>MRR</b> es cuánto entraría cada mes si todos los médicos al día siguieran pagando. Se suma el <b>último pago</b> de cada médico con su suscripción al día.",
     "No cuentan los que tienen un pago atrasado ni los que cancelaron. Va en dólares netos: lo que le queda a Clinical Hub después de Hotmart.",
-    "Hay un punto por día; si la línea sube, entran más médicos de los que se van."])}
+    "Hay un punto por día; si la línea sube, entran más médicos de los que se van. Elige las fechas o usa los atajos."])}
+    ${selectorFechas("mrr")}
     <div class="vt-grafica"><canvas id="vs-mrr" aria-label="MRR diario"></canvas></div></section>
-  <section class="caja">${cabecera("ayuda-movimientos", "Nuevos contra bajas", "Por mes · * el mes en curso todavía no cierra", [
-    "<b>Verde (arriba):</b> médicos que pagaron por primera vez ese mes.",
-    "<b>Rojo (abajo):</b> bajas del mes: canceló, Hotmart lo dio de baja por pago fallido, o se le reembolsó. Un pago atrasado todavía no es baja.",
+  <section class="caja">${cabecera("ayuda-movimientos", "Nuevos contra bajas", { id: "vs-mov-sub", texto: "Por mes" }, [
+    "<b>Verde (arriba):</b> médicos que pagaron por primera vez en ese día, semana o mes.",
+    "<b>Rojo (abajo):</b> bajas: canceló, Hotmart lo dio de baja por pago fallido, o se le reembolsó. Un pago atrasado todavía no es baja.",
+    "Se agrupa según el rango: <b>por día</b> hasta 45 días, <b>por semana</b> hasta 6 meses y <b>por mes</b> si es más largo. * el periodo en curso todavía no cierra.",
     "Si el rojo crece más que el verde, se están yendo más médicos de los que llegan."])}
+    ${selectorFechas("mov")}
     <div class="vt-grafica"><canvas id="vs-movimientos" aria-label="Nuevos y bajas por mes"></canvas></div></section>
 </div>
 <section class="caja" style="margin-top:14px">
@@ -51,30 +124,28 @@ export async function render(caja, datos){
   const ahora = Date.now();
   const m = datos.modelo;
 
-  /* MRR diario de 12 meses */
-  const puntos = mrrDiario(m.subs, ahora - 364 * DIA, ahora);
-  grafica("vs-mrr", {
-    type: "line",
-    data: {
-      labels: puntos.map(p => { const d = new Date(p.t + ZONA); return d.getUTCDate() + " " + MESES[d.getUTCMonth()]; }),
-      datasets: [{ label: "MRR (US$)", data: puntos.map(p => Math.round(p.mrr * 100) / 100),
-        borderColor: "#2a4927", backgroundColor: "rgba(193,225,135,.35)", fill: true, pointRadius: 0, tension: .25 }]
-    },
-    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 12 } }, y: { beginAtZero: true } } }
-  });
-
-  /* Nuevos (+) contra bajas (−), últimos 12 meses */
-  const ult12 = meses(m, ahora).slice(-12);
-  grafica("vs-movimientos", {
-    type: "bar",
-    data: {
-      labels: ult12.map(x => nombreMes(x.anio, x.mes) + (x.cerrado ? "" : " *")),
-      datasets: [
-        { label: "Nuevos", data: ult12.map(x => x.nuevos), backgroundColor: "#7ab447", borderRadius: 6 },
-        { label: "Bajas", data: ult12.map(x => -x.bajas), backgroundColor: "#d9654d", borderRadius: 6 }
-      ]
-    },
-    options: { scales: { x: { stacked: true }, y: { stacked: true, ticks: { precision: 0 } } } }
+  /* Las dos gráficas con su selector de fechas */
+  const primero = m.subs.length ? m.subs.reduce((x, sub) => Math.min(x, sub.alta), Infinity) : ahora;
+  const dibujar = { mrr: pintarMrr, mov: pintarMovimientos };
+  caja.querySelectorAll("[data-selector]").forEach(sel => {
+    const clave = sel.dataset.selector, e = elegido[clave];
+    const aplicar = () => {
+      sel.querySelector("[data-desde]").value = aDia(e.rango[0]);
+      sel.querySelector("[data-hasta]").value = aDia(e.rango[1]);
+      sel.querySelectorAll("[data-atajo]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.atajo === e.atajo)));
+      dibujar[clave](m, e.rango[0], e.rango[1], ahora);
+    };
+    if (!e.rango || e.atajo) e.rango = rangoDe(e.atajo || "12m", ahora, primero);
+    sel.querySelector(".filtros").addEventListener("click", ev => {
+      const b = ev.target.closest("[data-atajo]"); if (!b) return;
+      e.atajo = b.dataset.atajo; e.rango = rangoDe(e.atajo, Date.now(), primero); aplicar();
+    });
+    sel.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+      const a = sel.querySelector("[data-desde]").value, b = sel.querySelector("[data-hasta]").value;
+      if (!a || !b || a > b) return;
+      e.atajo = null; e.rango = [deDia(a), Math.min(deDia(b, true), Date.now())]; aplicar();
+    }));
+    aplicar();
   });
 
   /* Cohortes como mapa de calor */

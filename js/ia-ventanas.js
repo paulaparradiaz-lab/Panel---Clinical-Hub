@@ -11,7 +11,7 @@
                Devolver al Inbox.
    ============================================================ */
 import { $, escapar, fecha, num, abrirVentana, avisar, cerrarVentana, traducirError } from "./nucleo.js";
-import { catalogo, clasificar, devolverAlInbox, nombrePais, nombreOrigen, TIPOS, tieneTexto } from "./ia.js";
+import { catalogo, clasificar, devolverAlInbox, nombrePais, nombreOrigen, TIPOS, tieneTexto, cargarCatalogo, crearEtiqueta, separarFormas } from "./ia.js";
 
 /* ============================================================
    0. La tarjeta del comentario (estilo chat)
@@ -94,10 +94,12 @@ export function ventanaClasificar(lista, alTerminar, opciones){
         ' temas: sepsis, dengue, falla cardiaca…">' +
       '<div class="bandeja-opciones" id="c-temas" style="max-height:300px"></div>' +
       '<div id="c-temas-nota"></div>' +
+      formaNueva("tema", "+ Nuevo tema", "Por ejemplo: Cetoacidosis diabética", "CAD, cetoacidosis, crisis hiperglucémica") +
     '</div>' +
     '<div id="c-bloque-soluciones">' +
       '<span class="etiqueta">¿Qué tipo de crítica?</span>' +
       '<div class="bandeja-opciones" id="c-soluciones"></div>' +
+      formaNueva("mejora", "+ Nueva crítica global", "Por ejemplo: Velocidad de carga", "lento, se demora, tarda en cargar") +
     '</div>' +
     (una ? '' : '<p class="mini">Se aplica a las ' + lista.length +
       ' elegidas y reemplaza lo que tuvieran.</p>');
@@ -120,6 +122,40 @@ export function ventanaClasificar(lista, alTerminar, opciones){
       return false;
     }
   });
+
+  /* Crear una etiqueta sin salir de Clasificar: queda en el catálogo (la
+     IA también la usa) y marcada de una vez en lo que se está clasificando */
+  function formaNueva(tipo, boton, ejemplo, ejemploFormas){
+    return '<button type="button" class="c-nueva-abrir" data-nueva="' + tipo + '">' + boton + '</button>' +
+      '<div class="c-nueva" id="c-nueva-' + tipo + '" hidden>' +
+        '<span class="etiqueta">Nombre</span><input class="campo" id="c-nueva-nombre-' + tipo + '" placeholder="' + ejemplo + '">' +
+        '<span class="etiqueta">Otras formas de decirlo · opcional</span><input class="campo" id="c-nueva-formas-' + tipo + '" placeholder="' + ejemploFormas + '">' +
+        '<p class="mini">Sepáralas con comas o con |. Ayudan a que la IA la reconozca.</p>' +
+        '<div class="c-nueva-botones"><button type="button" class="boton-chico secundario" data-cancelar-nueva="' + tipo + '">Cancelar</button>' +
+        '<button type="button" class="boton-chico" data-crear="' + tipo + '">Crear y marcar</button></div>' +
+      '</div>';
+  }
+  async function crearDesdeAqui(tipo, boton){
+    const nombre = ($("#c-nueva-nombre-" + tipo).value || "").trim();
+    if (!nombre){ avisar("Escribe el nombre de la etiqueta nueva.", "mal", "#aviso-forma"); return; }
+    const repetida = catalogo.temas.concat(catalogo.mejoras).find(c => c.nombre.trim().toLowerCase() === nombre.toLowerCase());
+    if (repetida){ avisar("Ya existe «" + repetida.nombre + "»: búscala en la lista.", "mal", "#aviso-forma"); return; }
+    boton.disabled = true; boton.textContent = "Creando…";
+    try {
+      const slug = await crearEtiqueta(tipo, nombre, separarFormas($("#c-nueva-formas-" + tipo).value));
+      await cargarCatalogo();
+      (tipo === "tema" ? marcadas.temas : marcadas.mejoras).add(slug);
+      tipos.add(tipo === "tema" ? "tema_pedido" : "mejora_tecnica");
+      $("#c-nueva-" + tipo).hidden = true;
+      document.querySelector('[data-nueva="' + tipo + '"]').hidden = false;
+      if (tipo === "tema"){ buscaTema = ""; $("#c-busca-tema").value = ""; pintarTemas(); } else pintarSoluciones();
+      pintarTipos();
+      avisar((tipo === "tema" ? "Tema «" : "Crítica global «") + nombre + "» creado y marcado.", "ok", "#aviso-forma");
+    } catch (err){
+      avisar(traducirError(err && err.message), "mal", "#aviso-forma");
+      boton.disabled = false; boton.textContent = "Crear y marcar";
+    }
+  }
 
   /* Una fila de la bandeja: nombre a la izquierda, circulito a la
      derecha que se pone lima con ✓ cuando está elegida. */
@@ -183,7 +219,8 @@ export function ventanaClasificar(lista, alTerminar, opciones){
     $("#c-temas-nota").innerHTML =
       (resto.length > muestra.length ? '<p class="mini">Se ven ' + muestra.length + ' de ' + resto.length +
         '. Escribe para encontrar el que buscas.</p>' : '') +
-      (b && !resto.length ? '<p class="mini">Ningún tema del catálogo coincide con “' + escapar(buscaTema.trim()) + '”.</p>' : '');
+      (b && !resto.length ? '<p class="mini">Ningún tema del catálogo coincide con “' + escapar(buscaTema.trim()) + '”. ' +
+        '<button type="button" class="c-nueva-enlace" data-nueva="tema">Crear «' + escapar(buscaTema.trim()) + '» como tema nuevo</button></p>' : '');
   }
 
   function pintarSoluciones(){
@@ -213,6 +250,19 @@ export function ventanaClasificar(lista, alTerminar, opciones){
      vive siempre y ahí se irían sumando los oyentes de ventanas viejas. */
   const ventana = $("#velo-forma .ventana");
   ventana.addEventListener("click", e => {
+    const nueva = e.target.closest("button[data-nueva], button[data-cancelar-nueva], button[data-crear]");
+    if (nueva){
+      if (nueva.dataset.crear){ crearDesdeAqui(nueva.dataset.crear, nueva); return; }
+      const t = nueva.dataset.nueva || nueva.dataset.cancelarNueva, abrir = !!nueva.dataset.nueva;
+      $("#c-nueva-" + t).hidden = !abrir;
+      document.querySelector('.c-nueva-abrir[data-nueva="' + t + '"]').hidden = abrir;
+      if (abrir){
+        const campo = $("#c-nueva-nombre-" + t);
+        if (t === "tema" && buscaTema.trim() && !campo.value) campo.value = buscaTema.trim();
+        campo.focus();
+      }
+      return;
+    }
     const b = e.target.closest("button[data-tipo], button[data-tema], button[data-mejora]");
     if (!b) return;
     if (b.dataset.tipo){

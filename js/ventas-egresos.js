@@ -9,7 +9,7 @@
    Cada archivo se guarda como «AAAA-MM/código/nombre-original.ext», así
    al descargarlo conserva su nombre y su extensión.
 
-   · Registrar: fecha, monto en pesos, TRM, categoría (por ahora Anuncios), concepto,
+   · Registrar: fecha, monto en pesos, TRM, categoría (Anuncios u otra que se crea ahí mismo), concepto,
      quién lo pagó (Paula, Hámilton o mitad y mitad) y los soportes (mínimo uno).
    · Editar y borrar (con confirmación); queda quién lo cambió.
    · Por mes: total y cuánto puso cada uno; avisa los meses sin gastos.
@@ -32,7 +32,12 @@ async function trmDelDia(dia){
 }
 
 const ESPACIO = "soportes-egresos";
-const CATEGORIAS = ["Anuncios"];
+/* Categorías: Anuncios siempre, más las que ya tengan los gastos registrados.
+   Una nueva se crea desde el formulario («+ Nueva categoría…») */
+const CATEGORIA_BASE = "Anuncios";
+const NUEVA = "__nueva";
+const categorias = () => [CATEGORIA_BASE, ...[...new Set(egresos.map(e => e.categoria).filter(c => c && c !== CATEGORIA_BASE))]
+  .sort((a, b) => a.localeCompare(b, "es"))];
 const QUIENES = ["Paula", "Hámilton"];            // columnas de «cuánto puso cada uno»
 const MITAD = "Mitad y mitad";                    // se reparte 50/50 en los totales
 const OPCIONES_PAGO = [...QUIENES, MITAD];
@@ -67,7 +72,7 @@ export async function render(c, datos){
   caja.innerHTML = `
 <section class="caja" style="margin-top:18px">
   ${cabecera("ayuda-egresos", "Egresos", "Gastos en pesos, con su soporte", [
-    "Los gastos que ustedes anotan a mano, <b>en pesos</b>. Por ahora la categoría es <b>Anuncios</b>.",
+    "Los gastos que ustedes anotan a mano, <b>en pesos</b>. Cada uno lleva su <b>categoría</b> (Anuncios, Contador, Herramientas…); si no existe, se crea al registrarlo con «+ Nueva categoría».",
     "Cada gasto guarda la <b>TRM de su día</b> (la tasa oficial, que el panel trae sola y se puede corregir). Con ella se calcula su equivalente en dólares para la <b>rentabilidad estimada</b>.",
     "Cada gasto necesita al menos un <b>soporte</b> (foto de la factura, pantallazo o PDF); puede llevar varios. Se guardan en un espacio privado: solo se abren desde el panel.",
     "<b>Pagó</b> es quién puso la plata: Paula, Hámilton o <b>mitad y mitad</b> (en los totales se suma la mitad a cada uno). También queda anotado quién lo registró y quién lo cambió por última vez.",
@@ -303,7 +308,10 @@ function ventana(g){
       '<input class="campo" type="number" inputmode="decimal" min="1" step="0.01" id="eg-trm" value="' + (g ? escapar(g.trm) : "") + '">' +
       '<span class="mini" id="eg-trm-nota">' + (g ? "La que se guardó con el gasto. Cámbiala solo si hace falta." : "Buscando la TRM oficial…") + '</span>' +
       '<span class="etiqueta">Categoría</span>' +
-      '<select class="campo" id="eg-categoria">' + CATEGORIAS.map(c => '<option' + (g && g.categoria === c ? " selected" : "") + '>' + c + '</option>').join("") + '</select>' +
+      '<div id="eg-cat-ui"></div>' +
+      '<select class="campo" id="eg-categoria" hidden>' + categorias().map(c => '<option' + (g && g.categoria === c ? " selected" : "") + '>' + escapar(c) + '</option>').join("") +
+        '<option value="' + NUEVA + '">+ Nueva categoría…</option></select>' +
+      '<input class="campo" id="eg-categoria-nueva" placeholder="Nombre de la categoría: Contador, Herramientas, Diseño…" hidden>' +
       '<span class="etiqueta">Concepto</span>' +
       '<input class="campo" id="eg-concepto" placeholder="Ej.: Meta, campaña de septiembre" value="' + (g ? escapar(g.concepto) : "") + '">' +
       '<span class="etiqueta">Pagó</span>' +
@@ -323,6 +331,13 @@ function ventana(g){
       if (!(trm > 0)){ avisar("Falta la TRM del día (pesos por dólar).", "mal", "#aviso-forma"); return false; }
       if (!concepto){ avisar("Escribe el concepto.", "mal", "#aviso-forma"); return false; }
       if (!quedan.length && !nuevos.length){ avisar("Adjunta al menos un soporte (foto o PDF).", "mal", "#aviso-forma"); return false; }
+      /* Categoría nueva: primera letra en mayúscula; si ya existe (con otras mayúsculas), se usa la que hay */
+      let categoria = leer("eg-categoria");
+      if (categoria === NUEVA){
+        const escrita = (leer("eg-categoria-nueva") || "").trim().replace(/\s+/g, " ");
+        if (!escrita){ avisar("Escribe el nombre de la categoría nueva.", "mal", "#aviso-forma"); return false; }
+        categoria = categorias().find(c => c.toLowerCase() === escrita.toLowerCase()) || escrita.charAt(0).toUpperCase() + escrita.slice(1);
+      }
       const pesado = nuevos.find(a => a.size > MAX_BYTES);
       if (pesado){ avisar("«" + pesado.name + "» pesa más de 10 MB.", "mal", "#aviso-forma"); return false; }
 
@@ -338,7 +353,7 @@ function ventana(g){
         }
         subidos.push(ruta);
       }
-      const fila = { fecha: fechaG, monto_cop: Math.round(monto), trm: Math.round(trm * 100) / 100, categoria: leer("eg-categoria"),
+      const fila = { fecha: fechaG, monto_cop: Math.round(monto), trm: Math.round(trm * 100) / 100, categoria,
                      concepto, pagado_por: leer("eg-quien"), soportes: [...quedan, ...subidos] };
       const { error } = g
         ? await sb.from("egresos").update(fila).eq("id", g.id)
@@ -378,6 +393,38 @@ function ventana(g){
     }
   };
   document.getElementById("eg-fecha").addEventListener("change", traerTrm);
+  /* Categoría con un menú propio (el estilo de los filtros de Soluciones) en vez de la
+     lista del sistema, que no se puede decorar. El <select> oculto guarda el valor. */
+  const selCat = document.getElementById("eg-categoria"), uiCat = document.getElementById("eg-cat-ui");
+  const FLECHA_CAT = '<svg class="desplegable-flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  const elegirCat = v => { selCat.value = v; selCat.dispatchEvent(new Event("change")); pintarCat(); };
+  const nombreCat = v => v === NUEVA ? "+ Nueva categoría…" : v;
+  function pintarCat(){
+    const valores = [...selCat.options].map(o => o.value);
+    uiCat.innerHTML = '<div class="desplegable eg-cat-desp"><button type="button" class="campo eg-cat-boton" aria-haspopup="true" aria-expanded="false">' +
+        '<span>' + escapar(nombreCat(selCat.value)) + '</span>' + FLECHA_CAT + '</button>' +
+        '<div class="desplegable-menu eg-cat-menu" role="menu">' + valores.map(v => (v === NUEVA ? '<div class="desplegable-raya"></div>' : '') +
+          '<button type="button" role="menuitemradio" class="desplegable-op" data-cat="' + escapar(v) + '" aria-checked="' + (v === selCat.value) + '">' +
+          '<span class="desplegable-ok" aria-hidden="true">' + (v === selCat.value ? "✓" : "") + '</span>' + escapar(nombreCat(v)) + '</button>').join("") + '</div></div>';
+  }
+  uiCat.addEventListener("click", e => {
+    const op = e.target.closest("[data-cat]");
+    if (op){ elegirCat(op.dataset.cat); return; }
+    const boton = e.target.closest(".eg-cat-boton");
+    if (boton){ const caja = boton.parentElement; const abrir = !caja.classList.contains("abierto"); caja.classList.toggle("abierto", abrir); boton.setAttribute("aria-expanded", String(abrir)); }
+  });
+  /* Tocar fuera del menú lo cierra */
+  document.querySelector("#velo-forma .ventana").addEventListener("click", e => {
+    const caja = uiCat.querySelector(".eg-cat-desp.abierto");
+    if (caja && !caja.contains(e.target)){ caja.classList.remove("abierto"); caja.querySelector(".eg-cat-boton").setAttribute("aria-expanded", "false"); }
+  });
+  pintarCat();
+  /* «+ Nueva categoría…» muestra el campo para escribirla */
+  document.getElementById("eg-categoria").addEventListener("change", e => {
+    const campo = document.getElementById("eg-categoria-nueva");
+    campo.hidden = e.target.value !== NUEVA;
+    if (!campo.hidden) campo.focus();
+  });
   if (!g) traerTrm();
   /* Lista de soportes: los que ya tenía y los nuevos, cada uno con ✕ para quitarlo */
   const lista = document.getElementById("eg-archivos");

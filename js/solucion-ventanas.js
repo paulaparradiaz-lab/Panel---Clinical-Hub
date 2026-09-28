@@ -15,7 +15,7 @@
    ============================================================ */
 import { escapar, fecha, abrirVentana, avisar, cerrarVentana, leer } from "./nucleo.js";
 import { catalogo, cargarCatalogo, nombreDe, RUIDO, ESTADOS, indicadoresDe, nombreEstado, crearSolucionCompleta, enlazarSolucion,
-  desvincularSolucion, editarSolucion, cargarUsuarios, asignarPersona, crearEtiqueta } from "./ia.js";
+  desvincularSolucion, editarSolucion, cargarUsuarios, asignarPersona, crearEtiqueta, separarFormas } from "./ia.js";
 import { plural } from "./ia-ventanas.js";
 
 /* Crear solución desde un ranking: nueva, o enlazar una que ya existe.
@@ -220,8 +220,8 @@ export function ventanaNuevaEtiqueta({ tipo, alCambiar }){
       '<span class="etiqueta">Nombre</span>' +
       '<input class="campo" id="e-nombre" placeholder="' + (esTema ? "Por ejemplo: Cetoacidosis diabética" : "Por ejemplo: Velocidad de carga") + '">' +
       '<span class="etiqueta">Otras formas de decirlo</span>' +
-      '<input class="campo" id="e-sinonimos" placeholder="' + (esTema ? "CAD | cetoacidosis | crisis hiperglucémica" : "lento | se demora | tarda en cargar") + '">' +
-      '<p class="mini explica">Sepáralas con una barra |. Sirven para que la IA la reconozca aunque el médico lo diga ' +
+      '<input class="campo" id="e-sinonimos" placeholder="' + (esTema ? "CAD, cetoacidosis, crisis hiperglucémica" : "lento, se demora, tarda en cargar") + '">' +
+      '<p class="mini explica">Sepáralas con comas o con una barra |. Sirven para que la IA la reconozca aunque el médico lo diga ' +
       'de otra manera.</p>' +
       '<p class="mini explica">La etiqueta aparece en el ranking cuando tenga su primer comentario. Ya puedes usarla ' +
       'al clasificar en el Inbox y para enlazar soluciones.</p>',
@@ -232,7 +232,7 @@ export function ventanaNuevaEtiqueta({ tipo, alCambiar }){
       const repetida = catalogo.temas.concat(catalogo.mejoras)
         .find(c => c.nombre.trim().toLowerCase() === nombre.toLowerCase());
       if (repetida){ avisar("Ya existe una etiqueta con ese nombre.", "mal", "#aviso-forma"); return false; }
-      const sinonimos = (leer("e-sinonimos") || "").split("|").map(t => t.trim()).filter(Boolean).join(" | ");
+      const sinonimos = separarFormas(leer("e-sinonimos"));
       await crearEtiqueta(tipo === "tema" ? "tema" : "mejora", nombre, sinonimos);
       cerrarVentana();
       await alCambiar((esTema ? "Tema “" + nombre + "” creado." : "Crítica global “" + nombre + "” creada."));

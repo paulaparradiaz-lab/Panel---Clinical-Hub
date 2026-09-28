@@ -237,6 +237,12 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-fechas .campo{height:40px}
 .vt-fechas-resumen{align-items:flex-end}
 .vt-fechas-resumen .filtros{margin-left:auto}
+/* En las gráficas de media columna (MRR, nuevos contra bajas): el selector en dos filas */
+.vt-fechas-chica{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vt-fechas-chica .campo{width:100%;min-width:0;padding:0 12px}
+.vt-fechas-chica .filtros{grid-column:1/-1;margin-left:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.vt-fechas-chica .filtros::-webkit-scrollbar{display:none}
+.vt-fechas-chica .chip{flex:none}
 .vt-corto,.vt-tabla .vt-corto,.vt-tarjetas-cel{display:none}
 @media (max-width:760px){
   .vt-dos{grid-template-columns:1fr}
@@ -288,6 +294,23 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-ico svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .vt-ico-borrar{color:#b3432e}
 .vt-ico[data-confirmar="1"]{width:auto;padding:0 12px;background:#fbe3dd;color:#b3432e;font-size:13px;font-weight:700}
+/* Clasificar: crear una etiqueta sin salir de la ventana */
+.c-nueva-abrir,.c-nueva-enlace{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--ink,#18181b);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.c-nueva-abrir{display:block;margin:10px 0 2px;font-size:14px}
+.c-nueva-enlace{font-size:inherit}
+.c-nueva{margin-top:10px;padding:12px 14px;border-radius:14px;background:var(--surface2)}
+.c-nueva .etiqueta{margin-top:0}
+.c-nueva .campo{margin-bottom:8px}
+.c-nueva-botones{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+/* Rentabilidad: el mes de los tres cuadros */
+.vt-rent-periodo{margin:0 0 10px;font-size:15px;color:var(--muted,#6b6b76)}
+.vt-rent-periodo b{color:var(--ink,#18181b)}
+/* Egresos: categoría con menú propio (como los filtros de Soluciones) */
+.eg-cat-desp{display:block}
+.eg-cat-boton{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;cursor:pointer}
+.eg-cat-desp .desplegable-menu{right:0;min-width:0;max-height:260px;overflow:auto}
+/* Egresos: campo para escribir una categoría nueva */
+#eg-categoria-nueva{margin-top:8px}
 /* Egresos en PC: tabla con pastillas e íconos */
 .vt-pc td{vertical-align:middle}
 .vt-pc .vt-der{text-align:right}
