@@ -1546,7 +1546,7 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(3),:is(#ranking,#ranking-criticas) .tabla td:nth-child(3){width:72px;text-align:right}
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(4),:is(#ranking,#ranking-criticas) .tabla td:nth-child(4){width:26%}
 :is(#ranking,#ranking-criticas) .tabla th:nth-child(5),:is(#ranking,#ranking-criticas) .tabla td:nth-child(5){width:128px}
-:is(#ranking,#ranking-criticas) .tabla th:nth-child(6),:is(#ranking,#ranking-criticas) .tabla td:nth-child(6){width:146px}
+:is(#ranking,#ranking-criticas) .tabla th:nth-child(6),:is(#ranking,#ranking-criticas) .tabla td:nth-child(6){width:168px}
 :is(#ranking,#ranking-criticas) .tabla td{vertical-align:middle}
 :is(#ranking,#ranking-criticas) .tabla td .mini{margin:0}
 :is(#ranking,#ranking-criticas) .tema-nombre{display:flex;align-items:center;gap:6px;font-weight:600;line-height:1.25}
@@ -1700,6 +1700,9 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
   .ventana-botones{flex-direction:column-reverse}
   /* Uno debajo del otro: sin flex:1 (en columna los aplastaba) */
   .ventana-botones .boton{flex:none}
+  /* Clasificar (botones cortos en computador): en celular, igual que las demás ventanas */
+  .ventana.botones-cortos .ventana-botones{flex-direction:column-reverse;justify-content:normal}
+  .ventana.botones-cortos .ventana-botones .boton{font-size:inherit}
   /* Clasificar: «Tema pedido | Crítica global» cabe en el ancho del celular */
   .subpestanas.que-es .subpestana{padding-left:14px;padding-right:14px}
   .dato:hover,.accion:hover,.comentario:hover{transform:none}
@@ -1938,8 +1941,8 @@ select.filtrando{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
    conserva su alto), Cancelar y el botón principal de 48 px, y los
    botones de las listas de 32 px con letra 13 semi-negrita. */
 #velo-forma .campo:not(textarea){height:44px;min-height:0;padding-top:0;padding-bottom:0;box-sizing:border-box}
-#velo-forma .ventana-botones .boton{height:48px;min-height:0;padding-top:0;padding-bottom:0;box-sizing:border-box;border:1px solid transparent}
-#velo-forma .ventana-botones .boton.secundario{border-color:var(--border2)}
+#velo-forma .ventana-botones .boton,#velo-clave .ventana-botones .boton{height:48px;min-height:0;padding-top:0;padding-bottom:0;box-sizing:border-box;border:1px solid transparent}
+#velo-forma .ventana-botones .boton.secundario,#velo-clave .ventana-botones .boton.secundario{border-color:var(--border2)}
 #velo-forma .forma .boton-chico{
   height:32px;padding-top:0;padding-bottom:0;box-sizing:border-box;
   display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;line-height:1;
