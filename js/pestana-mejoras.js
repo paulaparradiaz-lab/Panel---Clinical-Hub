@@ -42,19 +42,12 @@ const FLECHA = '<svg class="desplegable-flecha" viewBox="0 0 24 24" aria-hidden=
 /* ============================================================
    1. Armazón
    ============================================================ */
-export async function render(){
-  $("#vista").innerHTML = `
-<div class="cabecera cabecera-compacta">
-  <div>
-    <div class="mast"><span class="etiqueta">Lo que vamos a cambiar</span><h1>Mejoras</h1></div>
-    <p>Cambia el estado, desvincula temas o mejoras globales y asigna quién la hace.</p>
-  </div>
-  <button class="boton-recargar" id="btn-recargar" data-tip="Actualizar" aria-label="Actualizar">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 1 1 18 6.6L20.5 9"/><path d="M20.5 4v5h-5"/></svg>
-  </button>
-</div>
+export function recargar(){ return cargar(); }
 
-<p class="aviso" id="aviso-panel" role="status"></p>
+/* Se pinta dentro de la subpestaña de Mejoras (pestana-mejoras-impacto.js),
+   que pone el título y el botón Actualizar. */
+export async function render(caja){
+  caja.innerHTML = `<p class="aviso" id="aviso-panel" role="status"></p>
 <p class="resumen-sub" id="resumen-mejoras"></p>
 
 <div class="desplegables" id="filtros-mejoras">
@@ -66,12 +59,6 @@ export async function render(){
 
 <div id="lista-mejoras" class="lista-mejoras"><p class="vacio">Cargando…</p></div>`;
 
-  $("#btn-recargar").addEventListener("click", async () => {
-    const b = $("#btn-recargar");
-    if (b.classList.contains("girando")) return;
-    b.classList.add("girando");
-    try { await cargar(); } finally { b.classList.remove("girando"); }
-  });
   /* Tocar la pastilla abre su menú (y cierra el otro); elegir una
      opción filtra y cierra. Fuera del menú o con Escape se cierra. */
   $("#filtros-mejoras").addEventListener("click", e => {
