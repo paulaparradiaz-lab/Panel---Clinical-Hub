@@ -335,6 +335,28 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-quien.paula{background:var(--paula-suave);color:var(--paula-texto)}
 .vt-quien.hamilton{background:var(--hamilton-suave);color:var(--hamilton-texto)}
 .vt-quien.mitad{background:linear-gradient(90deg,var(--paula-suave) 50%,var(--hamilton-suave) 50%);color:#18181b}
+.vt-quien-ok{display:inline-flex;align-items:center;gap:4px;background:var(--brand-bg);color:var(--brand-ink)}
+.vt-quien-ok svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+/* Por mes: saldo de la diferencia, meses saldados y pagos */
+.vt-saldo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 6px;padding:16px 18px;border-radius:18px;background:var(--brand-bg)}
+.vt-saldo-txt{display:grid;justify-items:start;gap:6px;min-width:0}
+.vt-saldo-monto{font-size:22px;line-height:1.2}
+.vt-saldo .vt-quien-ok{background:var(--brand)}
+.vt-saldo .boton-chico svg,.vt-pd-quien svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vt-saldo .boton-chico{display:inline-flex;align-items:center;gap:6px}
+.vt-saldado td{color:var(--faint)}
+.vt-saldado td b{color:inherit}
+.vt-ico-candado{cursor:default;color:var(--faint)}
+.vt-ico-candado:hover{background:none}
+.vt-pagos{display:grid;gap:8px;margin-top:16px}
+.vt-pago{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface2)}
+.vt-pago-txt{display:grid;gap:2px;min-width:0}
+.vt-pago .vt-sl-caja{flex:1 1 100%}
+.vt-pago.anulado .vt-pago-txt b{text-decoration:line-through;color:var(--faint)}
+.vt-pago-anulado{color:var(--warn)}
+.vt-anular{padding:6px 14px;font-size:12.5px}
+.vt-pd-quien{margin:8px 0 0}
+#aviso-pagos:empty{display:none}
 /* Soportes de un gasto: lista debajo del gasto */
 .vt-sl{display:grid;gap:6px;min-width:0}
 .vt-sl-caja{margin-top:4px;padding-top:10px;border-top:1px solid rgba(24,24,27,.08)}

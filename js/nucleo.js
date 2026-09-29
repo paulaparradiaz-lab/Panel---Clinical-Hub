@@ -73,6 +73,8 @@ export async function sesionSegura(){
 
 export function traducirError(msg){
   const m = String(msg || "").toLowerCase();
+  /* Avisos propios de Supabase (triggers): empiezan con «ch: » y se muestran tal cual */
+  if (String(msg || "").startsWith("ch: ")) return String(msg).slice(4);
   if (m.includes("invalid login credentials")) return "Correo o contraseña incorrectos.";
   if (m.includes("email not confirmed")) return "Ese usuario no está confirmado todavía.";
   if (m.includes("different from the old")) return "La nueva contraseña debe ser distinta de la actual.";
