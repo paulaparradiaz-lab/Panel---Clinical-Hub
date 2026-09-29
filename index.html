@@ -207,8 +207,10 @@ textarea.campo{min-height:90px;resize:vertical}
 .metro-nivel-pie b{color:var(--ink)}
 .metro-cab .enlace-ayuda,.metro-nivel-cab .enlace-ayuda{flex:none}
 /* Ventas (Resumen y Suscripciones) */
-.vt-grafica{position:relative;height:260px;margin-top:12px}
-.vt-dos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.vt-grafica{position:relative;height:260px;margin-top:12px;min-width:0}
+.vt-dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+/* Las tarjetas (y sus gráficas) se pueden encoger al angostar la pantalla */
+.vt-dos > *{min-width:0}
 .vt-dos .caja{margin:0}
 .vt-tabla{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
 .vt-tabla .mini{display:block}
@@ -253,7 +255,7 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-fechas-chica .chip{flex:none}
 .vt-corto,.vt-tabla .vt-corto,.vt-tarjetas-cel{display:none}
 @media (max-width:760px){
-  .vt-dos{grid-template-columns:1fr}
+  .vt-dos{grid-template-columns:minmax(0,1fr)}
   .vt-grafica{height:220px}
   /* Fechas lado a lado y atajos en una sola fila que se desliza */
   .vt-fechas-resumen{display:grid;grid-template-columns:1fr 1fr;gap:10px}
