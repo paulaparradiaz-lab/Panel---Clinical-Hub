@@ -28,6 +28,7 @@ const COLUMNAS = "evento,fecha,transaccion,suscriptor,correo,nombre,telefono,pai
 
 /* Turno de carga: si se sale y se vuelve a Dinero mientras carga, solo sigue la última */
 let turno = 0;
+let errorCarga = null;   // si la carga falló, las subpestañas lo dicen (no se quedan en «Cargando…»)
 
 export async function render(){
   const mio = ++turno;
@@ -72,15 +73,23 @@ export async function render(){
       else if (sub === "rentabilidad") { await cargar(); await rentabilidad.render($("#sub-vista"), datos); }
       else { await cargar(); await pintar(); }
     } catch (err){
+      const { data: ses } = await sb.auth.getSession();
+      if (!ses.session){ location.reload(); return; }   // la sesión se cerró: al inicio de sesión
       /* Sin conexión o Supabase no respondió: se avisa y se deja lo que ya estaba */
       avisar("No se pudo actualizar: " + (err.message || err) + ". Revisa la conexión y vuelve a intentar.", "mal", "#aviso-dinero");
     } finally { b.classList.remove("girando"); }
   });
 
+  errorCarga = null;
   try { await cargar(); }
   catch (err){
-    if (mio !== turno || !$("#sub-vista")) return;
-    $("#sub-vista").innerHTML = '<p class="vacio">No se pudieron leer las ventas. ' + escapar(err.message || err) + '</p>';
+    if (mio !== turno) return;
+    /* Sin sesión (se cerró en otro equipo o venció): de vuelta al inicio de sesión */
+    const { data: s } = await sb.auth.getSession();
+    if (!s.session){ location.reload(); return; }
+    errorCarga = err.message || String(err);
+    if (!$("#sub-vista")) return;
+    $("#sub-vista").innerHTML = '<p class="vacio">No se pudieron leer las ventas. ' + escapar(errorCarga) + '</p>';
     return;
   }
   if (mio !== turno) return;
@@ -94,7 +103,12 @@ async function abrir(id){
     b.setAttribute("aria-selected", String(b.dataset.sub === sub)));
   moverGoma();
   /* Si todavía no llegan las ventas, la carga inicial abre la subpestaña elegida al terminar */
-  if (!datos){ $("#sub-vista").innerHTML = '<p class="vacio">Cargando…</p>'; return; }
+  if (!datos){
+    $("#sub-vista").innerHTML = errorCarga
+      ? '<p class="vacio">No se pudieron leer las ventas. ' + escapar(errorCarga) + ' Usa ↻ para intentar de nuevo.</p>'
+      : '<p class="vacio">Cargando…</p>';
+    return;
+  }
   if (sub === "egresos") await egresos.render($("#sub-vista"), datos);
   else if (sub === "rentabilidad") await rentabilidad.render($("#sub-vista"), datos);
   else await pintar();

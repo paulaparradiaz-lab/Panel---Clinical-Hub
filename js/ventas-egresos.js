@@ -1,15 +1,15 @@
 /* ============================================================
    CLINICAL HUB · VENTAS › EGRESOS
    Los gastos que los cofundadores anotan a mano (tabla egresos), en
-   PESOS. Cada gasto guarda la TRM de su día (se trae sola de datos.gov.co
-   y se puede corregir) y Supabase calcula el equivalente en dólares, que
+   PESOS. Por dentro, cada gasto guarda la TRM oficial de su día (la trae
+   el panel de datos.gov.co al guardar; no se muestra) y Supabase calcula el equivalente en dólares, que
    se usará para la rentabilidad estimada.
    Cada gasto lleva uno o varios soportes (fotos o PDF) en el espacio
    privado «soportes-egresos»: se abren con enlaces que vencen en 5 min.
    Cada archivo se guarda como «AAAA-MM/código/nombre-original.ext», así
    al descargarlo conserva su nombre y su extensión.
 
-   · Registrar: fecha, monto en pesos, TRM, categoría (Anuncios u otra que se crea ahí mismo), concepto,
+   · Registrar: fecha, monto en pesos, categoría (Anuncios u otra que se crea ahí mismo), concepto,
      quién lo pagó (Paula, Hámilton o mitad y mitad) y los soportes (mínimo uno).
    · Editar y borrar (con confirmación); queda quién lo cambió.
    · Por mes: total y cuánto puso cada uno; avisa los meses sin gastos.
@@ -73,7 +73,7 @@ export async function render(c, datos){
 <section class="caja" style="margin-top:18px">
   ${cabecera("ayuda-egresos", "Egresos", "Gastos en pesos, con su soporte", [
     "Los gastos que ustedes anotan a mano, <b>en pesos</b>. Cada uno lleva su <b>categoría</b> (Anuncios, Contador, Herramientas…); si no existe, se crea al registrarlo con «+ Nueva categoría».",
-    "Cada gasto guarda la <b>TRM de su día</b> (la tasa oficial, que el panel trae sola y se puede corregir). Con ella se calcula su equivalente en dólares para la <b>rentabilidad estimada</b>.",
+    "Por dentro, cada gasto guarda la <b>TRM oficial de su día</b> (la trae el panel solo), para pasarlo a dólares en la <b>rentabilidad estimada</b>.",
     "Cada gasto necesita al menos un <b>soporte</b> (foto de la factura, pantallazo o PDF); puede llevar varios. Se guardan en un espacio privado: solo se abren desde el panel.",
     "<b>Pagó</b> es quién puso la plata: Paula, Hámilton o <b>mitad y mitad</b> (en los totales se suma la mitad a cada uno). También queda anotado quién lo registró y quién lo cambió por última vez.",
     "Con los ingresos (subpestaña Ingresos) y estos egresos armamos después la <b>rentabilidad estimada</b> del mes."])}
@@ -304,9 +304,6 @@ function ventana(g){
       '<input class="campo" type="date" id="eg-fecha" value="' + escapar(g ? g.fecha : hoy) + '">' +
       '<span class="etiqueta">Monto (pesos)</span>' +
       '<input class="campo" type="number" inputmode="numeric" min="1" step="1" id="eg-monto" placeholder="Ej.: 150000" value="' + (g ? escapar(Math.round(g.monto_cop)) : "") + '">' +
-      '<span class="etiqueta">TRM del día (pesos por dólar)</span>' +
-      '<input class="campo" type="number" inputmode="decimal" min="1" step="0.01" id="eg-trm" value="' + (g ? escapar(g.trm) : "") + '">' +
-      '<span class="mini" id="eg-trm-nota">' + (g ? "La que se guardó con el gasto. Cámbiala solo si hace falta." : "Buscando la TRM oficial…") + '</span>' +
       '<span class="etiqueta">Categoría</span>' +
       '<div id="eg-cat-ui"></div>' +
       '<select class="campo" id="eg-categoria" hidden>' + categorias().map(c => '<option' + (g && g.categoria === c ? " selected" : "") + '>' + escapar(c) + '</option>').join("") +
@@ -325,10 +322,9 @@ function ventana(g){
       '<p class="mini explica">Puedes elegir varios archivos a la vez (en computador, con Cmd o Ctrl presionado). Se guardan en un espacio privado de Supabase: nadie de afuera puede verlos. Máximo 10 MB cada uno.</p>',
     aceptar: g ? "Guardar cambios" : "Registrar",
     alAceptar: async () => {
-      const fechaG = leer("eg-fecha"), monto = Number(leer("eg-monto")), trm = Number(leer("eg-trm")), concepto = leer("eg-concepto");
+      const fechaG = leer("eg-fecha"), monto = Number(leer("eg-monto")), concepto = leer("eg-concepto");
       if (!fechaG){ avisar("Elige la fecha.", "mal", "#aviso-forma"); return false; }
       if (!(monto > 0)){ avisar("Escribe el monto en pesos.", "mal", "#aviso-forma"); return false; }
-      if (!(trm > 0)){ avisar("Falta la TRM del día (pesos por dólar).", "mal", "#aviso-forma"); return false; }
       if (!concepto){ avisar("Escribe el concepto.", "mal", "#aviso-forma"); return false; }
       if (!quedan.length && !nuevos.length){ avisar("Adjunta al menos un soporte (foto o PDF).", "mal", "#aviso-forma"); return false; }
       /* Categoría nueva: primera letra en mayúscula; si ya existe (con otras mayúsculas), se usa la que hay */
@@ -338,6 +334,19 @@ function ventana(g){
         if (!escrita){ avisar("Escribe el nombre de la categoría nueva.", "mal", "#aviso-forma"); return false; }
         categoria = categorias().find(c => c.toLowerCase() === escrita.toLowerCase()) || escrita.charAt(0).toUpperCase() + escrita.slice(1);
       }
+      /* La TRM no se ve: el gasto se registra en pesos y la TRM oficial de su
+         día se guarda por dentro, solo para pasarlo a dólares en Rentabilidad.
+         Al editar sin cambiar la fecha se conserva la que tenía. Si datos.gov.co
+         no responde, se usa la del gasto más reciente (es una estimación). */
+      let trm = g && g.fecha === fechaG ? Number(g.trm) : null;
+      if (!trm){
+        try { trm = await trmDelDia(fechaG); }
+        catch (err){
+          const previo = egresos.slice().sort((x, y) => y.fecha.localeCompare(x.fecha)).find(e => Number(e.trm) > 0);
+          trm = previo ? Number(previo.trm) : null;
+        }
+      }
+      if (!(trm > 0)){ avisar("No se pudo consultar la tasa del dólar. Intenta de nuevo en un momento.", "mal", "#aviso-forma"); return false; }
       const pesado = nuevos.find(a => a.size > MAX_BYTES);
       if (pesado){ avisar("«" + pesado.name + "» pesa más de 10 MB.", "mal", "#aviso-forma"); return false; }
 
@@ -372,27 +381,6 @@ function ventana(g){
   });
   /* Los botones van uno debajo del otro */
   document.querySelector("#velo-forma .ventana").classList.add("vt-ventana-egreso");
-  /* La TRM oficial se trae sola al abrir (gasto nuevo) y al cambiar la fecha */
-  /* Solo cuenta la respuesta de la última fecha elegida: si se cambia rápido,
-     una respuesta vieja que llegue tarde no pisa la TRM de la fecha nueva */
-  let pedido = 0;
-  const traerTrm = async () => {
-    const dia = leer("eg-fecha"), nota = document.getElementById("eg-trm-nota");
-    if (!dia || !nota) return;
-    const mio = ++pedido;
-    nota.textContent = "Buscando la TRM oficial…";
-    try {
-      const valor = await trmDelDia(dia);
-      const campo = document.getElementById("eg-trm");
-      if (!campo || mio !== pedido) return;
-      campo.value = valor;
-      nota.textContent = "TRM oficial vigente ese día (datos.gov.co). Puedes cambiarla si usaste otra tasa.";
-    } catch (err){
-      if (mio !== pedido) return;
-      nota.textContent = "No se pudo traer la TRM oficial: escríbela a mano.";
-    }
-  };
-  document.getElementById("eg-fecha").addEventListener("change", traerTrm);
   /* Categoría con un menú propio (el estilo de los filtros de Soluciones) en vez de la
      lista del sistema, que no se puede decorar. El <select> oculto guarda el valor. */
   const selCat = document.getElementById("eg-categoria"), uiCat = document.getElementById("eg-cat-ui");
@@ -425,7 +413,6 @@ function ventana(g){
     campo.hidden = e.target.value !== NUEVA;
     if (!campo.hidden) campo.focus();
   });
-  if (!g) traerTrm();
   /* Lista de soportes: los que ya tenía y los nuevos, cada uno con ✕ para quitarlo */
   const lista = document.getElementById("eg-archivos");
   const pintarArchivos = () => {
