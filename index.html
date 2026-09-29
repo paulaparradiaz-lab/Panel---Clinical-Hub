@@ -118,8 +118,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 textarea.campo,select.campo{border-radius:18px}
 /* Fecha en iPhone: Safari centra el texto y le da un ancho mínimo propio que
    se sale del formulario; así queda como los demás campos */
-input[type="date"].campo{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
-input[type="date"].campo::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type="date"].campo{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;box-sizing:border-box;text-align:left;
+  /* Safari dibuja la fecha en una caja propia que no se centra: la altura del
+     campo va en el alto de línea (sin relleno arriba y abajo) y así queda al medio */
+  height:calc(1.65em + 26px);padding-top:0;padding-bottom:0;line-height:calc(1.65em + 24px)}
+input[type="date"].campo::-webkit-date-and-time-value{text-align:left;margin:0;line-height:inherit;min-height:0}
+.vt-fechas input[type="date"].campo{height:40px;line-height:38px}
 .campo::placeholder{color:var(--faint)}
 .campo:focus{outline:none;background:var(--surface);border-color:var(--sel);box-shadow:0 0 0 4px var(--brand-bg)}
 .campo[disabled]{opacity:.5;cursor:not-allowed}
