@@ -3,6 +3,7 @@
    Formato en dólares y porcentajes, flecha de comparación contra el
    periodo anterior y gráficas (Chart.js) con los colores del panel.
    ============================================================ */
+import { finDelDia } from "./ventas-calculos.js";
 
 /* US$ con coma decimal, como se escribe en español */
 export const usd = n => n == null ? "—"
@@ -70,4 +71,48 @@ export function grafica(id, config){
     }
   });
   graficas.set(id, new window.Chart(lienzo, config));
+}
+
+/* ------------------------------------------------------------
+   Selector de fechas de las gráficas (MRR, nuevos contra bajas,
+   rentabilidad): calendario desde / hasta y atajos. Igual al de
+   Ventas por día, con atajos que sirven para ver tendencias.
+   ------------------------------------------------------------ */
+const DIA = 864e5, ZONA = -5 * 3600e3;
+const ATAJOS = [["30", "30 días"], ["3m", "3 meses"], ["6m", "6 meses"], ["12m", "12 meses"], ["todo", "Todo"]];
+const aDia = t => new Date(t + ZONA).toISOString().slice(0, 10);
+const deDia = (s, fin) => Date.parse(s + "T00:00:00Z") - ZONA + (fin ? DIA - 1 : 0);
+function rangoDe(atajo, ahora, primero){
+  const hoyIni = finDelDia(ahora) - DIA + 1;
+  if (atajo === "30") return [hoyIni - 29 * DIA, ahora];
+  if (atajo === "todo") return [Math.min(primero, hoyIni), ahora];
+  const d = new Date(ahora + ZONA), n = Number(atajo.replace("m", ""));
+  return [Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - n, d.getUTCDate()) - ZONA + DIA, ahora];
+}
+export function selectorFechas(clave){
+  return '<div class="vt-fechas vt-fechas-resumen vt-fechas-chica" data-selector="' + clave + '">' +
+    '<label>Desde <input class="campo" type="date" data-desde></label><label>Hasta <input class="campo" type="date" data-hasta></label>' +
+    '<div class="filtros">' + ATAJOS.map(([k, t]) => '<button class="chip" data-atajo="' + k + '">' + t + '</button>').join("") + '</div></div>';
+}
+/* Conecta un selector: estado = { atajo, rango } (se conserva al volver a la
+   pestaña); primero = desde cuándo hay datos (para «Todo»); dibujar(a, b) */
+export function armarSelector(caja, clave, estado, primero, dibujar){
+  const sel = caja.querySelector('[data-selector="' + clave + '"]');
+  const aplicar = () => {
+    sel.querySelector("[data-desde]").value = aDia(estado.rango[0]);
+    sel.querySelector("[data-hasta]").value = aDia(estado.rango[1]);
+    sel.querySelectorAll("[data-atajo]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.atajo === estado.atajo)));
+    dibujar(estado.rango[0], estado.rango[1]);
+  };
+  if (!estado.rango || estado.atajo) estado.rango = rangoDe(estado.atajo || "todo", Date.now(), primero);
+  sel.querySelector(".filtros").addEventListener("click", e => {
+    const b = e.target.closest("[data-atajo]"); if (!b) return;
+    estado.atajo = b.dataset.atajo; estado.rango = rangoDe(estado.atajo, Date.now(), primero); aplicar();
+  });
+  sel.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+    const a = sel.querySelector("[data-desde]").value, b = sel.querySelector("[data-hasta]").value;
+    if (!a || !b || a > b) return;
+    estado.atajo = null; estado.rango = [deDia(a), Math.min(deDia(b, true), Date.now())]; aplicar();
+  }));
+  aplicar();
 }

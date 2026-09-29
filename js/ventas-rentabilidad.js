@@ -18,6 +18,8 @@ const MESES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "jul
   "septiembre", "octubre", "noviembre", "diciembre"];
 
 let caja = null;
+let periodoGrafica = "12";   // «3», «6», «12» (últimos meses) o un año («2026»); se conserva al volver
+
 let datosVentas = null;
 
 export async function render(c, datos){
@@ -71,30 +73,38 @@ const signo = (n, formato = usd) => '<span class="' + (n >= 0 ? "vt-rent-mas" : 
 /* En la tabla, sin «US$» en cada celda (el subtítulo lo dice) */
 const cifra = n => Number(n).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nombre = f => MESES_LARGO[f.mes] + " " + f.anio + (f.cerrado ? "" : " *");
-const corto = f => MESES[f.mes] + (f.cerrado ? "" : " *");
 
 function pintar(filas){
   if (!filas.length){ caja.innerHTML = '<p class="vacio">Todavía no hay ventas.</p>'; return; }
   const hoy = filas[filas.length - 1];
+  /* Totales desde el primer mes con venta o gasto */
+  const hist = filas.reduce((t, f) => ({ ingresos: t.ingresos + f.ingresos, gasto: t.gasto + f.gasto }), { ingresos: 0, gasto: 0 });
+  hist.utilidad = hist.ingresos - hist.gasto;
+  hist.margen = hist.ingresos ? hist.utilidad / hist.ingresos : null;
+  const primerMes = filas[0];
+  /* Un solo recuadro: la utilidad histórica destacada, la franja del mes en curso y la gráfica mes a mes */
+  const desde = MESES_LARGO[primerMes.mes] + " " + primerMes.anio;
+  const enCurso = hoy.cerrado ? "" : " · en curso";
+  const aviso = '<p class="vt-rent-aviso"><b>Es una estimación.</b> Los ingresos están en dólares y los egresos en pesos: ' +
+    'cada gasto se pasa a dólares con la TRM de su día, pero el valor real varía según el momento en que se cambia la plata, ' +
+    'el momento puntual del gasto y las tasas de los bancos.</p>';
+  const arriba =
+    '<div class="vu-grande"><span class="mini">Utilidad estimada histórica · desde ' + escapar(desde) + '</span><b>' + signo(hist.utilidad) + '</b>' +
+      '<span class="mini">Ingresos ' + usd(hist.ingresos) + ' − egresos ' + usd(hist.gasto) + ' · margen ' + porcentaje(hist.margen, 0) + '</span></div>' +
+    /* El mes en curso, con la misma organización pero en gris */
+    '<div class="vu-grande vu-mes"><span class="mini">Utilidad estimada · ' + escapar(MESES_LARGO[hoy.mes] + " " + hoy.anio) + enCurso + '</span><b>' + signo(hoy.utilidad) + '</b>' +
+      '<span class="mini">Ingresos ' + usd(hoy.ingresos) + ' − egresos ' + usd(hoy.gasto) + ' · margen ' + porcentaje(hoy.margen, 0) + '</span></div>';
   caja.innerHTML =
     '<section class="caja" style="margin-top:18px">' +
-      cabecera("ayuda-rent", "Rentabilidad estimada", "Ingresos menos egresos, en US$", [
-        "<b>Ingresos:</b> lo que le queda a Clinical Hub de Hotmart en el mes (netos, sin las compras reembolsadas). Es lo mismo que suma la subpestaña Ingresos.",
-        "<b>Egresos:</b> los gastos anotados en Egresos, pasados a dólares con la TRM del día de cada uno.",
+      cabecera("ayuda-rent", "Ingresos, egresos y rentabilidad", "En US$", [
+        "<b>Ingresos:</b> lo que le queda a Clinical Hub de Hotmart (netos, sin las compras reembolsadas).",
+        "<b>Egresos:</b> los gastos anotados en Egresos, de todas las categorías, pasados a dólares con la TRM del día de cada uno.",
         "<b>Utilidad estimada</b> = ingresos − egresos. <b>Margen</b> = qué parte de los ingresos queda como utilidad.",
-        "Un mes con «sin gastos anotados» puede verse mejor de lo que fue: anota sus gastos para que el cálculo sea real. * el mes en curso todavía no cierra."]) +
-      '<p class="vt-rent-aviso"><b>Es una estimación.</b> Los ingresos están en dólares y los egresos en pesos: ' +
-        'cada gasto se pasa a dólares con la TRM de su día, pero el valor real varía según el momento en que se cambia la plata, ' +
-        'el momento puntual del gasto y las tasas de los bancos.</p>' +
-      /* Los tres cuadros son del mismo mes: el título lo dice una vez */
-      '<p class="vt-rent-periodo"><b>' + escapar(MESES_LARGO[hoy.mes].charAt(0).toUpperCase() + MESES_LARGO[hoy.mes].slice(1) + " " + hoy.anio) + '</b>' +
-        (hoy.cerrado ? '' : ' · en curso') + '</p>' +
-      '<div class="vt-rent-ecuacion">' +
-        '<div><span class="mini">Ingresos</span><b>' + usd(hoy.ingresos) + '</b></div><span class="vt-rent-op">−</span>' +
-        '<div><span class="mini">Egresos</span><b>' + usd(hoy.gasto) + '</b></div><span class="vt-rent-op">=</span>' +
-        '<div class="vt-rent-total"><span class="mini">Utilidad estimada</span><b>' + signo(hoy.utilidad) + '</b>' +
-          '<span class="mini">Margen ' + porcentaje(hoy.margen, 0) + '</span></div></div>' +
-      '<div class="vt-grafica"><canvas id="vr-grafica" aria-label="Ingresos, egresos y utilidad por mes"></canvas></div>' +
+        "<b>Histórico</b> suma desde la primera venta; el <b>mes en curso</b> va del día 1 a hoy. La gráfica muestra cada mes: elige los últimos 3, 6 o 12 meses, o un año. * el mes en curso todavía no cierra."]) +
+      aviso + arriba +
+      '<div class="vu-sep"><b>Mes a mes</b><span class="mini">* el mes en curso todavía no cierra</span></div>' +
+      '<div class="filtros vt-rent-periodos" id="vrent-periodos"></div>' +
+      '<div class="vt-grafica"><canvas id="vrent-grafica" aria-label="Ingresos, egresos y utilidad"></canvas></div>' +
     '</section>' +
     '<section class="caja" style="margin-top:14px">' +
       cabecera("ayuda-rent-mes", "Por mes", "Ingresos, egresos y utilidad, en US$", [
@@ -108,14 +118,33 @@ function pintar(filas){
     '</section>';
   armarAyudas(caja);
 
+  /* Opciones: últimos 3, 6 o 12 meses, y cada año con datos (el más reciente primero) */
+  const anios = [...new Set(filas.map(f => f.anio))].sort((x, y) => y - x);
+  const periodos = [["3", "3 meses"], ["6", "6 meses"], ["12", "12 meses"], ...anios.map(a => [String(a), String(a)])];
+  if (!periodos.some(p => p[0] === periodoGrafica)) periodoGrafica = "12";
+  const botones = caja.querySelector("#vrent-periodos");
+  const pintarGrafica = () => {
+    botones.innerHTML = periodos.map(([k, t]) => '<button class="chip" data-periodo="' + k + '" aria-pressed="' + (k === periodoGrafica) + '">' + t + '</button>').join("");
+    const n = Number(periodoGrafica);
+    graficaMeses(n > 999 ? filas.filter(f => f.anio === n) : filas.slice(-n));
+  };
+  botones.addEventListener("click", e => {
+    const b = e.target.closest("[data-periodo]");
+    if (b){ periodoGrafica = b.dataset.periodo; pintarGrafica(); }
+  });
+  pintarGrafica();
+}
+
+/* Barras de ingresos y egresos por mes, con la línea de utilidad */
+function graficaMeses(filas){
   const redondo = n => Math.round(n * 100) / 100;
-  grafica("vr-grafica", {
+  grafica("vrent-grafica", {
     type: "bar",
-    data: { labels: filas.map(corto), datasets: [
+    data: { labels: filas.map(f => MESES[f.mes] + (f.cerrado ? "" : " *")), datasets: [
       { type: "line", label: "Utilidad", data: filas.map(f => redondo(f.utilidad)), borderColor: "#2a4927", backgroundColor: "#2a4927", pointRadius: 4, tension: .25, order: 0 },
       { label: "Ingresos", data: filas.map(f => redondo(f.ingresos)), backgroundColor: "#7ab447", borderRadius: 6, order: 1 },
       { label: "Egresos", data: filas.map(f => redondo(f.gasto)), backgroundColor: "#d9654d", borderRadius: 6, order: 1 }
     ] },
-    options: { scales: { y: { ticks: { callback: v => "US$ " + Math.round(v).toLocaleString("es-CO") } } } }
+    options: { scales: { x: { ticks: { maxRotation: 0, autoSkip: true } }, y: { ticks: { callback: v => "US$ " + Math.round(v).toLocaleString("es-CO") } } } }
   });
 }

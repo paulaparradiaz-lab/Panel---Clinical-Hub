@@ -306,13 +306,17 @@ textarea.campo{min-height:90px;resize:vertical}
 .c-nueva .etiqueta{margin-top:0}
 .c-nueva .campo{margin-bottom:8px}
 .c-nueva-botones{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
-/* Rentabilidad: el mes de los tres cuadros */
-.vt-rent-periodo{margin:0 0 10px;font-size:15px;color:var(--muted,#6b6b76)}
-.vt-rent-periodo b{color:var(--ink,#18181b)}
 /* Egresos: categoría con menú propio (como los filtros de Soluciones) */
 .eg-cat-desp{display:block}
 .eg-cat-boton{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;cursor:pointer}
 .eg-cat-desp .desplegable-menu{right:0;min-width:0;max-height:260px;overflow:auto}
+/* Rentabilidad: un solo recuadro (utilidad histórica destacada, franja del mes en curso y gráfica mes a mes) */
+.vu-grande{display:grid;gap:3px;padding:16px;border-radius:16px;background:#e9f4d6}
+.vu-grande b{font-size:28px;letter-spacing:-.01em}
+.vu-mes{margin-top:10px;background:var(--surface2)}
+.vu-sep{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+/* Rentabilidad: opciones de la gráfica por mes (3, 6, 12 meses o un año) */
+.vt-rent-periodos{margin:10px 0 4px}
 /* Egresos: campo para escribir una categoría nueva */
 #eg-categoria-nueva{margin-top:8px}
 /* Egresos en PC: tabla con pastillas e íconos */
@@ -379,19 +383,8 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-rent-aviso{margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:#fff6e0;font-size:13px;line-height:1.45}
 .vt-rent-mas{color:#2a4927}
 .vt-rent-menos{color:#b3432e}
-.vt-rent-ecuacion{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
-.vt-rent-ecuacion>div{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--surface2);flex:1 1 120px}
-.vt-rent-ecuacion b{font-size:20px;white-space:nowrap}
-.vt-rent-ecuacion .vt-rent-total{background:#e9f4d6}
-.vt-rent-op{font-size:22px;color:#8b8e96}
 .vt-rent-tabla td .mini{display:block}
 @media (max-width:760px){
-  .vt-rent-ecuacion{display:grid;grid-template-columns:1fr 1fr;align-items:stretch}
-  /* Ingresos y Egresos del mismo alto; la cifra abajo en los dos */
-  .vt-rent-ecuacion>div{align-content:space-between}
-  .vt-rent-ecuacion .vt-rent-op{display:none}
-  .vt-rent-ecuacion .vt-rent-total{grid-column:1 / -1}
-  .vt-rent-ecuacion b{font-size:18px}
   .vt-tabla .vt-rent-tabla th,.vt-tabla .vt-rent-tabla td{font-size:13px;padding-left:5px;padding-right:5px}
 }
 /* Ventana de gastos: botones uno debajo del otro, sin aplastarse */
