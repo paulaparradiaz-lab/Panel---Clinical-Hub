@@ -296,6 +296,13 @@ function saldoHasta(porMes, hasta){
   return Math.round(s + activos().reduce((x, p) => x + conSigno(p), 0));
 }
 
+/* «septiembre 2026», «julio y agosto 2026», «junio a septiembre 2026» */
+function rangoMeses(l){
+  const corto = k => MESES[Number(k.slice(5)) - 1] + (k.slice(0, 4) === l[l.length - 1].slice(0, 4) ? "" : " " + k.slice(0, 4));
+  if (l.length === 1) return nombreMes(l[0]);
+  return corto(l[0]) + (l.length === 2 ? " y " : " a ") + nombreMes(l[l.length - 1]);
+}
+
 const ICONO_OK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
 const ICONO_CAMARA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 function pintarMeses(){
@@ -313,7 +320,7 @@ function pintarMeses(){
   /* Tarjeta del saldo */
   const nota = sinPagos ? "No se pudieron leer los pagos de la diferencia."
     : pazYSalvo ? "No hay nada pendiente."
-    : [pendientes.length ? "Pendiente: " + pendientes.map(nombreMes).join(", ") : "",
+    : [pendientes.length ? "Pendiente: " + rangoMeses(pendientes) : "",
        Math.abs(faltaSaldados) >= 1 ? "Del último pago faltaron " + cop(Math.abs(faltaSaldados)) : ""].filter(Boolean).join(" · ");
   const hayQuePagar = !sinPagos && meses.some(k => (!hasta || k >= hasta) && Math.abs(saldoHasta(porMes, k)) >= 1);
   const tarjeta =
@@ -327,7 +334,7 @@ function pintarMeses(){
 
   /* Tabla: los meses saldados en gris con su pastilla */
   const tabla =
-    '<table class="tabla"><thead><tr><th>Mes</th><th>Total</th>' + QUIENES.map(q => '<th>' + q + '</th>').join("") + '<th>Diferencia</th></tr></thead><tbody>' +
+    '<table class="tabla vt-solo-compu"><thead><tr><th>Mes</th><th>Total</th>' + QUIENES.map(q => '<th>' + q + '</th>').join("") + '<th>Diferencia</th></tr></thead><tbody>' +
     meses.slice().reverse().map(k => {
       const d = porMes.get(k), saldado = !!hasta && k <= hasta;
       if (!d) return '<tr><td>' + nombreMes(k) + '</td><td colspan="' + (QUIENES.length + 2) + '"><span class="mini">Sin gastos registrados</span></td></tr>';
@@ -353,12 +360,28 @@ function pintarMeses(){
             (ultimoActivo && ultimoActivo.id === p.id ? '<button class="boton-chico secundario vt-anular" type="button" data-anular="' + p.id + '">Anular</button>' : '') +
           '</span></div>').join("") + '</div>'
     : '';
-  donde.innerHTML = tarjeta + tabla + lista;
+  /* En celular, en vez de la tabla, una línea por mes: total y quién le debe
+     a quién (o «Saldado»). Al tocarla se abre cuánto puso cada uno */
+  const cel = '<div class="vt-meses-cel">' + meses.slice().reverse().map(k => {
+    const d = porMes.get(k), saldado = !!hasta && k <= hasta;
+    if (!d) return '<div class="vt-mc"><div class="vt-mc-izq"><b>' + nombreMes(k) + '</b><span class="mini">Sin gastos registrados</span></div></div>';
+    const [dd, aa] = quienDebe(d.dif);
+    const der = saldado ? '<span class="vt-quien vt-quien-ok">' + ICONO_OK + 'Saldado</span>'
+      : Math.abs(d.dif) < 1 ? '<span class="mini">Mitad y mitad</span>'
+      : '<span class="vt-quien ' + claseDe(dd) + '">' + dd + ' → ' + aa + '</span><b>' + escapar(cop(Math.abs(d.dif))) + '</b>';
+    return '<button type="button" class="vt-mc' + (saldado ? ' saldado' : '') + '" data-mes-cel aria-expanded="false">' +
+      '<span class="vt-mc-izq"><b>' + nombreMes(k) + '</b><span class="mini">Total ' + escapar(cop(d.total)) + '</span></span>' +
+      '<span class="vt-mc-der">' + der + '</span>' +
+      '<span class="vt-mc-det">' + QUIENES.map(q => '<span><i class="' + claseDe(q) + '"></i>' + q + ' puso <b>' + escapar(cop(d.por[q] || 0)) + '</b></span>').join("") + '</span></button>';
+  }).join("") + '<p class="mini vt-mc-nota">Toca un mes para ver cuánto puso cada uno.</p></div>';
+  donde.innerHTML = tarjeta + tabla + cel + lista;
 }
 
 /* Clics dentro de «Por mes»: registrar, ver foto y anular */
 async function alTocarPagos(e){
   if (e.target.closest("#eg-pagar")){ ventanaPago(); return; }
+  const mes = e.target.closest("[data-mes-cel]");
+  if (mes){ const abrir = !mes.classList.contains("abierta"); mes.classList.toggle("abierta", abrir); mes.setAttribute("aria-expanded", String(abrir)); return; }
   const ver = e.target.closest("[data-ver-pago]");
   const anular = e.target.closest("[data-anular]");
   const buscar = id => pagos.find(x => String(x.id) === String(id));

@@ -357,6 +357,27 @@ textarea.campo{min-height:90px;resize:vertical}
 .vt-anular{padding:6px 14px;font-size:12.5px}
 .vt-pd-quien{margin:8px 0 0}
 #aviso-pagos:empty{display:none}
+/* Por mes en celular: una línea por mes que se abre al tocarla */
+.vt-meses-cel{display:none}
+@media (max-width:760px){
+  #eg-meses{overflow-x:visible}
+  .vt-meses-cel{display:grid}
+  .vt-saldo{display:grid;justify-items:start;gap:10px}
+  .vt-saldo-monto{font-size:20px}
+  .vt-saldo .boton-chico{justify-self:stretch;justify-content:center}
+  .vt-mc{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 2px;border:0;border-bottom:1px solid var(--border);background:none;text-align:left;cursor:pointer}
+  div.vt-mc{cursor:default}
+  .vt-mc-izq{display:grid;gap:2px}
+  .vt-mc-der{display:grid;gap:3px;justify-items:end;text-align:right}
+  .vt-mc.saldado .vt-mc-izq{opacity:.6}
+  .vt-mc-det{display:none;flex:1 1 100%;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+  .vt-mc-det b{color:var(--ink)}
+  .vt-mc-det i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+  .vt-mc-det i.paula{background:var(--paula)}
+  .vt-mc-det i.hamilton{background:var(--hamilton)}
+  .vt-mc.abierta .vt-mc-det{display:flex}
+  .vt-mc-nota{margin:8px 0 0}
+}
 /* Soportes de un gasto: lista debajo del gasto */
 .vt-sl{display:grid;gap:6px;min-width:0}
 .vt-sl-caja{margin-top:4px;padding-top:10px;border-top:1px solid rgba(24,24,27,.08)}
