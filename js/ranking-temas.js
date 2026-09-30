@@ -69,7 +69,7 @@ export function armazon(){
         ¿Cómo funciona?</button>
     </div>
     <div class="ayuda-plegable" id="ayuda-ranking" hidden>
-      <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos comentarios los piden). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
+      <p class="mini">Tus temas, ordenados de más a menos pedidos (por cuántos usuarios distintos los piden; si alguien lo pidió dos veces, cuenta una). Solo aparecen los que ya tienen comentarios clasificados; se ven los 10 más pedidos
       y el botón de abajo muestra todos. El filtro de arriba deja ver <b>Todos</b>, solo los que están
       <b>Sin solución</b> o solo los que ya tienen <b>Con solución</b>.</p>
       <p class="mini"><b>El texto subrayado</b> abre los comentarios reales de ese tema; desde ahí puedes
@@ -158,8 +158,11 @@ function textoPedido(x){
 function agrupar(){
   const mapa = new Map();
   filas.forEach(x => (x.temas || []).forEach(slug => {
-    const o = mapa.get(slug) || { slug: slug, n:0, paises:new Set(), formas:new Set(), refs:new Set() };
+    const o = mapa.get(slug) || { slug: slug, n:0, usuarios:new Set(), paises:new Set(), formas:new Set(), refs:new Set() };
     o.n++;
+    /* usuario: huella del correo o teléfono (sql/usuarios_temas.sql); sin
+       ella, cada comentario cuenta como un usuario aparte */
+    o.usuarios.add(x.usuario || "id:" + x.id);
     if (x.pais) o.paises.add(x.pais);
     const t = textoPedido(x).toLowerCase();
     if (t) o.formas.add(t);
@@ -167,7 +170,8 @@ function agrupar(){
     if (r) o.refs.add(r);
     mapa.set(slug, o);
   }));
-  return Array.from(mapa.values()).sort((a, b) => (b.n - a.n) || nombreDe(a.slug).localeCompare(nombreDe(b.slug)));
+  return Array.from(mapa.values()).sort((a, b) => (b.usuarios.size - a.usuarios.size) || (b.n - a.n) ||
+    nombreDe(a.slug).localeCompare(nombreDe(b.slug)));
 }
 
 /* ============================================================
@@ -209,8 +213,8 @@ function pintarRanking(){
       : '<span class="etq alerta">sin solución</span>';
     const refs = Array.from(o.refs).join(" / ");
     const formas = o.formas.size;
-    const textoFormas = formas > 1 ? formas + " formas de decirlo"
-      : (o.n > 1 ? o.n + " comentarios" : "1 comentario");
+    const textoFormas = "<b>" + plural(o.usuarios.size, "usuario", "usuarios") + "</b>" +
+      (formas ? " · " + plural(formas, "forma de decirlo", "formas de decirlo") : "");
     const enlace = '<button class="enlace-formas" data-ver="' + clave +
       '" title="Ver los comentarios reales de este tema">' + textoFormas + '</button>';
     const iconos =
@@ -227,7 +231,7 @@ function pintarRanking(){
         '">Crear solución</button>';
     return '<tr>' +
       '<td><span class="tema-nombre">' + escapar(corto(nombreDe(o.slug), 60)) + iconos + '</span><br>' + enlace + '</td>' +
-      '<td class="tabular"><b>' + o.n + '</b></td>' +
+      '<td class="tabular"><b>' + o.usuarios.size + '</b></td>' +
       '<td class="tabular">' + o.paises.size + '</td>' +
       '<td><span class="mini">' + (refs ? escapar(corto(refs, 44)) : "—") + '</span></td>' +
       '<td>' + marca + '</td>' +
