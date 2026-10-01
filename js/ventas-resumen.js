@@ -1,26 +1,29 @@
 /* ============================================================
    CLINICAL HUB · VENTAS › RESUMEN
    Como el inicio de Hotmart: la gráfica de ventas por día con un
-   calendario (desde / hasta) y atajos de periodo; países y formas de
-   pago del mismo rango (top 5 países y «Mostrar más»).
+   calendario (desde / hasta) y atajos de periodo; países del mismo
+   rango (top 5 y «Mostrar más»); médicos activos al cierre de cada mes,
+   con su propio selector de fechas (como el del MRR).
    Venta = cobro aprobado y no reembolsado (compra nueva o renovación).
    ============================================================ */
 import { escapar, num } from "./nucleo.js";
 import { nombrePais } from "./ia.js";
-import { finDelDia } from "./ventas-calculos.js";
-import { usd, grafica, cabecera, armarAyudas } from "./ventas-comun.js";
+import { finDelDia, claveMes, inicioMes, vigente, activa } from "./ventas-calculos.js";
+import { usd, grafica, cabecera, armarAyudas, selectorFechas, armarSelector } from "./ventas-comun.js";
 
 const DIA = 864e5;
 const ZONA = -5 * 3600e3;
 const PERIODOS = [
   ["hoy", "Hoy"], ["7", "7 días"], ["30", "30 días"], ["mes", "Este mes"], ["mesAnterior", "Mes anterior"]
 ];
-const FORMAS = { CREDIT_CARD:"Tarjeta de crédito", DEBIT_CARD:"Tarjeta de débito", PAYPAL:"PayPal",
-  "Apple Pay":"Apple Pay", "Google Pay":"Google Pay", PIX:"PIX", BILLET:"Boleto" };
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
 
 let periodo = "30";
 let rangoElegido = null;   // [desde, hasta] del calendario
 let datos = null;
+/* Rango de «Médicos activos» (se conserva al volver a la pestaña); de entrada, desde la primera venta */
+const elegidoActivos = { atajo: "todo", rango: null };
 const aDia = t => new Date(t + ZONA).toISOString().slice(0, 10);
 const deDia = (s, fin) => Date.parse(s + "T00:00:00Z") - ZONA + (fin ? DIA - 1 : 0);
 
@@ -32,7 +35,7 @@ export async function render(caja, d){
     "Cada <b>barra</b> son las ventas del día: cobros aprobados en Hotmart, tanto <b>compras nuevas</b> como <b>renovaciones</b> mensuales. Los reembolsos no cuentan.",
     "La <b>línea</b> es la <b>facturación neta</b> del día: lo que le queda a Clinical Hub en dólares, ya sin la tarifa de Hotmart ni los impuestos de cada país.",
     "Las <b>barras rojas hacia abajo</b> son el dinero que salió ese día por <b>reembolsos y contracargos</b> (en dólares netos).",
-    "Elige las fechas en el calendario o usa los atajos (Hoy, 7 días…). Países y formas de pago usan el mismo rango."])}
+    "Elige las fechas en el calendario o usa los atajos (Hoy, 7 días…). «Por país» usa el mismo rango."])}
   <div class="vt-fechas vt-fechas-resumen">
     <label>Desde <input class="campo" type="date" id="vr-desde"></label>
     <label>Hasta <input class="campo" type="date" id="vr-hasta"></label>
@@ -45,9 +48,13 @@ export async function render(caja, d){
   <section class="caja">${cabecera("ayuda-paises", "Por país", "", [
     "Ventas del rango elegido arriba, según el país desde donde pagó el médico: la <b>cantidad de ventas</b> y su <b>facturación neta</b> en dólares.",
     "Se ven los 5 países con más ventas; «Mostrar más» abre el resto."])}<div id="vr-paises"></div></section>
-  <section class="caja">${cabecera("ayuda-formas", "Por forma de pago", "", [
-    "Con qué pagaron los médicos en el rango elegido arriba: tarjeta, PayPal, Apple Pay, Google Pay… con la <b>cantidad de ventas</b> y su <b>facturación neta</b>.",
-    "Sirve para ver qué medios de pago usan más y cuáles vale la pena ofrecer."])}<div id="vr-formas"></div></section>
+  <section class="caja">${cabecera("ayuda-activos", "Médicos activos", "Al cierre de cada mes · * el mes todavía no cierra", [
+    "Cada <b>barra</b> es cuántos médicos tenían la suscripción <b>vigente</b> al cierre de ese mes: ya pagaron y no se han dado de baja. Incluye a los que tienen un pago atrasado, porque todavía pueden pagar.",
+    "El número grande es el total al final del rango elegido, separado entre los que están <b>al día</b> y los que tienen un <b>pago atrasado</b>.",
+    "Pasa el mouse por una barra para ver cuántos <b>entraron</b> y cuántos <b>se fueron</b> ese mes. Elige las fechas o usa los atajos."])}
+    ${selectorFechas("activos")}
+    <div class="vt-activos-cifra" id="vr-activos-cifra"></div>
+    <div class="vt-grafica"><canvas id="vr-activos" aria-label="Médicos activos por mes"></canvas></div></section>
 </div>
 `;
   armarAyudas(caja);
@@ -68,6 +75,52 @@ export async function render(caja, d){
   }));
   if (!rangoElegido || periodo) rangoElegido = rango(periodo || "30", Date.now());
   pintar();
+  const m = datos.modelo;
+  const primero = m.subs.length ? m.subs.reduce((x, s) => Math.min(x, s.alta), Infinity) : Date.now();
+  armarSelector(caja, "activos", elegidoActivos, primero, (a, b) => pintarActivos(m, a, b));
+}
+
+/* Médicos activos: una barra por mes del rango con los vigentes al cierre
+   (o a la fecha «Hasta», si el mes no termina dentro del rango) */
+function pintarActivos(m, a, b){
+  const lista = [];
+  for (let { anio, mes } = claveMes(a); ; mes === 11 ? (anio++, mes = 0) : mes++){
+    const ini = inicioMes(anio, mes);
+    if (ini > b) break;
+    const fin = inicioMes(mes === 11 ? anio + 1 : anio, (mes + 1) % 12) - 1;
+    /* Entradas y salidas del mes completo (aunque el rango empiece a mitad), hasta el corte */
+    const corte = Math.min(fin, b);
+    lista.push({ anio, mes, parcial: corte < fin,
+      vigentes: m.subs.filter(s => vigente(s, corte)).length,
+      entraron: m.subs.filter(s => s.alta >= ini && s.alta <= corte).length,
+      seFueron: m.subs.filter(s => s.baja != null && s.baja >= ini && s.baja <= corte).length });
+  }
+  const vigentes = m.subs.filter(s => vigente(s, b)).length;
+  const alDia = m.subs.filter(s => activa(s, b)).length;
+  const esHoy = finDelDia(b) >= finDelDia(Date.now());
+  const d = new Date(b + ZONA);
+  document.getElementById("vr-activos-cifra").innerHTML = "<b>" + num(vigentes) + "</b><span>vigentes " +
+    (esHoy ? "hoy" : "al " + d.getUTCDate() + " de " + MESES[d.getUTCMonth()]) + " · " + num(alDia) + " al día" +
+    (vigentes > alDia ? " y " + num(vigentes - alDia) + " con pago atrasado" : "") + "</span>";
+  grafica("vr-activos", {
+    type: "bar",
+    data: {
+      labels: lista.map(x => MESES_CORTOS[x.mes] + (x.parcial ? " *" : "")),
+      /* El mes que todavía no cierra va en el verde claro de la marca */
+      datasets: [{ label: "Activos", data: lista.map(x => x.vigentes), borderRadius: 6,
+        backgroundColor: lista.map(x => x.parcial ? "#c1e187" : "#7ab447") }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          title: i => { const x = lista[i[0].dataIndex]; return MESES[x.mes] + " " + x.anio + (x.parcial ? " (todavía no cierra)" : ""); },
+          label: c => " " + num(c.raw) + (c.raw === 1 ? " activo" : " activos"),
+          afterLabel: c => { const x = lista[c.dataIndex]; return " Entraron " + num(x.entraron) + " · se fueron " + num(x.seFueron); } } }
+      },
+      scales: { x: { ticks: { maxRotation: 0, autoSkip: true }, grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
 }
 
 /* Rango del periodo elegido y el anterior de igual duración */
@@ -167,7 +220,7 @@ function pintar(){
     }
   });
 
-  /* Países y formas de pago del periodo */
+  /* Países del periodo */
   /* limite: cuántas filas se ven de entrada; el resto, con «Mostrar más» */
   const agrupar = (clave, nombre, limite) => {
     const g = new Map();
@@ -195,5 +248,4 @@ function pintar(){
     ocultos.forEach(f => { f.hidden = !abrir; });
     mas.textContent = abrir ? "Mostrar menos" : "Mostrar " + ocultos.length + " más";
   });
-  document.getElementById("vr-formas").innerHTML = agrupar("forma", k => FORMAS[k] || (k === "—" ? "Sin dato" : k));
 }
