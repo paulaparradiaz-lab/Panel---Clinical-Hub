@@ -109,8 +109,11 @@ function conectar(){
    ============================================================ */
 async function cargar(){
   try {
-    await cargarCatalogo();
-    const { data, error } = await sb.from("v_ia_por_revisar").select("*").order("fecha", { ascending:false });
+    /* El catálogo de temas y los comentarios se piden a la vez */
+    const [, { data, error }] = await Promise.all([
+      cargarCatalogo(),
+      sb.from("v_ia_por_revisar").select("*").order("fecha", { ascending:false })
+    ]);
     if (error) throw error;
     filas = data || [];
   } catch (err){

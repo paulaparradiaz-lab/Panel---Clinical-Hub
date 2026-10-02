@@ -62,7 +62,9 @@ export async function render(){
     document.querySelectorAll("#subpestanas .subpestana").forEach(b => vigia.observe(b));
   }
 
-  contarPendientes();
+  /* El Inbox ya trae los pendientes y pinta el globo al cargar: el conteo
+     aparte solo hace falta si se abre en Métricas */
+  if (sub !== "inbox") contarPendientes();
   await abrir(sub);
 }
 

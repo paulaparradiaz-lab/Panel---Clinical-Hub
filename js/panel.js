@@ -1,23 +1,31 @@
 /* ============================================================
    CLINICAL HUB · PANEL
    Entrada del panel: acceso con 2FA, barra superior y pestañas.
-   Cada pestaña vive en su propio archivo.
+   Cada pestaña vive en su propio archivo. Feedback (la que abre primero)
+   viene con el panel; las demás se bajan cuando se abren, o en segundo
+   plano apenas Feedback termina de pintarse.
    ============================================================ */
 import { sb, $, estado, escapar, avisar, ocupado, traducirError,
          cerrarVentana, abrirVentana, sesionSegura } from "./nucleo.js";
 import * as feedback from "./pestana-feedback.js";
-import * as mejoras from "./pestana-soluciones-impacto.js";
-import * as hitos from "./pestana-hitos.js";
-import * as ventas from "./pestana-ventas.js";
 
 /* Aquí crece el panel: añade una sección con su render y listo.
+   «cargar» baja el archivo de la pestaña la primera vez que hace falta.
    Feedback y Soluciones (Tablero | Impacto) leen solo las tablas de la IA (ver ia.js). */
 const SECCIONES = [
-  { id:"feedback", nombre:"Feedback", render: feedback.render },
-  { id:"soluciones",  nombre:"Soluciones",  render: mejoras.render },
-  { id:"ventas",   nombre:"Dinero",   render: ventas.render },
-  { id:"hitos",    nombre:"Hitos",    render: hitos.render }
+  { id:"feedback", nombre:"Feedback", render: () => feedback.render() },
+  { id:"soluciones",  nombre:"Soluciones",  cargar: () => import("./pestana-soluciones-impacto.js") },
+  { id:"ventas",   nombre:"Dinero",   cargar: () => import("./pestana-ventas.js") },
+  { id:"hitos",    nombre:"Hitos",    cargar: () => import("./pestana-hitos.js") }
 ];
+SECCIONES.forEach(s => { if (s.cargar) s.render = async () => (await s.cargar()).render(); });
+
+/* Las demás pestañas se bajan en segundo plano cuando el navegador está libre */
+function precargarPestanas(){
+  const precargar = () => SECCIONES.forEach(s => { if (s.cargar) s.cargar().catch(() => {}); });
+  if (window.requestIdleCallback) requestIdleCallback(precargar, { timeout: 3000 });
+  else setTimeout(precargar, 1500);
+}
 
 let seccionActiva = "feedback";
 let factorId = null;
@@ -117,8 +125,13 @@ async function decidir(){
   if (nivel.currentLevel === "aal2" || conPasskey){
     /* Contraseña propia: la primera vez (la inicial la puso quien creó la
        cuenta, o llegó por invitación sin contraseña) y al recuperarla */
-    const { data: u } = await sb.auth.getUser();
-    const usuario = (u && u.user) || s.session.user;
+    /* La sesión guardada ya trae los datos del usuario; solo se le pregunta
+       a Supabase (un viaje más) si todavía no dice que tiene contraseña propia */
+    let usuario = s.session.user;
+    if (modoRecuperacion || !(usuario.user_metadata || {}).clave_propia){
+      const { data: u } = await sb.auth.getUser();
+      usuario = (u && u.user) || usuario;
+    }
     if (modoRecuperacion || !(usuario.user_metadata || {}).clave_propia) return pedirClaveNueva();
     return abrirPanel(s.session);
   }
@@ -287,6 +300,7 @@ async function abrirPanel(sesion){
 
   pintarPestanas();
   abrirSeccion(seccionActiva);
+  precargarPestanas();
 }
 
 function iniciales(correo){
@@ -349,7 +363,10 @@ function abrirSeccion(id){
   seccionActiva = id;
   marcarPestana();
   $("#vista").innerHTML = '<p class="vacio">Cargando…</p>';
-  s.render();
+  if (!s.cargar) return s.render();
+  /* Si mientras bajaba el archivo elegiste otra pestaña, esta ya no se pinta */
+  s.cargar().then(modulo => { if (seccionActiva === id) modulo.render(); })
+    .catch(() => { if (seccionActiva === id) $("#vista").innerHTML = '<p class="vacio">No se pudo abrir esta sección. Revisa tu conexión y vuelve a intentar.</p>'; });
 }
 
 /* Cifras que cuentan desde cero cuando aparecen (estilo Dashboard V2).
