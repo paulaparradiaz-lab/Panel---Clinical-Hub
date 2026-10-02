@@ -81,6 +81,17 @@ export async function render(){
   });
 
   errorCarga = null;
+  /* Si ya se bajaron las ventas antes, se muestran al instante y se actualizan
+     por detrás; solo se vuelve a pintar si llegó algo nuevo (y si sigues en Dinero).
+     Si la actualización falla, queda lo que ya se veía; ↻ lo intenta de nuevo. */
+  if (datos){
+    const antes = huella(datos.eventos);
+    await abrir(sub);
+    try { await cargar(); } catch (err){ return; }
+    if (mio !== turno || huella(datos.eventos) === antes || !$("#subpestanas[aria-label='Secciones de dinero']")) return;
+    await abrir(sub);
+    return;
+  }
   try { await cargar(); }
   catch (err){
     if (mio !== turno) return;
@@ -135,6 +146,9 @@ function moverGoma(){
   goma.style.opacity = "1";
 }
 window.addEventListener("resize", moverGoma);
+
+/* Cambia si llegó un aviso nuevo (la bitácora solo crece, nunca se edita) */
+const huella = ev => ev.length + ":" + (ev.length ? ev[ev.length - 1].fecha : "");
 
 /* Todos los avisos, de a 1.000 (Supabase entrega máximo 1.000 por consulta) */
 async function cargar(){

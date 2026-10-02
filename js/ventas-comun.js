@@ -42,16 +42,37 @@ export function armarAyudas(caja){
   });
 }
 
+/* La librería de gráficas (Chart.js, versión fija) se baja una sola vez:
+   en segundo plano cuando se carga este archivo, o al pedir la primera gráfica */
+let pedidoGraficas = null;
+function cargarGraficas(){
+  if (window.Chart) return Promise.resolve();
+  if (!pedidoGraficas) pedidoGraficas = new Promise((ok, mal) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";
+    s.onload = ok;
+    s.onerror = () => { pedidoGraficas = null; s.remove(); mal(); };
+    document.head.appendChild(s);
+  });
+  return pedidoGraficas;
+}
+if (window.requestIdleCallback) requestIdleCallback(() => cargarGraficas().catch(() => {}), { timeout: 3000 });
+else setTimeout(() => cargarGraficas().catch(() => {}), 1500);
+
 /* Una gráfica por lienzo: si ya había una, se reemplaza */
 const graficas = new Map();
 export function grafica(id, config){
   const lienzo = document.getElementById(id);
   if (!lienzo) return;
-  if (graficas.has(id)) graficas.get(id).destroy();
   if (!window.Chart){
-    lienzo.replaceWith(Object.assign(document.createElement("p"), { className: "vacio", textContent: "No se pudo cargar la librería de gráficas." }));
+    /* Todavía no llega la librería: se dibuja apenas llegue */
+    cargarGraficas().then(() => grafica(id, config), () => {
+      const l = document.getElementById(id);
+      if (l) l.replaceWith(Object.assign(document.createElement("p"), { className: "vacio", textContent: "No se pudo cargar la librería de gráficas." }));
+    });
     return;
   }
+  if (graficas.has(id)) graficas.get(id).destroy();
   const base = {
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: "index", intersect: false },
